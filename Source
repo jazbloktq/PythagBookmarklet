@@ -730,75 +730,62 @@
     get('optAdvanced').addEventListener('change', function(){rebuildAll();saveSettings();});
 
     // ── Keyboard shortcuts ────────────────────────────────────────────────────
-    var historyIndex = -1; // tracks which history entry we're browsing
-    document.addEventListener('keydown', function(e) {
-        // Only act if focus is inside the widget or no input is focused elsewhere
-        var active = document.activeElement;
-        var focusedElsewhere = active && active !== document.body && !ui.contains(active);
-        if (focusedElsewhere) return;
+    var historyIndex = -1;
 
-        if (e.key === 'Enter') {
+    // Enter on any input inside the widget → calculate
+    ui.addEventListener('keydown', function(e) {
+        var key = e.key || e.keyCode;
+        if (key === 'Enter' || key === 13) {
+            // Don't trigger if focused on a button
+            if (document.activeElement && document.activeElement.tagName === 'BUTTON') return;
             e.preventDefault();
             historyIndex = -1;
             get('calc').click();
-        } else if (e.key === 'ArrowLeft') {
+        }
+    });
+
+    function restoreEntry(entry) {
+        if (!entry || !entry.tri) return;
+        currentTri    = entry.tri;
+        currentGoal   = entry.goal;
+        currentMethod = entry.method;
+        buildTriBtns(); buildGoalBtns(); buildMethodBtns(); renderInputs();
+        entry.inputs.forEach(function(val, i) {
+            var el = get('v' + i); if (el) el.value = val;
+        });
+        if (entry.isExt) {
+            var r = ui.querySelector('input[name="geopro_pos"][value="ext"]');
+            if (r) r.checked = true;
+        }
+        get('final').innerText = entry.finalText;
+        var ae = get('finalApprox');
+        ae.innerText = entry.approxText; ae.style.display = entry.approxVis;
+        get('formulaText').innerText = entry.formula;
+        get('areaRes').innerText = entry.area;
+        get('perimRes').innerText = entry.perim;
+        get('res').style.display = 'block';
+        drawTri(entry.ds1, entry.dh, entry.db, entry.ds2, entry.isExt);
+    }
+
+    // Arrow keys — listen on document but ignore when a number input has focus
+    document.addEventListener('keydown', function(e) {
+        var key = e.key || e.keyCode;
+        var active = document.activeElement;
+        // If an input/textarea outside the widget has focus, do nothing
+        if (active && !ui.contains(active) && active !== document.body) return;
+        // If a number input inside the widget has focus, don't intercept arrows
+        if (active && active.type === 'number' && (key === 'ArrowLeft' || key === 37 || key === 'ArrowRight' || key === 39)) return;
+
+        if (key === 'ArrowLeft' || key === 37) {
             if (!history.length) return;
             e.preventDefault();
             historyIndex = Math.min(historyIndex + 1, history.length - 1);
-            var entry = history[historyIndex];
-            if (!entry || !entry.tri) return;
-            // Restore triangle type + goal + method
-            currentTri    = entry.tri;
-            currentGoal   = entry.goal;
-            currentMethod = entry.method;
-            buildTriBtns(); buildGoalBtns(); buildMethodBtns(); renderInputs();
-            // Restore input values
-            entry.inputs.forEach(function(val, i) {
-                var el = get('v' + i); if (el) el.value = val;
-            });
-            // Restore position toggle
-            if (entry.isExt) {
-                var extRadio = ui.querySelector('input[name="geopro_pos"][value="ext"]');
-                if (extRadio) extRadio.checked = true;
-            }
-            // Restore result panel
-            get('final').innerText = entry.finalText;
-            var approxEl = get('finalApprox');
-            approxEl.innerText = entry.approxText;
-            approxEl.style.display = entry.approxVis;
-            get('formulaText').innerText = entry.formula;
-            get('areaRes').innerText = entry.area;
-            get('perimRes').innerText = entry.perim;
-            get('res').style.display = 'block';
-            // Restore canvas
-            drawTri(entry.ds1, entry.dh, entry.db, entry.ds2, entry.isExt);
-        } else if (e.key === 'ArrowRight') {
-            // Go forward in history (towards more recent)
+            restoreEntry(history[historyIndex]);
+        } else if (key === 'ArrowRight' || key === 39) {
             if (historyIndex <= 0) { historyIndex = -1; return; }
             e.preventDefault();
             historyIndex--;
-            var entry = history[historyIndex];
-            if (!entry || !entry.tri) return;
-            currentTri    = entry.tri;
-            currentGoal   = entry.goal;
-            currentMethod = entry.method;
-            buildTriBtns(); buildGoalBtns(); buildMethodBtns(); renderInputs();
-            entry.inputs.forEach(function(val, i) {
-                var el = get('v' + i); if (el) el.value = val;
-            });
-            if (entry.isExt) {
-                var extRadio2 = ui.querySelector('input[name="geopro_pos"][value="ext"]');
-                if (extRadio2) extRadio2.checked = true;
-            }
-            get('final').innerText = entry.finalText;
-            var approxEl2 = get('finalApprox');
-            approxEl2.innerText = entry.approxText;
-            approxEl2.style.display = entry.approxVis;
-            get('formulaText').innerText = entry.formula;
-            get('areaRes').innerText = entry.area;
-            get('perimRes').innerText = entry.perim;
-            get('res').style.display = 'block';
-            drawTri(entry.ds1, entry.dh, entry.ds2, entry.isExt);
+            restoreEntry(history[historyIndex]);
         }
     });
 
