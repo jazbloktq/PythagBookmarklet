@@ -1,7 +1,6 @@
 (function() {
     if (document.getElementById('geo-ultimate-vscroll')) { document.getElementById('geo-ultimate-vscroll').remove(); }
 
-    // ── State (load BEFORE building UI so checkboxes start correct) ───────────
     var LS_KEY = 'geoPro_settings';
     var saved = {};
     try { saved = JSON.parse(localStorage.getItem(LS_KEY) || '{}'); } catch(e) {}
@@ -9,17 +8,18 @@
     var currentGoal   = saved.goal   || 'base';
     var currentMethod = saved.method || 0;
     var currentTri    = saved.tri    || 'scalene';
-    var initSurd      = saved.surd     === true;
-    var initAdvanced  = saved.advanced === true;
-    var initSimplify  = saved.simplify === true;  // off by default — show √3300 not 10√33
-    var initPrec      = saved.prec     !== undefined ? String(saved.prec) : '2';
+    var initSurd      = saved.surd      === true;
+    var initAdvanced  = saved.advanced  === true;
+    var initSimplify  = saved.simplify  === true;
+    var initDark      = saved.dark      === true;
+    var initDegrees   = saved.degrees   !== false; // default true
+    var initPrec      = saved.prec !== undefined ? String(saved.prec) : '2';
 
-    // ── DOM scaffold ──────────────────────────────────────────────────────────
     var ui = document.createElement('div');
     ui.id = 'geo-ultimate-vscroll';
     ui.style.cssText = 'position:fixed;top:20px;right:20px;width:380px;max-height:88vh;background:#fff;border:1px solid #ddd;border-radius:14px;z-index:10000;padding:0;font-family:system-ui,sans-serif;box-shadow:0 8px 32px rgba(0,0,0,0.18);color:#222;overflow:hidden;display:flex;flex-direction:column;box-sizing:border-box;';
     ui.innerHTML = [
-        '<div style="padding:14px 18px;background:#1a73e8;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;border-radius:14px 14px 0 0;">',
+        '<div id="uiHeader" style="padding:14px 18px;background:#1a73e8;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;border-radius:14px 14px 0 0;">',
           '<h3 style="margin:0;font-size:15px;color:#fff;font-weight:700;letter-spacing:0.3px;">&#9651; Geometry Pro</h3>',
           '<div style="display:flex;gap:12px;align-items:center;">',
             '<span id="histBtn" title="History" style="cursor:pointer;font-size:16px;opacity:0.9;">&#128337;</span>',
@@ -27,10 +27,10 @@
             '<span id="close"   style="cursor:pointer;font-size:18px;color:#fff;opacity:0.8;line-height:1;">&times;</span>',
           '</div>',
         '</div>',
-        '<div style="padding:16px;overflow-y:auto;overflow-x:hidden;flex:1;box-sizing:border-box;">',
-          '<div style="margin-bottom:14px;"><div style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;margin-bottom:7px;">TRIANGLE TYPE:</div><div id="triBtns" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;"></div></div>',
-          '<div style="margin-bottom:14px;"><div style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;margin-bottom:7px;">FIND:</div><div id="goalBtns" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;"></div></div>',
-          '<div id="methodSection" style="margin-bottom:14px;"><div style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;margin-bottom:7px;">METHOD:</div><div id="methodBtns" style="display:flex;flex-direction:column;gap:5px;"></div></div>',
+        '<div id="uiBody" style="padding:16px;overflow-y:auto;overflow-x:hidden;flex:1;box-sizing:border-box;">',
+          '<div style="margin-bottom:14px;"><div class="secLabel" style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;margin-bottom:7px;">TRIANGLE TYPE:</div><div id="triBtns" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;"></div></div>',
+          '<div style="margin-bottom:14px;"><div class="secLabel" style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;margin-bottom:7px;">FIND:</div><div id="goalBtns" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;"></div></div>',
+          '<div id="methodSection" style="margin-bottom:14px;"><div class="secLabel" style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;margin-bottom:7px;">METHOD:</div><div id="methodBtns" style="display:flex;flex-direction:column;gap:5px;"></div></div>',
           '<div id="posToggle" style="background:#eef3fe;padding:9px 12px;border-radius:8px;margin-bottom:14px;font-size:12px;display:none;">',
             '<div id="posTitle" style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;margin-bottom:6px;">HEIGHT POSITION:</div>',
             '<div style="display:flex;gap:16px;">',
@@ -40,7 +40,7 @@
           '</div>',
           '<div id="inputStack" style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px;"></div>',
           '<div id="canvasBox" style="position:relative;width:100%;margin-bottom:14px;border:1px solid #eee;border-radius:8px;overflow:hidden;background:#fafafa;">',
-            '<canvas id="triCanvas" width="340" height="190" style="width:100%;display:block;"></canvas>',
+            '<canvas id="triCanvas" width="340" height="210" style="width:100%;display:block;"></canvas>',
             '<button id="dlBtn" style="position:absolute;bottom:7px;right:7px;background:rgba(255,255,255,0.92);border:1px solid #ddd;padding:4px 9px;border-radius:4px;font-size:10px;cursor:pointer;font-weight:600;color:#555;">Save PNG</button>',
           '</div>',
           '<div style="display:flex;gap:8px;margin-bottom:14px;">',
@@ -54,11 +54,19 @@
                 '<strong id="final" style="font-size:26px;color:#1a73e8;"></strong>',
                 '<div id="finalApprox" style="font-size:11px;color:#666;margin-top:2px;display:none;"></div>',
               '</div>',
-              '<button id="copy" style="background:#1a73e8;border:none;color:#fff;padding:7px 13px;border-radius:6px;font-size:11px;cursor:pointer;font-weight:700;">Copy</button>',
+              '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;">',
+                '<button id="copy" style="background:#1a73e8;border:none;color:#fff;padding:7px 13px;border-radius:6px;font-size:11px;cursor:pointer;font-weight:700;">Copy</button>',
+                '<div id="classTag" style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;background:#e8f0fe;color:#1a73e8;display:none;"></div>',
+              '</div>',
             '</div>',
             '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;font-size:12px;border-top:1px solid #c5d8f8;padding-top:10px;">',
-              '<div style="background:#fff;padding:8px;border-radius:6px;"><div style="color:#888;font-size:10px;font-weight:600;">AREA</div><div id="areaRes" style="font-weight:700;color:#222;font-size:14px;"></div></div>',
-              '<div style="background:#fff;padding:8px;border-radius:6px;"><div style="color:#888;font-size:10px;font-weight:600;">PERIMETER</div><div id="perimRes" style="font-weight:700;color:#222;font-size:14px;"></div></div>',
+              '<div id="areaBox" style="background:#fff;padding:8px;border-radius:6px;"><div style="color:#888;font-size:10px;font-weight:600;">AREA</div><div id="areaRes" style="font-weight:700;color:#222;font-size:14px;"></div></div>',
+              '<div id="perimBox" style="background:#fff;padding:8px;border-radius:6px;"><div style="color:#888;font-size:10px;font-weight:600;">PERIMETER</div><div id="perimRes" style="font-weight:700;color:#222;font-size:14px;"></div></div>',
+            '</div>',
+            '<div id="tripleBox" style="display:none;padding:7px 10px;background:#e8f8e8;border:1px solid #a8d8a8;border-radius:7px;font-size:11px;color:#2a7a2a;margin-bottom:10px;font-weight:600;"></div>',
+            '<div id="anglesBox" style="display:none;background:#fff;padding:8px;border-radius:6px;border:1px solid #dde8fb;margin-bottom:10px;font-size:12px;">',
+              '<div style="color:#888;font-size:10px;font-weight:600;margin-bottom:4px;">ANGLES</div>',
+              '<div id="anglesContent" style="display:flex;gap:10px;flex-wrap:wrap;"></div>',
             '</div>',
             '<div style="border-top:1px solid #c5d8f8;padding-top:10px;">',
               '<div style="font-size:10px;font-weight:700;color:#1a73e8;margin-bottom:5px;letter-spacing:0.5px;">STEPS:</div>',
@@ -71,14 +79,16 @@
           '<div id="histList" style="color:#666;line-height:1.8;">No history yet.</div>',
           '<button id="closeHist" style="width:100%;margin-top:10px;padding:6px;border:none;background:#f1f3f4;border-radius:6px;cursor:pointer;font-size:12px;">Dismiss</button>',
         '</div>',
-        '<div id="setMenu" style="display:none;position:absolute;top:50px;right:16px;width:210px;background:#fff;border:1px solid #ddd;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.15);padding:14px;z-index:10005;font-size:12px;">',
+        '<div id="setMenu" style="display:none;position:absolute;top:50px;right:16px;width:220px;background:#fff;border:1px solid #ddd;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.15);padding:14px;z-index:10005;font-size:12px;">',
           '<div style="font-weight:700;margin-bottom:10px;color:#333;">Settings</div>',
           '<label style="font-size:11px;color:#666;display:block;margin-bottom:4px;">Decimal places</label>',
           '<input type="number" id="prec" min="0" max="8" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:6px;box-sizing:border-box;font-size:13px;margin-bottom:10px;">',
           '<div style="border-top:1px solid #eee;padding-top:10px;display:flex;flex-direction:column;gap:8px;">',
             '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optSurd"     style="accent-color:#1a73e8;width:14px;height:14px;"> Surd form output</label>',
             '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optSimplify" style="accent-color:#1a73e8;width:14px;height:14px;"> Simplify surds (e.g. 10\u221a33)</label>',
+            '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optDegrees"  style="accent-color:#1a73e8;width:14px;height:14px;"> Angles in degrees</label>',
             '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optAdvanced" style="accent-color:#1a73e8;width:14px;height:14px;"> Advanced wording</label>',
+            '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optDark"     style="accent-color:#1a73e8;width:14px;height:14px;"> Dark mode</label>',
           '</div>',
         '</div>'
     ].join('');
@@ -94,19 +104,21 @@
     var canvas = get('triCanvas'), ctx = canvas.getContext('2d');
     var history = [];
 
-    // ── Apply saved settings to DOM ───────────────────────────────────────────
-    get('prec').value           = initPrec;
-    get('optSurd').checked      = initSurd;
-    get('optSimplify').checked  = initSimplify;
-    get('optAdvanced').checked  = initAdvanced;
+    // Apply saved settings to DOM
+    get('prec').value          = initPrec;
+    get('optSurd').checked     = initSurd;
+    get('optSimplify').checked = initSimplify;
+    get('optAdvanced').checked = initAdvanced;
+    get('optDark').checked     = initDark;
+    get('optDegrees').checked  = initDegrees;
 
-    // ── Accessors ─────────────────────────────────────────────────────────────
     function getAdv()      { return get('optAdvanced').checked; }
     function getSurd()     { return get('optSurd').checked; }
     function getSimplify() { return get('optSimplify').checked; }
     function getPrec()     { return parseInt(get('prec').value) || 2; }
+    function getDark()     { return get('optDark').checked; }
+    function getDeg()      { return get('optDegrees').checked; }
 
-    // ── Persist ───────────────────────────────────────────────────────────────
     function saveSettings() {
         try {
             localStorage.setItem(LS_KEY, JSON.stringify({
@@ -114,12 +126,121 @@
                 prec: get('prec').value,
                 surd: get('optSurd').checked,
                 simplify: get('optSimplify').checked,
-                advanced: get('optAdvanced').checked
+                advanced: get('optAdvanced').checked,
+                dark: get('optDark').checked,
+                degrees: get('optDegrees').checked
             }));
         } catch(e) {}
     }
 
-    // ── Error helpers ─────────────────────────────────────────────────────────
+    // ── Dark mode ──────────────────────────────────────────────────────────────
+    // Colour palette: [light, dark]
+    var DK = {
+        uiBg:      ['#fff',     '#1e1e2e'],
+        uiBorder:  ['#ddd',     '#333350'],
+        bodyBg:    ['#fff',     '#1e1e2e'],
+        text:      ['#222',     '#e0e0f0'],
+        subtext:   ['#666',     '#9090b0'],
+        label:     ['#888',     '#7070a0'],
+        inputBg:   ['#fff',     '#2a2a3e'],
+        inputBdr:  ['#ddd',     '#444466'],
+        btnBg:     ['#f1f3f4',  '#2a2a3e'],
+        btnTxt:    ['#555',     '#c0c0e0'],
+        resBg:     ['#f0f6ff',  '#1a1a2e'],
+        resBdr:    ['#c5d8f8',  '#3a3a5e'],
+        cardBg:    ['#fff',     '#2a2a3e'],
+        codeBg:    ['#fff',     '#2a2a3e'],
+        codeBdr:   ['#dde8fb',  '#3a3a5e'],
+        codeTxt:   ['#333',     '#c0c0e0'],
+        menuBg:    ['#fff',     '#252535'],
+        menuBdr:   ['#ddd',     '#3a3a5e'],
+        posBg:     ['#eef3fe',  '#1e2240'],
+        canvasBg:  ['#fafafa',  '#181828'],
+        canvasBdr: ['#eee',     '#333350'],
+        tagBg:     ['#e8f0fe',  '#1e2e4e'],
+        tagTxt:    ['#1a73e8',  '#4a9eff'],
+        angleBg:   ['#fff',     '#2a2a3e'],
+        angleBdr:  ['#dde8fb',  '#3a3a5e'],
+        tripleBg:  ['#e8f8e8',  '#1a2e1a'],
+        tripleBdr: ['#a8d8a8',  '#3a6a3a'],
+        tripleTxt: ['#2a7a2a',  '#6abf6a'],
+        setMenuW:  ['#fff',     '#252535']
+    };
+    function dk(key) { return DK[key][getDark()?1:0]; }
+
+    function applyDark() {
+        var d = getDark();
+        // main widget
+        ui.style.background = dk('uiBg');
+        ui.style.borderColor = dk('uiBorder');
+        ui.style.color = dk('text');
+        // body scroll area
+        var body = get('uiBody');
+        if(body) body.style.background = dk('bodyBg');
+        // section labels
+        ui.querySelectorAll('.secLabel').forEach(function(el){ el.style.color = dk('label'); });
+        // pos toggle
+        var tog = get('posToggle');
+        if(tog) tog.style.background = dk('posBg');
+        // canvas box
+        var cb = get('canvasBox');
+        if(cb){ cb.style.background = dk('canvasBg'); cb.style.borderColor = dk('canvasBdr'); }
+        // clear button
+        var clr = get('clear');
+        if(clr){ clr.style.background = dk('btnBg'); clr.style.color = dk('btnTxt'); }
+        // result panel
+        var res = get('res');
+        if(res){ res.style.background = dk('resBg'); res.style.borderColor = dk('resBdr'); }
+        // result sub-labels
+        res && res.querySelectorAll('div[style*="color:#666"],div[style*="color:#888"]').forEach(function(el){
+            if(el.style.color==='#666'||el.style.color==='rgb(102, 102, 102)') el.style.color=dk('subtext');
+            if(el.style.color==='#888'||el.style.color==='rgb(136, 136, 136)') el.style.color=dk('label');
+        });
+        // area/perim cards
+        ['areaBox','perimBox'].forEach(function(id){
+            var el=get(id); if(el){ el.style.background=dk('cardBg'); }
+        });
+        var aR=get('areaRes'),pR=get('perimRes');
+        if(aR) aR.style.color=dk('text'); if(pR) pR.style.color=dk('text');
+        // triple box
+        var tb=get('tripleBox');
+        if(tb){ tb.style.background=dk('tripleBg'); tb.style.borderColor=dk('tripleBdr'); tb.style.color=dk('tripleTxt'); }
+        // angles box
+        var ab=get('anglesBox');
+        if(ab){ ab.style.background=dk('angleBg'); ab.style.borderColor=dk('angleBdr'); }
+        // formula code
+        var ft=get('formulaText');
+        if(ft){ ft.style.background=dk('codeBg'); ft.style.borderColor=dk('codeBdr'); ft.style.color=dk('codeTxt'); }
+        // class tag
+        var ct=get('classTag');
+        if(ct){ ct.style.background=dk('tagBg'); ct.style.color=dk('tagTxt'); }
+        // finalApprox
+        var fa=get('finalApprox'); if(fa) fa.style.color=dk('subtext');
+        // menus
+        ['histMenu','setMenu'].forEach(function(id){
+            var m=get(id); if(m){ m.style.background=dk('menuBg'); m.style.borderColor=dk('menuBdr'); m.style.color=dk('text'); }
+        });
+        var hL=get('histList'); if(hL) hL.style.color=dk('subtext');
+        var sTitle=get('setMenu') && get('setMenu').querySelector('div[style*="font-weight:700"]');
+        // inputs in inputStack
+        ui.querySelectorAll('#inputStack input').forEach(function(inp){
+            inp.style.background=dk('inputBg'); inp.style.borderColor=dk('inputBdr'); inp.style.color=dk('text');
+        });
+        // prec input
+        var prec=get('prec'); if(prec){ prec.style.background=dk('inputBg'); prec.style.borderColor=dk('inputBdr'); prec.style.color=dk('text'); }
+        // set menu labels
+        var sm=get('setMenu');
+        if(sm){ sm.querySelectorAll('label').forEach(function(l){ l.style.color=dk('text'); }); }
+        // dlBtn
+        var dl=get('dlBtn');
+        if(dl){ dl.style.background=d?'rgba(30,30,46,0.9)':'rgba(255,255,255,0.92)'; dl.style.borderColor=dk('inputBdr'); dl.style.color=dk('btnTxt'); }
+        // closeHist button
+        var ch=get('closeHist'); if(ch){ ch.style.background=dk('btnBg'); ch.style.color=dk('btnTxt'); }
+        // method buttons — rebuild to pick up new colours
+        buildTriBtns(); buildGoalBtns(); buildMethodBtns();
+    }
+
+    // ── Error helpers ──────────────────────────────────────────────────────────
     var errTimer = null;
     function showError(title, msg) {
         get('errTitle').innerText = title; get('errMsg').innerText = msg;
@@ -131,331 +252,340 @@
     function dismissErr() { errBox.style.opacity='0'; setTimeout(function(){errBox.style.display='none';errBox.style.opacity='1';},400); }
     function clearError() { if(errTimer){clearTimeout(errTimer);errTimer=null;} errBox.style.display='none'; errBox.style.opacity='1'; }
 
-    // ── Surd helpers ──────────────────────────────────────────────────────────
-    // Simplify sqrt(n) into a*sqrt(b) where b is square-free
+    // ── Surd helpers ───────────────────────────────────────────────────────────
     function simplifySqrt(n) {
-        // n must be a positive integer
-        var coeff = 1, rad = n;
-        for (var p = 2; p * p <= rad; p++) {
-            while (rad % (p*p) === 0) { rad /= p*p; coeff *= p; }
-        }
-        return { coeff: coeff, rad: rad };
+        var coeff=1, rad=n;
+        for(var p=2;p*p<=rad;p++) while(rad%(p*p)===0){rad/=p*p;coeff*=p;}
+        return {coeff:coeff,rad:rad};
     }
-    // Try to express `value` as a surd. Returns string or null.
-    // If simplify is off, returns √N (raw). If on, returns simplified a√b.
     function toSurdStr(value) {
-        var sq = value * value;
-        var sqR = Math.round(sq);
-        if (Math.abs(sq - sqR) > 1e-7 || sqR <= 0) return null;
-        var s = simplifySqrt(sqR);
-        if (s.rad === 1) return null; // perfect square, just show integer
-        if (!getSimplify()) return '\u221a' + sqR; // unsimplified: √3300
-        return (s.coeff === 1 ? '' : s.coeff) + '\u221a' + s.rad; // simplified: 10√33
+        var sq=value*value, sqR=Math.round(sq);
+        if(Math.abs(sq-sqR)>1e-7||sqR<=0) return null;
+        var s=simplifySqrt(sqR);
+        if(s.rad===1) return null;
+        if(!getSimplify()) return '\u221a'+sqR;
+        return (s.coeff===1?'':s.coeff)+'\u221a'+s.rad;
     }
-    // Format a computed value for display (main result + step strings)
-    // In surd mode, show simplified surd; for steps show sqrt(original radicand)
     function fmt(value) {
-        if (getSurd()) {
-            var ss = toSurdStr(value);
-            if (ss) return ss;
-            var sqR = Math.round(value * value);
-            if (Math.abs(value * value - sqR) < 1e-7 && Math.abs(value - Math.round(value)) < 1e-9) return String(Math.round(value));
+        if(getSurd()){
+            var ss=toSurdStr(value); if(ss) return ss;
+            var sqR=Math.round(value*value);
+            if(Math.abs(value*value-sqR)<1e-7&&Math.abs(value-Math.round(value))<1e-9) return String(Math.round(value));
         }
         return value.toFixed(getPrec());
     }
-    // For step strings: in surd mode show sqrt(n) keeping the radicand explicit before simplification
     function fmtS(value) {
-        if (getSurd()) {
-            var sq = value * value, sqR = Math.round(sq);
-            if (Math.abs(sq - sqR) < 1e-7 && sqR > 0) {
-                var s = simplifySqrt(sqR);
-                if (s.rad !== 1) {
-                    if (!getSimplify()) return '\u221a' + sqR; // unsimplified: √3300
-                    return (s.coeff===1?'':s.coeff)+'\u221a'+s.rad; // simplified: 10√33
-                }
-                if (Math.abs(value - Math.round(value)) < 1e-9) return String(Math.round(value));
+        if(getSurd()){
+            var sq=value*value, sqR=Math.round(sq);
+            if(Math.abs(sq-sqR)<1e-7&&sqR>0){
+                var s=simplifySqrt(sqR);
+                if(s.rad!==1){ if(!getSimplify()) return '\u221a'+sqR; return (s.coeff===1?'':s.coeff)+'\u221a'+s.rad; }
+                if(Math.abs(value-Math.round(value))<1e-9) return String(Math.round(value));
             }
         }
         return value.toFixed(getPrec());
     }
 
+    // ── Angle formatting ───────────────────────────────────────────────────────
+    function fmtAngle(rad) {
+        var p=getPrec();
+        if(getDeg()) return (rad*180/Math.PI).toFixed(p)+'\u00b0';
+        return rad.toFixed(p)+'\u02b3';
+    }
+    // Compute all 3 angles from sides a, b, c (law of cosines)
+    // Returns [A, B, C] in radians opposite to sides a, b, c
+    function computeAngles(a, b, c) {
+        function ac(opp, adj1, adj2) {
+            var val=(adj1*adj1+adj2*adj2-opp*opp)/(2*adj1*adj2);
+            val=Math.max(-1,Math.min(1,val));
+            return Math.acos(val);
+        }
+        return [ac(a,b,c), ac(b,a,c), ac(c,a,b)];
+    }
+
+    // ── Triangle classification ────────────────────────────────────────────────
+    function classifyTriangle(a, b, c) {
+        // sort so c is largest
+        var sides=[a,b,c].sort(function(x,y){return x-y;});
+        var A=sides[0],B=sides[1],C=sides[2];
+        var eps=1e-6;
+        var c2=C*C, ab=A*A+B*B;
+        var type;
+        if(Math.abs(c2-ab)<eps*C*C) type='Right';
+        else if(c2<ab) type='Acute';
+        else type='Obtuse';
+        return type;
+    }
+
+    // ── Pythagorean triple check ───────────────────────────────────────────────
+    function gcd(a,b){ return b<0.5?a:gcd(b,a%b); }
+    function checkTriple(a, b, c) {
+        // ensure c is hypotenuse (largest)
+        var sides=[a,b,c].sort(function(x,y){return x-y;});
+        var A=sides[0],B=sides[1],C=sides[2];
+        // check integer-ness after dividing by GCD
+        var g=gcd(gcd(Math.round(A*1000),Math.round(B*1000)),Math.round(C*1000))/1000;
+        if(g<1e-9) return null;
+        var pa=Math.round(A/g), pb=Math.round(B/g), pc=Math.round(C/g);
+        // verify integer ratio
+        if(Math.abs(A/g-pa)>0.001||Math.abs(B/g-pb)>0.001||Math.abs(C/g-pc)>0.001) return null;
+        // verify Pythagorean: pa^2+pb^2=pc^2
+        if(Math.abs(pa*pa+pb*pb-pc*pc)>1) return null;
+        var scale=Math.round(A/pa*1000)/1000;
+        if(Math.abs(scale-1)<0.001) return pa+'-'+pb+'-'+pc;
+        return pa+'-'+pb+'-'+pc+' (scaled \u00d7'+scale+')';
+    }
+
     // ── Triangle type & goal/method tables ────────────────────────────────────
-    var triTypes = [
+    var triTypes=[
         {id:'scalene',     label:'Scalene'},
         {id:'isosceles',   label:'Isosceles'},
         {id:'equilateral', label:'Equilateral'},
         {id:'right',       label:'Right'}
     ];
-    var triGoals = {
-        scalene:     ['base','side','height'],
-        isosceles:   ['base','side','height'],
-        equilateral: ['height','base'],
+    var triGoals={
+        scalene:     ['base','side','height','area'],
+        isosceles:   ['base','side','height','area'],
+        equilateral: ['height','base','area'],
         right:       ['hypo','side','height','base']
     };
-    var goalLabel = {
-        s:{ base:'Base', side:'Side', height:'Height', hypo:'Hypotenuse' },
-        a:{ base:'Base', side:'Lateral Side', height:'Altitude', hypo:'Hypotenuse' }
+    var goalLabel={
+        s:{base:'Base',side:'Side',height:'Height',hypo:'Hypotenuse',area:'Area'},
+        a:{base:'Base',side:'Lateral Side',height:'Altitude',hypo:'Hypotenuse',area:'Area'}
     };
-    // Methods: { id, s (simple text), a (advanced text), si (simple inputs), ai (advanced inputs), toggle }
-    var methods = {
-        scalene: {
+    var methods={
+        scalene:{
             base:[
-                {id:'sc_b_shs', s:'Two sides + height',  a:'Two lateral sides + altitude',
-                 si:['Side 1','Height','Side 2'], ai:['Lateral Side 1','Altitude','Lateral Side 2'], toggle:true},
-                {id:'sc_b_ah',  s:'Area + height',        a:'Area + altitude',
-                 si:['Area','Height'],            ai:['Area','Altitude'], toggle:false}
+                {id:'sc_b_shs',s:'Two sides + height',a:'Two lateral sides + altitude',si:['Side 1','Height','Side 2'],ai:['Lateral Side 1','Altitude','Lateral Side 2'],toggle:true},
+                {id:'sc_b_ah', s:'Area + height',     a:'Area + altitude',             si:['Area','Height'],           ai:['Area','Altitude'],toggle:false}
             ],
             side:[
-                {id:'sc_s_shb', s:'Known side + height + base', a:'Known lateral side + altitude + base',
-                 si:['Known Side','Height','Base'],               ai:['Known Lateral Side','Altitude','Base'], toggle:true},
-                {id:'sc_s_hb',  s:'Height + base segment',      a:'Altitude + base projection',
-                 si:['Height','Base Segment'],                   ai:['Altitude','Base Projection'], toggle:false}
+                {id:'sc_s_shb',s:'Known side + height + base',a:'Known lateral side + altitude + base',si:['Known Side','Height','Base'],ai:['Known Lateral Side','Altitude','Base'],toggle:true},
+                {id:'sc_s_hb', s:'Height + base segment',     a:'Altitude + base projection',          si:['Height','Base Segment'],    ai:['Altitude','Base Projection'],toggle:false}
             ],
             height:[
-                {id:'sc_h_ab',  s:'Area + base',      a:'Area + base',
-                 si:['Area','Base'],               ai:['Area','Base'], toggle:false},
-                {id:'sc_h_ssb', s:'Two sides + base', a:'Two lateral sides + base',
-                 si:['Side 1','Side 2','Base'],    ai:['Lateral Side 1','Lateral Side 2','Base'], toggle:false}
+                {id:'sc_h_ab', s:'Area + base',      a:'Area + base',      si:['Area','Base'],            ai:['Area','Base'],toggle:false},
+                {id:'sc_h_ssb',s:'Two sides + base', a:'Two lateral sides + base',si:['Side 1','Side 2','Base'],ai:['Lateral Side 1','Lateral Side 2','Base'],toggle:false}
+            ],
+            area:[
+                {id:'sc_a_heron',s:"Heron's formula",a:"Heron's formula",si:['Side 1','Side 2','Side 3'],ai:['Side 1','Side 2','Side 3'],toggle:false}
             ]
         },
-        isosceles: {
+        isosceles:{
             base:[
-                {id:'is_b_sh',  s:'Leg + height',     a:'Leg + altitude',
-                 si:['Leg','Height'],              ai:['Leg','Altitude'], toggle:false},
-                {id:'is_b_ah',  s:'Area + height',    a:'Area + altitude',
-                 si:['Area','Height'],             ai:['Area','Altitude'], toggle:false},
-                {id:'is_b_al',  s:'Area + leg',       a:'Area + leg',
-                 si:['Area','Leg'],                ai:['Area','Leg'], toggle:false}
+                {id:'is_b_sh',s:'Leg + height',  a:'Leg + altitude',  si:['Leg','Height'],   ai:['Leg','Altitude'],toggle:false},
+                {id:'is_b_ah',s:'Area + height', a:'Area + altitude', si:['Area','Height'],  ai:['Area','Altitude'],toggle:false},
+                {id:'is_b_al',s:'Area + leg',    a:'Area + leg',      si:['Area','Leg'],     ai:['Area','Leg'],toggle:false}
             ],
             side:[
-                {id:'is_s_bh',  s:'Base + height',    a:'Base + altitude',
-                 si:['Base','Height'],             ai:['Base','Altitude'], toggle:false},
-                {id:'is_s_ab',  s:'Area + base',      a:'Area + base',
-                 si:['Area','Base'],               ai:['Area','Base'], toggle:false}
+                {id:'is_s_bh',s:'Base + height', a:'Base + altitude', si:['Base','Height'],  ai:['Base','Altitude'],toggle:false},
+                {id:'is_s_ab',s:'Area + base',   a:'Area + base',     si:['Area','Base'],    ai:['Area','Base'],toggle:false}
             ],
             height:[
-                {id:'is_h_bl',  s:'Base + leg',       a:'Base + leg',
-                 si:['Base','Leg'],                ai:['Base','Leg'], toggle:false},
-                {id:'is_h_ab',  s:'Area + base',      a:'Area + base',
-                 si:['Area','Base'],               ai:['Area','Base'], toggle:false}
-            ]
-        },
-        equilateral: {
-            height:[
-                {id:'eq_h_s',   s:'From side',        a:'From side',
-                 si:['Side'],                     ai:['Side'], toggle:false}
+                {id:'is_h_bl',s:'Base + leg',    a:'Base + leg',      si:['Base','Leg'],     ai:['Base','Leg'],toggle:false},
+                {id:'is_h_ab',s:'Area + base',   a:'Area + base',     si:['Area','Base'],    ai:['Area','Base'],toggle:false}
             ],
-            base:[
-                {id:'eq_b_ah',  s:'Area + height',    a:'Area + altitude',
-                 si:['Area','Height'],             ai:['Area','Altitude'], toggle:false}
+            area:[
+                {id:'is_a_heron',s:"Heron's formula",a:"Heron's formula",si:['Leg','Leg','Base'],ai:['Leg','Leg','Base'],toggle:false}
             ]
         },
-        right: {
+        equilateral:{
+            height:[{id:'eq_h_s',s:'From side',a:'From side',si:['Side'],ai:['Side'],toggle:false}],
+            base:[  {id:'eq_b_ah',s:'Area + height',a:'Area + altitude',si:['Area','Height'],ai:['Area','Altitude'],toggle:false}],
+            area:[  {id:'eq_a_heron',s:"Heron's formula",a:"Heron's formula",si:['Side'],ai:['Side'],toggle:false}]
+        },
+        right:{
             hypo:[
-                {id:'rt_c_ll',  s:'Both legs (Pythagoras)',         a:'Both legs (Pythagorean theorem)',
-                 si:['Leg a','Leg b'],                              ai:['Leg a','Leg b'], toggle:false},
-                {id:'rt_c_al',  s:'Area + one leg',                 a:'Area + one leg',
-                 si:['Area','Leg'],                                 ai:['Area','Leg'], toggle:false}
+                {id:'rt_c_ll',s:'Both legs (Pythagoras)',a:'Both legs (Pythagorean theorem)',si:['Leg a','Leg b'],ai:['Leg a','Leg b'],toggle:false},
+                {id:'rt_c_al',s:'Area + one leg',        a:'Area + one leg',                si:['Area','Leg'],   ai:['Area','Leg'],toggle:false}
             ],
             side:[
-                {id:'rt_l_cl',  s:'Hypotenuse + other leg',        a:'Hypotenuse + other leg',
-                 si:['Hypotenuse','Other Leg'],                     ai:['Hypotenuse','Other Leg'], toggle:false},
-                {id:'rt_l_ac',  s:'Area + hypotenuse',             a:'Area + hypotenuse',
-                 si:['Area','Hypotenuse'],                          ai:['Area','Hypotenuse'], toggle:false}
+                {id:'rt_l_cl',s:'Hypotenuse + other leg',a:'Hypotenuse + other leg',si:['Hypotenuse','Other Leg'],ai:['Hypotenuse','Other Leg'],toggle:false},
+                {id:'rt_l_ac',s:'Area + hypotenuse',     a:'Area + hypotenuse',     si:['Area','Hypotenuse'],    ai:['Area','Hypotenuse'],toggle:false}
             ],
             height:[
-                {id:'rt_h_ll',  s:'Both legs',                     a:'Both legs',
-                 si:['Leg a','Leg b'],                              ai:['Leg a','Leg b'], toggle:false},
-                {id:'rt_h_ac',  s:'Area + hypotenuse',             a:'Area + hypotenuse',
-                 si:['Area','Hypotenuse'],                          ai:['Area','Hypotenuse'], toggle:false}
+                {id:'rt_h_ll',s:'Both legs',        a:'Both legs',         si:['Leg a','Leg b'],    ai:['Leg a','Leg b'],toggle:false},
+                {id:'rt_h_ac',s:'Area + hypotenuse',a:'Area + hypotenuse', si:['Area','Hypotenuse'],ai:['Area','Hypotenuse'],toggle:false}
             ],
             base:[
-                {id:'rt_b_cl',  s:'Hypotenuse + leg',              a:'Hypotenuse + leg',
-                 si:['Hypotenuse','Leg'],                           ai:['Hypotenuse','Leg'], toggle:false},
-                {id:'rt_b_ah',  s:'Area + height',                 a:'Area + altitude',
-                 si:['Area','Height'],                              ai:['Area','Altitude'], toggle:false}
+                {id:'rt_b_cl',s:'Hypotenuse + leg',a:'Hypotenuse + leg',si:['Hypotenuse','Leg'],ai:['Hypotenuse','Leg'],toggle:false},
+                {id:'rt_b_ah',s:'Area + height',   a:'Area + altitude',  si:['Area','Height'],   ai:['Area','Altitude'],toggle:false}
             ]
         }
     };
 
     function getMethodList() {
-        var adv = getAdv();
-        var list = (methods[currentTri] || {})[currentGoal] || [];
-        return list.map(function(m) {
-            return { id:m.id, text:adv?m.a:m.s, inputs:adv?m.ai:m.si, toggle:m.toggle };
-        });
+        var adv=getAdv(), list=(methods[currentTri]||{})[currentGoal]||[];
+        return list.map(function(m){return{id:m.id,text:adv?m.a:m.s,inputs:adv?m.ai:m.si,toggle:m.toggle};});
     }
 
-    // ── Button style constants ────────────────────────────────────────────────
-    var bBase   = 'border:2px solid #e0e0e0;border-radius:8px;padding:8px 10px;cursor:pointer;font-size:12px;font-weight:600;background:#fff;color:#555;text-align:center;';
-    var bActive = 'border:2px solid #1a73e8;border-radius:8px;padding:8px 10px;cursor:pointer;font-size:12px;font-weight:700;background:#e8f0fe;color:#1a73e8;text-align:center;';
-    var mBase   = 'border:1.5px solid #e8e8e8;border-radius:7px;padding:8px 11px;cursor:pointer;font-size:12px;background:#fff;color:#555;text-align:left;font-weight:500;';
-    var mActive = 'border:1.5px solid #1a73e8;border-radius:7px;padding:8px 11px;cursor:pointer;font-size:12px;background:#e8f0fe;color:#1a73e8;text-align:left;font-weight:700;';
+    // ── Button styles (dark-aware) ────────────────────────────────────────────
+    function bBaseStyle()   { return 'border:2px solid '+(getDark()?'#444466':'#e0e0e0')+';border-radius:8px;padding:8px 10px;cursor:pointer;font-size:12px;font-weight:600;background:'+(getDark()?'#2a2a3e':'#fff')+';color:'+(getDark()?'#c0c0e0':'#555')+';text-align:center;'; }
+    function bActiveStyle() { return 'border:2px solid #1a73e8;border-radius:8px;padding:8px 10px;cursor:pointer;font-size:12px;font-weight:700;background:'+(getDark()?'#1e2e4e':'#e8f0fe')+';color:'+(getDark()?'#4a9eff':'#1a73e8')+';text-align:center;'; }
+    function mBaseStyle()   { return 'border:1.5px solid '+(getDark()?'#444466':'#e8e8e8')+';border-radius:7px;padding:8px 11px;cursor:pointer;font-size:12px;background:'+(getDark()?'#2a2a3e':'#fff')+';color:'+(getDark()?'#c0c0e0':'#555')+';text-align:left;font-weight:500;'; }
+    function mActiveStyle() { return 'border:1.5px solid #1a73e8;border-radius:7px;padding:8px 11px;cursor:pointer;font-size:12px;background:'+(getDark()?'#1e2e4e':'#e8f0fe')+';color:'+(getDark()?'#4a9eff':'#1a73e8')+';text-align:left;font-weight:700;'; }
 
-    // ── Build UI sections ─────────────────────────────────────────────────────
+    // ── Build UI ───────────────────────────────────────────────────────────────
     function buildTriBtns() {
-        var el = get('triBtns'); el.innerHTML = '';
-        triTypes.forEach(function(t) {
-            var b = document.createElement('button');
-            b.style.cssText = t.id === currentTri ? bActive : bBase;
-            b.innerText = t.label;
-            b.onclick = function() {
-                currentTri = t.id;
-                if (triGoals[currentTri].indexOf(currentGoal) < 0) currentGoal = triGoals[currentTri][0];
-                currentMethod = 0;
-                buildTriBtns(); buildGoalBtns(); buildMethodBtns(); renderInputs(); saveSettings();
+        var el=get('triBtns'); el.innerHTML='';
+        triTypes.forEach(function(t){
+            var b=document.createElement('button');
+            b.style.cssText=t.id===currentTri?bActiveStyle():bBaseStyle();
+            b.innerText=t.label;
+            b.onclick=function(){
+                currentTri=t.id;
+                if(triGoals[currentTri].indexOf(currentGoal)<0) currentGoal=triGoals[currentTri][0];
+                currentMethod=0;
+                buildTriBtns();buildGoalBtns();buildMethodBtns();renderInputs();saveSettings();
             };
             el.appendChild(b);
         });
     }
-
     function buildGoalBtns() {
-        var el = get('goalBtns'); el.innerHTML = '';
-        var adv = getAdv();
-        triGoals[currentTri].forEach(function(gid) {
-            var b = document.createElement('button');
-            b.style.cssText = gid === currentGoal ? bActive : bBase;
-            b.innerText = (adv ? goalLabel.a : goalLabel.s)[gid] || gid;
-            b.onclick = function() {
-                currentGoal = gid; currentMethod = 0;
-                buildGoalBtns(); buildMethodBtns(); renderInputs(); saveSettings();
-            };
+        var el=get('goalBtns'); el.innerHTML=''; var adv=getAdv();
+        triGoals[currentTri].forEach(function(gid){
+            var b=document.createElement('button');
+            b.style.cssText=gid===currentGoal?bActiveStyle():bBaseStyle();
+            b.innerText=(adv?goalLabel.a:goalLabel.s)[gid]||gid;
+            b.onclick=function(){currentGoal=gid;currentMethod=0;buildGoalBtns();buildMethodBtns();renderInputs();saveSettings();};
             el.appendChild(b);
         });
     }
-
     function buildMethodBtns() {
-        var el = get('methodBtns'); el.innerHTML = '';
-        var list = getMethodList();
-        get('methodSection').style.display = list.length > 1 ? 'block' : 'none';
-        list.forEach(function(m, i) {
-            var b = document.createElement('button');
-            b.style.cssText = i === currentMethod ? mActive : mBase;
-            b.innerText = m.text;
-            b.onclick = function() { currentMethod = i; buildMethodBtns(); renderInputs(); saveSettings(); };
+        var el=get('methodBtns'); el.innerHTML=''; var list=getMethodList();
+        get('methodSection').style.display=list.length>1?'block':'none';
+        list.forEach(function(m,i){
+            var b=document.createElement('button');
+            b.style.cssText=i===currentMethod?mActiveStyle():mBaseStyle();
+            b.innerText=m.text;
+            b.onclick=function(){currentMethod=i;buildMethodBtns();renderInputs();saveSettings();};
             el.appendChild(b);
         });
     }
-
     function renderInputs() {
-        var list = getMethodList();
-        if (!list.length) { get('inputStack').innerHTML = '<div style="color:#999;font-size:12px;">No methods for this combination.</div>'; return; }
-        var cfg = list[Math.min(currentMethod, list.length-1)];
-        get('inputStack').innerHTML = cfg.inputs.map(function(lbl, i) {
-            return '<div><div style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.6px;margin-bottom:4px;">'+lbl.toUpperCase()+'</div>'+
-                   '<input type="number" id="v'+i+'" placeholder="0" style="width:100%;padding:9px 11px;border:1.5px solid #ddd;border-radius:7px;box-sizing:border-box;font-size:14px;outline:none;" onfocus="this.style.borderColor=\'#1a73e8\'" onblur="this.style.borderColor=\'#ddd\'"></div>';
+        var list=getMethodList();
+        if(!list.length){get('inputStack').innerHTML='<div style="color:#999;font-size:12px;">No methods for this combination.</div>';return;}
+        var cfg=list[Math.min(currentMethod,list.length-1)];
+        var d=getDark();
+        get('inputStack').innerHTML=cfg.inputs.map(function(lbl,i){
+            return '<div><div style="font-size:10px;font-weight:700;color:'+(d?'#7070a0':'#888')+';letter-spacing:0.6px;margin-bottom:4px;">'+lbl.toUpperCase()+'</div>'+
+                   '<input type="number" id="v'+i+'" placeholder="0" style="width:100%;padding:9px 11px;border:1.5px solid '+(d?'#444466':'#ddd')+';border-radius:7px;box-sizing:border-box;font-size:14px;outline:none;background:'+(d?'#2a2a3e':'#fff')+';color:'+(d?'#e0e0f0':'#222')+';" onfocus="this.style.borderColor=\'#1a73e8\'" onblur="this.style.borderColor=\''+(d?'#444466':'#ddd')+'\'"></div>';
         }).join('');
-        // Attach Enter key in capture phase so page can't absorb it first
-        cfg.inputs.forEach(function(_, i) {
-            var inp = get('v'+i);
-            if (inp) inp.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter' || e.keyCode === 13) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    get('calc').click();
-                }
-            }, true);
+        cfg.inputs.forEach(function(_,i){
+            var inp=get('v'+i);
+            if(inp) inp.addEventListener('keydown',function(e){
+                if(e.key==='Enter'||e.keyCode===13){e.preventDefault();e.stopPropagation();get('calc').click();}
+            },true);
         });
-        var tog = get('posToggle');
-        if (cfg.toggle) {
-            var adv = getAdv();
-            get('posTitle').innerText = adv ? 'ALTITUDE FOOT:' : 'HEIGHT POSITION:';
-            get('posInt').innerText   = adv ? 'Interior foot'  : 'Internal';
-            get('posExt').innerText   = adv ? 'Exterior foot'  : 'External';
-            tog.style.display = 'block';
-        } else {
-            tog.style.display = 'none';
-        }
-        get('res').style.display = 'none';
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        var tog=get('posToggle');
+        if(cfg.toggle){
+            var adv=getAdv();
+            get('posTitle').innerText=adv?'ALTITUDE FOOT:':'HEIGHT POSITION:';
+            get('posInt').innerText=adv?'Interior foot':'Internal';
+            get('posExt').innerText=adv?'Exterior foot':'External';
+            tog.style.display='block';
+        } else { tog.style.display='none'; }
+        get('res').style.display='none';
+        ctx.clearRect(0,0,canvas.width,canvas.height);
     }
-
-    function rebuildAll() { buildTriBtns(); buildGoalBtns(); buildMethodBtns(); renderInputs(); }
+    function rebuildAll(){buildTriBtns();buildGoalBtns();buildMethodBtns();renderInputs();}
 
     // ── Canvas ────────────────────────────────────────────────────────────────
-    // drawTri(s1, h, b, s2, isExt)
-    // s1=left side, h=altitude, b=base, s2=right side
-    // Shape overridden per triangle type
-    function drawTri(s1, h, b, s2, isExt) {
-        var W = canvas.width, H = canvas.height;
-        ctx.clearRect(0, 0, W, H);
+    // anglesData: optional {A, B, C} radians at vertices pA, pB, pC
+    function drawTri(s1, h, b, s2, isExt, anglesData) {
+        var W=canvas.width, H=canvas.height;
+        ctx.clearRect(0,0,W,H);
+        var d=getDark();
+        var triCol=d?'#4a9eff':'#1a73e8';
         var raw;
+        if(currentTri==='equilateral'||currentTri==='isosceles') raw=[[0,h],[b/2,0],[b,h]];
+        else if(currentTri==='right') raw=[[0,h],[0,0],[b,h]];
+        else { var ax=Math.sqrt(Math.max(0,s1*s1-h*h)); raw=isExt?[[0,h],[ax,0],[Math.abs(ax-b),h]]:[[0,h],[ax,0],[b,h]]; }
 
-        if (currentTri === 'equilateral') {
-            raw = [[0,h],[b/2,0],[b,h]];
-        } else if (currentTri === 'isosceles') {
-            raw = [[0,h],[b/2,0],[b,h]];
-        } else if (currentTri === 'right') {
-            // right angle at bottom-left: vertical leg up, horizontal leg right
-            raw = [[0,h],[0,0],[b,h]];
-        } else {
-            // scalene: compute apex x from s1 and h
-            var ax = Math.sqrt(Math.max(0, s1*s1 - h*h));
-            raw = isExt ? [[0,h],[ax,0],[Math.abs(ax-b),h]] : [[0,h],[ax,0],[b,h]];
-        }
-
-        var pad = 44;
-        var minX=raw[0][0], maxX=raw[0][0];
+        var pad=48;
+        var minX=raw[0][0],maxX=raw[0][0];
         for(var i=1;i<3;i++){if(raw[i][0]<minX)minX=raw[i][0];if(raw[i][0]>maxX)maxX=raw[i][0];}
-        var rangeX = maxX - minX || 1, rangeY = h || 1;
-        var scale = Math.min((W-pad*2)/rangeX, (H-pad*2)/rangeY);
-        var offX = (W - rangeX*scale)/2 - minX*scale;
-        var offY = (H - rangeY*scale)/2;
-        function tr(pt){return[pt[0]*scale+offX, pt[1]*scale+offY];}
-        var pA=tr(raw[0]), pB=tr(raw[1]), pC=tr(raw[2]);
-        var pH=[pB[0],pA[1]]; // altitude foot on base
+        var rangeX=maxX-minX||1, rangeY=h||1;
+        var scale=Math.min((W-pad*2)/rangeX,(H-pad*2)/rangeY);
+        var offX=(W-rangeX*scale)/2-minX*scale, offY=(H-rangeY*scale)/2;
+        function tr(pt){return[pt[0]*scale+offX,pt[1]*scale+offY];}
+        var pA=tr(raw[0]),pB=tr(raw[1]),pC=tr(raw[2]);
+        var pH=[pB[0],pA[1]];
 
         // fill
         ctx.beginPath();ctx.moveTo(pA[0],pA[1]);ctx.lineTo(pB[0],pB[1]);ctx.lineTo(pC[0],pC[1]);ctx.closePath();
-        ctx.fillStyle='rgba(26,115,232,0.07)';ctx.fill();
+        ctx.fillStyle=d?'rgba(74,158,255,0.08)':'rgba(26,115,232,0.07)';ctx.fill();
 
-        // Equal-side tick marks
+        // tick marks
         function tick(ax,ay,bx,by,n){
             var mx=(ax+bx)/2,my=(ay+by)/2,dx=bx-ax,dy=by-ay,len=Math.sqrt(dx*dx+dy*dy)||1;
             var nx=-dy/len*5,ny=dx/len*5,gap=4;
-            ctx.strokeStyle='#1a73e8';ctx.lineWidth=1.5;
+            ctx.strokeStyle=triCol;ctx.lineWidth=1.5;
             for(var t=0;t<n;t++){var o=(t-(n-1)/2)*gap,ox=dx/len*o,oy=dy/len*o;ctx.beginPath();ctx.moveTo(mx+ox-nx,my+oy-ny);ctx.lineTo(mx+ox+nx,my+oy+ny);ctx.stroke();}
         }
         if(currentTri==='equilateral'){tick(pA[0],pA[1],pB[0],pB[1],2);tick(pB[0],pB[1],pC[0],pC[1],2);tick(pA[0],pA[1],pC[0],pC[1],2);}
         else if(currentTri==='isosceles'){tick(pA[0],pA[1],pB[0],pB[1],1);tick(pB[0],pB[1],pC[0],pC[1],1);}
 
-        // triangle outline
-        ctx.strokeStyle='#1a73e8';ctx.lineWidth=2.5;ctx.lineJoin='round';
+        // outline
+        ctx.strokeStyle=triCol;ctx.lineWidth=2.5;ctx.lineJoin='round';
         ctx.beginPath();ctx.moveTo(pA[0],pA[1]);ctx.lineTo(pB[0],pB[1]);ctx.lineTo(pC[0],pC[1]);ctx.closePath();ctx.stroke();
 
-        // Right angle box
-        if(currentTri==='right'){
-            var sq=7;ctx.strokeStyle='#888';ctx.lineWidth=1.2;
-            ctx.strokeRect(pA[0],pA[1]-sq,sq,sq);
-        }
+        // right angle box
+        if(currentTri==='right'){var sq=7;ctx.strokeStyle=d?'#888':'#888';ctx.lineWidth=1.2;ctx.strokeRect(pA[0],pA[1]-sq,sq,sq);}
 
-        // Scalene: detect if altitude falls on a side (right angle at base corner)
-        var altOnLeft=false, altOnRight=false;
-        if(currentTri==='scalene'){
-            var eps=0.002*scale;
-            altOnLeft  = Math.abs(pB[0]-pA[0])<eps;
-            altOnRight = Math.abs(pB[0]-pC[0])<eps;
-        }
-
-        // Dashed altitude line
-        var drawAlt = (currentTri==='isosceles'||currentTri==='equilateral'||
-                      (currentTri==='scalene'&&!altOnLeft&&!altOnRight));
+        // altitude line
+        var altOnLeft=false,altOnRight=false;
+        if(currentTri==='scalene'){var eps=0.002*scale;altOnLeft=Math.abs(pB[0]-pA[0])<eps;altOnRight=Math.abs(pB[0]-pC[0])<eps;}
+        var drawAlt=(currentTri==='isosceles'||currentTri==='equilateral'||(currentTri==='scalene'&&!altOnLeft&&!altOnRight));
         if(drawAlt){
-            ctx.setLineDash([4,4]);ctx.lineWidth=1.5;ctx.strokeStyle='#aaa';
-            ctx.beginPath();ctx.moveTo(pB[0],pB[1]);ctx.lineTo(pH[0],pH[1]);ctx.stroke();
-            ctx.setLineDash([]);
-            var sq2=6;ctx.strokeStyle='#aaa';ctx.lineWidth=1;
-            ctx.strokeRect(pH[0],pH[1],sq2,sq2);
+            ctx.setLineDash([4,4]);ctx.lineWidth=1.5;ctx.strokeStyle=d?'#555':'#aaa';
+            ctx.beginPath();ctx.moveTo(pB[0],pB[1]);ctx.lineTo(pH[0],pH[1]);ctx.stroke();ctx.setLineDash([]);
+            var sq2=6;ctx.strokeStyle=d?'#555':'#aaa';ctx.lineWidth=1;ctx.strokeRect(pH[0],pH[1],sq2,sq2);
         } else if(currentTri==='scalene'&&altOnLeft){
-            ctx.strokeStyle='#aaa';ctx.lineWidth=1;ctx.strokeRect(pA[0],pA[1],6,-6);
+            ctx.strokeStyle=d?'#555':'#aaa';ctx.lineWidth=1;ctx.strokeRect(pA[0],pA[1],6,-6);
         } else if(currentTri==='scalene'&&altOnRight){
-            ctx.strokeStyle='#aaa';ctx.lineWidth=1;ctx.strokeRect(pC[0]-6,pC[1],6,-6);
+            ctx.strokeStyle=d?'#555':'#aaa';ctx.lineWidth=1;ctx.strokeRect(pC[0]-6,pC[1],6,-6);
         }
 
-        // Labels
-        ctx.fillStyle='#1a73e8';ctx.font='bold 11px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';
-        var OUT=14, adv=getAdv(), hLbl=adv?'alt=':'h=';
+        // ── Angle arcs ──
+        if(anglesData){
+            // Draw arc at vertex, label outside
+            // anglesData.angles = [angleAtA, angleAtB, angleAtC]
+            // vertices pA, pB, pC
+            var verts=[[pA,anglesData[0]],[pB,anglesData[1]],[pC,anglesData[2]]];
+            var otherVerts=[[pB,pC],[pA,pC],[pA,pB]];
+            ctx.font='bold 10px system-ui';
+            verts.forEach(function(vinfo,vi){
+                var vp=vinfo[0], ang=vinfo[1];
+                // Skip 90deg vertex on right triangle (already shown with box)
+                if(currentTri==='right'&&vi===0&&Math.abs(ang-Math.PI/2)<0.01) return;
+                var o1=otherVerts[vi][0], o2=otherVerts[vi][1];
+                // direction vectors from vertex to each adjacent vertex
+                var d1x=o1[0]-vp[0],d1y=o1[1]-vp[1];
+                var d2x=o2[0]-vp[0],d2y=o2[1]-vp[1];
+                var a1=Math.atan2(d1y,d1x), a2=Math.atan2(d2y,d2x);
+                // arc radius
+                var r=12;
+                ctx.beginPath();
+                // ensure arc goes the short way
+                var diff=a2-a1;
+                while(diff> Math.PI) diff-=2*Math.PI;
+                while(diff<-Math.PI) diff+=2*Math.PI;
+                ctx.arc(vp[0],vp[1],r,a1,a1+diff,diff<0);
+                ctx.strokeStyle=d?'#6090c0':'#4a90d0';ctx.lineWidth=1.2;ctx.stroke();
+                // label position: midpoint of arc, pushed outward
+                var midA=a1+diff/2;
+                var labelR=r+11;
+                var lx=vp[0]+Math.cos(midA)*labelR, ly=vp[1]+Math.sin(midA)*labelR;
+                ctx.fillStyle=d?'#6aafff':'#1a73e8';
+                ctx.textAlign='center';ctx.textBaseline='middle';
+                ctx.fillText(fmtAngle(ang),lx,ly);
+            });
+        }
 
+        // side labels
+        ctx.fillStyle=triCol;ctx.font='bold 11px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';
+        var OUT=14, adv=getAdv(), hLbl=adv?'alt=':'h=';
         function labelSide(ax,ay,bx,by,lbl){
             var mx=(ax+bx)/2,my=(ay+by)/2,dx=bx-ax,dy=by-ay,len=Math.sqrt(dx*dx+dy*dy)||1;
             var cx=(pA[0]+pB[0]+pC[0])/3,cy=(pA[1]+pB[1]+pC[1])/3;
@@ -463,34 +593,20 @@
             if((mx+nx-cx)*nx+(my+ny-cy)*ny<0){nx=-nx;ny=-ny;}
             ctx.fillText(lbl,mx+nx*OUT,my+ny*OUT);
         }
-
         function altLabel(hVal){
             var hmy=(pB[1]+pH[1])/2;
             if(W-pH[0]>=pH[0]){ctx.textAlign='left';ctx.fillText(hLbl+hVal,pH[0]+8,hmy);}
             else{ctx.textAlign='right';ctx.fillText(hLbl+hVal,pH[0]-8,hmy);}
         }
-
         var s1L=fmt(s1),s2L=fmt(s2),bL=fmt(b),hL=fmt(h);
-
         if(currentTri==='equilateral'){
-            labelSide(pA[0],pA[1],pB[0],pB[1],s1L);
-            labelSide(pB[0],pB[1],pC[0],pC[1],s1L);
-            labelSide(pA[0],pA[1],pC[0],pC[1],s1L);
-            altLabel(hL);
+            labelSide(pA[0],pA[1],pB[0],pB[1],s1L);labelSide(pB[0],pB[1],pC[0],pC[1],s1L);labelSide(pA[0],pA[1],pC[0],pC[1],s1L);altLabel(hL);
         } else if(currentTri==='isosceles'){
-            labelSide(pA[0],pA[1],pB[0],pB[1],s1L);
-            labelSide(pB[0],pB[1],pC[0],pC[1],s1L);
-            labelSide(pA[0],pA[1],pC[0],pC[1],bL);
-            altLabel(hL);
+            labelSide(pA[0],pA[1],pB[0],pB[1],s1L);labelSide(pB[0],pB[1],pC[0],pC[1],s1L);labelSide(pA[0],pA[1],pC[0],pC[1],bL);altLabel(hL);
         } else if(currentTri==='right'){
-            // s1=vertical leg, b=horizontal leg, s2=hypotenuse
-            labelSide(pA[0],pA[1],pB[0],pB[1],s1L);
-            labelSide(pA[0],pA[1],pC[0],pC[1],bL);
-            labelSide(pB[0],pB[1],pC[0],pC[1],s2L);
+            labelSide(pA[0],pA[1],pB[0],pB[1],s1L);labelSide(pA[0],pA[1],pC[0],pC[1],bL);labelSide(pB[0],pB[1],pC[0],pC[1],s2L);
         } else {
-            labelSide(pA[0],pA[1],pB[0],pB[1],s1L);
-            labelSide(pB[0],pB[1],pC[0],pC[1],s2L);
-            labelSide(pA[0],pA[1],pC[0],pC[1],bL);
+            labelSide(pA[0],pA[1],pB[0],pB[1],s1L);labelSide(pB[0],pB[1],pC[0],pC[1],s2L);labelSide(pA[0],pA[1],pC[0],pC[1],bL);
             if(!altOnLeft&&!altOnRight) altLabel(hL);
         }
     }
@@ -498,36 +614,33 @@
     // ── Calculate ─────────────────────────────────────────────────────────────
     get('calc').onclick = function() {
         clearError();
-        var list = getMethodList();
+        var list=getMethodList();
         if(!list.length){showError('Not available','No formula for this combination.');return;}
-        var cfg = list[Math.min(currentMethod,list.length-1)];
-        var vals=[], missing=[];
+        var cfg=list[Math.min(currentMethod,list.length-1)];
+        var vals=[],missing=[];
         cfg.inputs.forEach(function(lbl,i){
-            var el=get('v'+i), v=el?parseFloat(el.value):NaN;
+            var el=get('v'+i),v=el?parseFloat(el.value):NaN;
             vals.push(v);
             if(isNaN(v)||!el||el.value.trim()==='') missing.push(lbl);
         });
         if(missing.length){showError('Missing values','Please fill in: '+missing.join(', ')+'.');return;}
         for(var j=0;j<vals.length;j++) if(vals[j]<=0){showError('Values must be positive',cfg.inputs[j]+' must be greater than zero.');return;}
 
-        var v0=vals[0], v1=vals.length>1?vals[1]:NaN, v2=vals.length>2?vals[2]:NaN;
-        var p=getPrec(), useSurd=getSurd();
+        var v0=vals[0],v1=vals.length>1?vals[1]:NaN,v2=vals.length>2?vals[2]:NaN;
+        var p=getPrec(),useSurd=getSurd();
         var posEl=ui.querySelector('input[name="geopro_pos"]:checked');
         var isExt=posEl?posEl.value==='ext':false;
         var type=cfg.id;
-        var res, area, perim, formula, s1, h, b, s2;
+        var res,area,perim,formula,s1,h,b,s2;
 
         try{
-        // ─ Scalene ─────────────────────────────────────────────────────────
         if(type==='sc_b_shs'){
             s1=v0;h=v1;s2=v2;
             if(h>=s1){showError('Impossible','Height must be less than Side 1.');return;}
             if(h>=s2){showError('Impossible','Height must be less than Side 2.');return;}
             var xA=Math.sqrt(s1*s1-h*h),xB=Math.sqrt(s2*s2-h*h);
-            res=isExt?Math.abs(xA-xB):(xA+xB); b=res;
-            formula='Part1 = \u221a('+s1+'\u00b2 \u2212 '+h+'\u00b2) = '+fmtS(xA)+
-                    '\nPart2 = \u221a('+s2+'\u00b2 \u2212 '+h+'\u00b2) = '+fmtS(xB)+
-                    '\nBase = '+fmtS(xA)+(isExt?' \u2212 ':' + ')+fmtS(xB)+' = '+fmtS(res);
+            res=isExt?Math.abs(xA-xB):(xA+xB);b=res;
+            formula='Part1 = \u221a('+s1+'\u00b2 \u2212 '+h+'\u00b2) = '+fmtS(xA)+'\nPart2 = \u221a('+s2+'\u00b2 \u2212 '+h+'\u00b2) = '+fmtS(xB)+'\nBase = '+fmtS(xA)+(isExt?' \u2212 ':' + ')+fmtS(xB)+' = '+fmtS(res);
         }else if(type==='sc_b_ah'){
             res=(2*v0)/v1;b=res;h=v1;s1=Math.sqrt(h*h+(b/2)*(b/2));s2=s1;
             formula='Base = (2 \u00d7 Area) / Height\n= (2 \u00d7 '+v0+') / '+v1+' = '+fmtS(res);
@@ -536,12 +649,11 @@
             if(h>=s1){showError('Impossible','Height must be less than Known Side.');return;}
             var xxS=Math.sqrt(s1*s1-h*h);
             if(isExt){
-                if(xxS<=b){showError('Impossible','Side\'s horizontal reach ('+fmtS(xxS)+') must exceed base.');return;}
+                if(xxS<=b){showError('Impossible','Side\'s reach must exceed base.');return;}
                 res=Math.sqrt(b*b+h*h);s2=res;
                 formula='Reach = \u221a('+s1+'\u00b2 \u2212 '+h+'\u00b2) = '+fmtS(xxS)+'\nSide 2 = \u221a('+b+'\u00b2 + '+h+'\u00b2) = '+fmtS(res);
             }else{
-                var yS=Math.abs(b-xxS);
-                res=Math.sqrt(yS*yS+h*h);s2=res;
+                var yS=Math.abs(b-xxS);res=Math.sqrt(yS*yS+h*h);s2=res;
                 formula='Reach = \u221a('+s1+'\u00b2 \u2212 '+h+'\u00b2) = '+fmtS(xxS)+'\nSeg = |'+b+' \u2212 '+fmtS(xxS)+'| = '+fmtS(yS)+'\nSide 2 = \u221a('+fmtS(yS)+'\u00b2 + '+h+'\u00b2) = '+fmtS(res);
             }
         }else if(type==='sc_s_hb'){
@@ -555,26 +667,28 @@
             if(b/2>=s1){showError('Impossible','Base is too wide for Side 1.');return;}
             res=Math.sqrt(s1*s1-(b/2)*(b/2));h=res;
             formula='Height = \u221a(S1\u00b2 \u2212 (Base/2)\u00b2)\n= \u221a('+s1+'\u00b2 \u2212 '+(b/2)+'\u00b2) = '+fmtS(res);
-        // ─ Isosceles ───────────────────────────────────────────────────────
+        }else if(type==='sc_a_heron'||type==='is_a_heron'){
+            s1=v0;s2=v1;b=v2;
+            var sv=(s1+s2+b)/2;
+            var areaH=Math.sqrt(sv*(sv-s1)*(sv-s2)*(sv-b));
+            if(isNaN(areaH)||areaH<=0){showError('Impossible','These sides don\'t form a valid triangle.');return;}
+            res=areaH;area=areaH;h=(2*areaH)/b;perim=s1+s2+b;
+            formula="Heron's: s = ("+s1+'+'+s2+'+'+b+') / 2 = '+sv.toFixed(p)+'\nArea = \u221a(s(s\u2212a)(s\u2212b)(s\u2212c))\n= \u221a('+sv.toFixed(p)+'\u00d7'+(sv-s1).toFixed(p)+'\u00d7'+(sv-s2).toFixed(p)+'\u00d7'+(sv-b).toFixed(p)+')\n= '+fmtS(res);
         }else if(type==='is_b_sh'){
             s1=v0;h=v1;s2=v0;
             if(h>=s1){showError('Impossible','Height must be less than Leg.');return;}
-            var hfI=Math.sqrt(s1*s1-h*h);
-            res=2*hfI;b=res;
+            var hfI=Math.sqrt(s1*s1-h*h);res=2*hfI;b=res;
             formula='Half-base = \u221a('+s1+'\u00b2 \u2212 '+h+'\u00b2) = '+fmtS(hfI)+'\nBase = 2 \u00d7 '+fmtS(hfI)+' = '+fmtS(res);
         }else if(type==='is_b_ah'){
             res=(2*v0)/v1;b=res;h=v1;s1=Math.sqrt(h*h+(b/2)*(b/2));s2=s1;
             formula='Base = (2 \u00d7 Area) / Height\n= (2 \u00d7 '+v0+') / '+v1+' = '+fmtS(res);
         }else if(type==='is_b_al'){
-            // A=0.5*b*sqrt(s^2-(b/2)^2) => b^4/4 - b^2*s^2 + 4A^2 = 0 => let u=b^2
-            // u = 2s^2 - sqrt(4s^4-16A^2)  (smaller root = real base)
-            var Ai=v0,Si=v1;
-            var inner=4*Si*Si*Si*Si-16*Ai*Ai;
+            var Ai=v0,Si=v1,inner=4*Si*Si*Si*Si-16*Ai*Ai;
             if(inner<0){showError('Impossible','Area too large for that leg.');return;}
             var u=2*Si*Si-Math.sqrt(inner);
             if(u<=0){showError('Impossible','No valid solution.');return;}
             res=Math.sqrt(u);b=res;s1=Si;s2=Si;h=(2*Ai)/b;
-            formula='b\u00b2 = 2s\u00b2 \u2212 \u221a(4s\u2074\u22124A\u00b2)\nBase = \u221a'+fmtS(res)+' (approx)';
+            formula='b\u00b2 = 2s\u00b2 \u2212 \u221a(4s\u2074\u22124A\u00b2)\nBase = \u221a'+fmtS(res);
         }else if(type==='is_s_bh'){
             b=v0;h=v1;res=Math.sqrt(h*h+(b/2)*(b/2));s1=res;s2=res;
             formula='Leg = \u221a(h\u00b2 + (b/2)\u00b2)\n= \u221a('+h+'\u00b2 + '+(b/2)+'\u00b2) = '+fmtS(res);
@@ -589,21 +703,21 @@
         }else if(type==='is_h_ab'){
             res=(2*v0)/v1;h=res;b=v1;s1=Math.sqrt(h*h+(b/2)*(b/2));s2=s1;
             formula='Height = (2 \u00d7 Area) / Base\n= (2 \u00d7 '+v0+') / '+v1+' = '+fmtS(res);
-        // ─ Equilateral ─────────────────────────────────────────────────────
         }else if(type==='eq_h_s'){
-            var side=v0;b=side;s1=side;s2=side;
-            h=Math.sqrt(3)/2*side;
-            if(currentGoal==='height'){res=h;}else{res=side;}
+            var side=v0;b=side;s1=side;s2=side;h=Math.sqrt(3)/2*side;
+            res=currentGoal==='height'?h:side;
             formula='Height = (\u221a3 / 2) \u00d7 '+side+(useSurd?' = '+fmtS(h):' \u2248 '+h.toFixed(p));
         }else if(type==='eq_b_ah'){
-            // A = sqrt(3)/4 * b^2 => b = 2*sqrt(A/sqrt(3)*2) = 2*sqrt(2A/sqrt(3))
-            var beq=2*Math.sqrt(v0/(Math.sqrt(3)/2));
-            // from A=0.5*beq*v1 check consistency — use side formula
-            // Actually just use A=(sqrt(3)/4)*b^2 => b=2*sqrt(A/sqrt(3)*2)
-            beq=Math.sqrt(4*v0/Math.sqrt(3));
+            var beq=Math.sqrt(4*v0/Math.sqrt(3));
             res=beq;b=beq;s1=beq;s2=beq;h=Math.sqrt(3)/2*beq;
             formula='A = (\u221a3/4) \u00d7 b\u00b2\nb = \u221a(4A / \u221a3) = '+fmtS(res);
-        // ─ Right ───────────────────────────────────────────────────────────
+        }else if(type==='eq_a_heron'){
+            // equilateral: all sides equal, just one input
+            var seq=v0;s1=seq;s2=seq;b=seq;
+            var svEq=3*seq/2;
+            res=Math.sqrt(svEq*(svEq-seq)*(svEq-seq)*(svEq-seq));
+            area=res;h=Math.sqrt(3)/2*seq;
+            formula="Heron's (equilateral): s = 3a/2 = "+svEq.toFixed(p)+'\nArea = \u221a(s(s\u2212a)\u00b3) = '+fmtS(res);
         }else if(type==='rt_c_ll'){
             s1=v0;b=v1;res=Math.sqrt(s1*s1+b*b);s2=res;h=s1;
             formula='c = \u221a(a\u00b2 + b\u00b2)\n= \u221a('+s1+'\u00b2 + '+b+'\u00b2)\n= \u221a'+(s1*s1+b*b)+' = '+fmtS(res);
@@ -643,10 +757,10 @@
         if(!s1||isNaN(s1))s1=res; if(!s2||isNaN(s2))s2=res;
         if(!b||isNaN(b))b=res;   if(!h||isNaN(h))h=res;
 
-        area=0.5*b*h; perim=s1+s2+b;
+        if(!area||isNaN(area)) area=0.5*b*h;
+        perim=s1+s2+b;
         get('res').style.display='block';
 
-        // Display result with surd
         var approxEl=get('finalApprox');
         if(useSurd){
             var ss=toSurdStr(res);
@@ -659,36 +773,68 @@
         get('areaRes').innerText=area.toFixed(p);
         get('perimRes').innerText=perim.toFixed(p);
 
-        // Draw canvas
+        // ── Classification ──
+        var classTag=get('classTag');
+        var classification=classifyTriangle(s1,s2,b);
+        classTag.innerText=classification;
+        classTag.style.display='inline-block';
+
+        // ── Pythagorean triple (right triangle only) ──
+        var tripleBox=get('tripleBox');
         if(currentTri==='right'){
-            // s1=vertical leg, b=horizontal leg, s2=hypotenuse; h=s1 for drawTri
-            drawTri(s1, s1, b, s2, false);
-        }else{
-            drawTri(s1, h, b, s2, isExt);
-        }
+            var trip=checkTriple(s1,b,s2);
+            if(trip){tripleBox.innerText='\u2605 Pythagorean triple: '+trip;tripleBox.style.display='block';}
+            else{tripleBox.style.display='none';}
+        } else { tripleBox.style.display='none'; }
+
+        // ── Angles ──
+        var anglesBox=get('anglesBox'), anglesContent=get('anglesContent');
+        // Compute angles: for right tri, s1=vert leg, b=horiz leg, s2=hyp
+        // Sides: s1 opposite to angle at pC, b opposite to angle at pB, s2 opposite to angle at pA
+        // We pass sides as (a=s1, b=b, c=s2) for law of cosines
+        var angArr=computeAngles(s1, b, s2); // [opposite s1, opposite b, opposite s2]
+        // angArr[0]=angle at vertex opposite s1=pC, [1]=opposite b=pB, [2]=opposite s2=pA
+        // For canvas: pA=bottom-left, pB=apex, pC=bottom-right
+        // angArr ordered: [angleOppS1=angleAtC, angleOppB=angleAtB, angleOppS2=angleAtA]
+        var anglesForCanvas=[angArr[2], angArr[1], angArr[0]]; // [angleAtA, angleAtB, angleAtC]
+        anglesContent.innerHTML='';
+        var names=['A','B','C'];
+        angArr.forEach(function(ang,i){
+            var sp=document.createElement('span');
+            sp.style.cssText='font-weight:600;color:'+(getDark()?'#4a9eff':'#1a73e8')+';';
+            sp.innerText=names[i]+' = '+fmtAngle(ang);
+            anglesContent.appendChild(sp);
+        });
+        anglesBox.style.display='block';
+
+        // Draw canvas
+        var drawS1=s1, drawH=h, drawB=b, drawS2=s2;
+        if(currentTri==='right') drawH=s1;
+        drawTri(drawS1, drawH, drawB, drawS2, isExt, anglesForCanvas);
+
+        // Re-apply dark mode to result panel elements
+        applyDark();
 
         var adv=getAdv();
         var gLbl=((adv?goalLabel.a:goalLabel.s)[currentGoal])||currentGoal;
-        // Store full state so left-arrow can restore it
         var inputVals=[];
         cfg.inputs.forEach(function(_,i){var el=get('v'+i);inputVals.push(el?el.value:'');});
         history.unshift({
-            label: gLbl+': '+get('final').innerText,
-            tri: currentTri, goal: currentGoal, method: currentMethod,
-            inputs: inputVals, isExt: isExt,
-            // result display state
-            finalText: get('final').innerText,
-            approxText: approxEl.innerText, approxVis: approxEl.style.display,
-            formula: formula||'', area: area.toFixed(p), perim: perim.toFixed(p),
-            // draw params
-            ds1: currentTri==='right'?s1:s1, dh: currentTri==='right'?s1:h, db: b, ds2: s2
+            label:gLbl+': '+get('final').innerText,
+            tri:currentTri,goal:currentGoal,method:currentMethod,
+            inputs:inputVals,isExt:isExt,
+            finalText:get('final').innerText,
+            approxText:approxEl.innerText,approxVis:approxEl.style.display,
+            formula:formula||'',area:area.toFixed(p),perim:perim.toFixed(p),
+            ds1:drawS1,dh:drawH,db:drawB,ds2:drawS2,
+            anglesForCanvas:anglesForCanvas
         });
         if(history.length>10)history.pop();
         get('histList').innerHTML=history.map(function(hh){return'<span style="display:block;padding:3px 0;border-bottom:1px solid #f0f0f0;">'+(hh.label||hh)+'</span>';}).join('');
         saveSettings();
     };
 
-    // ── Other handlers ────────────────────────────────────────────────────────
+    // ── Handlers ───────────────────────────────────────────────────────────────
     get('copy').onclick    = function(){navigator.clipboard.writeText(get('final').innerText);this.innerText='Copied!';var self=this;setTimeout(function(){self.innerText='Copy';},1500);};
     get('dlBtn').onclick   = function(){var l=document.createElement('a');l.download='triangle.png';l.href=canvas.toDataURL();l.click();};
     get('clear').onclick   = function(){ui.querySelectorAll('#inputStack input').forEach(function(i){i.value='';});get('res').style.display='none';ctx.clearRect(0,0,canvas.width,canvas.height);};
@@ -696,37 +842,30 @@
     get('errClose').onclick= function(){clearError();};
     get('setBtn').onclick  = function(e){e.stopPropagation();var m=get('setMenu');m.style.display=m.style.display==='none'?'block':'none';get('histMenu').style.display='none';};
     get('histBtn').onclick = function(e){e.stopPropagation();var m=get('histMenu');m.style.display=m.style.display==='none'?'block':'none';get('setMenu').style.display='none';};
-    get('setMenu').addEventListener('click',  function(e){e.stopPropagation();});
-    get('histMenu').addEventListener('click', function(e){e.stopPropagation();});
+    get('setMenu').addEventListener('click',function(e){e.stopPropagation();});
+    get('histMenu').addEventListener('click',function(e){e.stopPropagation();});
 
-    // ── Draggable header ──────────────────────────────────────────────────────
-    var header = ui.querySelector('div[style*="background:#1a73e8"]');
-    header.style.cursor = 'grab';
-    var dragState = null;
-    header.addEventListener('mousedown', function(e) {
-        if (e.target !== header && e.target.tagName !== 'H3') return;
+    // Draggable header
+    var header=get('uiHeader');
+    header.style.cursor='grab';
+    var dragState=null;
+    header.addEventListener('mousedown',function(e){
+        if(e.target!==header&&e.target.tagName!=='H3') return;
         e.preventDefault();
-        var rect = ui.getBoundingClientRect();
-        dragState = { startX: e.clientX - rect.left, startY: e.clientY - rect.top };
-        header.style.cursor = 'grabbing';
-        ui.style.right = 'auto';
-        ui.style.left  = rect.left + 'px';
-        ui.style.top   = rect.top  + 'px';
+        var rect=ui.getBoundingClientRect();
+        dragState={startX:e.clientX-rect.left,startY:e.clientY-rect.top};
+        header.style.cursor='grabbing';
+        ui.style.right='auto';ui.style.left=rect.left+'px';ui.style.top=rect.top+'px';
     });
-    document.addEventListener('mousemove', function(e) {
-        if (!dragState) return;
-        var x = e.clientX - dragState.startX;
-        var y = e.clientY - dragState.startY;
-        x = Math.max(0, Math.min(window.innerWidth  - ui.offsetWidth,  x));
-        y = Math.max(0, Math.min(window.innerHeight - ui.offsetHeight, y));
-        ui.style.left = x + 'px';
-        ui.style.top  = y + 'px';
+    document.addEventListener('mousemove',function(e){
+        if(!dragState) return;
+        var x=e.clientX-dragState.startX,y=e.clientY-dragState.startY;
+        x=Math.max(0,Math.min(window.innerWidth-ui.offsetWidth,x));
+        y=Math.max(0,Math.min(window.innerHeight-ui.offsetHeight,y));
+        ui.style.left=x+'px';ui.style.top=y+'px';
     });
-    document.addEventListener('mouseup', function() {
-        if (!dragState) return;
-        dragState = null;
-        header.style.cursor = 'grab';
-    });
+    document.addEventListener('mouseup',function(){if(!dragState)return;dragState=null;header.style.cursor='grab';});
+
     get('closeHist').onclick=function(){get('histMenu').style.display='none';};
     document.addEventListener('click',function(e){
         var sm=get('setMenu'),hm=get('histMenu'),sb=get('setBtn'),hb=get('histBtn');
@@ -734,65 +873,50 @@
         if(hm.style.display!=='none'&&!hm.contains(e.target)&&e.target!==hb) hm.style.display='none';
     });
 
-    // Settings listeners — direct element bindings, not document-level
-    get('prec').addEventListener('change', saveSettings);
-    get('optSurd').addEventListener('change', saveSettings);
-    get('optSimplify').addEventListener('change', saveSettings);
-    get('optAdvanced').addEventListener('change', function(){rebuildAll();saveSettings();});
+    get('prec').addEventListener('change',saveSettings);
+    get('optSurd').addEventListener('change',saveSettings);
+    get('optSimplify').addEventListener('change',saveSettings);
+    get('optDegrees').addEventListener('change',saveSettings);
+    get('optAdvanced').addEventListener('change',function(){rebuildAll();saveSettings();});
+    get('optDark').addEventListener('change',function(){applyDark();saveSettings();});
 
     // ── Keyboard shortcuts ────────────────────────────────────────────────────
-    var historyIndex = -1;
-
-    function restoreEntry(entry) {
-        if (!entry || !entry.tri) return;
-        currentTri    = entry.tri;
-        currentGoal   = entry.goal;
-        currentMethod = entry.method;
-        buildTriBtns(); buildGoalBtns(); buildMethodBtns(); renderInputs();
-        entry.inputs.forEach(function(val, i) {
-            var el = get('v' + i); if (el) el.value = val;
-        });
-        if (entry.isExt) {
-            var r = ui.querySelector('input[name="geopro_pos"][value="ext"]');
-            if (r) r.checked = true;
-        }
-        get('final').innerText = entry.finalText;
-        var ae = get('finalApprox');
-        ae.innerText = entry.approxText; ae.style.display = entry.approxVis;
-        get('formulaText').innerText = entry.formula;
-        get('areaRes').innerText = entry.area;
-        get('perimRes').innerText = entry.perim;
-        get('res').style.display = 'block';
-        drawTri(entry.ds1, entry.dh, entry.db, entry.ds2, entry.isExt);
+    var historyIndex=-1;
+    function restoreEntry(entry){
+        if(!entry||!entry.tri) return;
+        currentTri=entry.tri;currentGoal=entry.goal;currentMethod=entry.method;
+        buildTriBtns();buildGoalBtns();buildMethodBtns();renderInputs();
+        entry.inputs.forEach(function(val,i){var el=get('v'+i);if(el)el.value=val;});
+        if(entry.isExt){var r=ui.querySelector('input[name="geopro_pos"][value="ext"]');if(r)r.checked=true;}
+        get('final').innerText=entry.finalText;
+        var ae=get('finalApprox');ae.innerText=entry.approxText;ae.style.display=entry.approxVis;
+        get('formulaText').innerText=entry.formula;
+        get('areaRes').innerText=entry.area;get('perimRes').innerText=entry.perim;
+        get('res').style.display='block';
+        drawTri(entry.ds1,entry.dh,entry.db,entry.ds2,entry.isExt,entry.anglesForCanvas);
+        applyDark();
     }
-
-    // Arrow keys — capture phase so page can't absorb them first
-    document.addEventListener('keydown', function(e) {
-        var key = e.key || e.keyCode;
-        var active = document.activeElement;
-        if (active && !ui.contains(active) && active !== document.body) return;
-        if (active && active.type === 'number' && (key === 'ArrowLeft' || key === 37 || key === 'ArrowRight' || key === 39)) return;
-
-        if (key === 'ArrowLeft' || key === 37) {
-            if (!history.length) return;
-            e.preventDefault();
-            e.stopPropagation();
-            historyIndex = Math.min(historyIndex + 1, history.length - 1);
+    document.addEventListener('keydown',function(e){
+        var key=e.key||e.keyCode, active=document.activeElement;
+        if(active&&!ui.contains(active)&&active!==document.body) return;
+        if(active&&active.type==='number'&&(key==='ArrowLeft'||key===37||key==='ArrowRight'||key===39)) return;
+        if(key==='ArrowLeft'||key===37){
+            if(!history.length) return;
+            e.preventDefault();e.stopPropagation();
+            historyIndex=Math.min(historyIndex+1,history.length-1);
             restoreEntry(history[historyIndex]);
-        } else if (key === 'ArrowRight' || key === 39) {
-            if (historyIndex <= 0) { historyIndex = -1; return; }
-            e.preventDefault();
-            e.stopPropagation();
-            historyIndex--;
-            restoreEntry(history[historyIndex]);
+        } else if(key==='ArrowRight'||key===39){
+            if(historyIndex<=0){historyIndex=-1;return;}
+            e.preventDefault();e.stopPropagation();
+            historyIndex--;restoreEntry(history[historyIndex]);
         }
-    }, true);
+    },true);
 
     // ── Initial build ─────────────────────────────────────────────────────────
     if(triGoals[currentTri].indexOf(currentGoal)<0) currentGoal=triGoals[currentTri][0];
     var mLen=(methods[currentTri]&&methods[currentTri][currentGoal]?methods[currentTri][currentGoal].length:0);
     if(currentMethod>=mLen) currentMethod=0;
-
-    buildTriBtns(); buildGoalBtns(); buildMethodBtns(); renderInputs();
+    buildTriBtns();buildGoalBtns();buildMethodBtns();renderInputs();
+    if(initDark) applyDark();
 })();
 
