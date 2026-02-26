@@ -134,7 +134,7 @@
     }
 
     // ── Dark mode ──────────────────────────────────────────────────────────────
-    // Colour palette: [light, dark]
+    // CHANGE 3: Replaced bright #1a73e8 / #4a9eff blues in dark mode with muted bluish-grey tones
     var DK = {
         uiBg:      ['#fff',     '#1e1e2e'],
         uiBorder:  ['#ddd',     '#333350'],
@@ -157,19 +157,24 @@
         posBg:     ['#eef3fe',  '#1e2240'],
         canvasBg:  ['#fafafa',  '#181828'],
         canvasBdr: ['#eee',     '#333350'],
-        tagBg:     ['#e8f0fe',  '#1e2e4e'],
-        tagTxt:    ['#1a73e8',  '#4a9eff'],
+        tagBg:     ['#e8f0fe',  '#252535'],
+        tagTxt:    ['#1a73e8',  '#8aa8c8'],  // bluish-grey in dark
         angleBg:   ['#fff',     '#2a2a3e'],
         angleBdr:  ['#dde8fb',  '#3a3a5e'],
         tripleBg:  ['#e8f8e8',  '#1a2e1a'],
         tripleBdr: ['#a8d8a8',  '#3a6a3a'],
         tripleTxt: ['#2a7a2a',  '#6abf6a'],
-        setMenuW:  ['#fff',     '#252535']
+        setMenuW:  ['#fff',     '#252535'],
+        // Dark mode accent colour (replaces #1a73e8 / #4a9eff in dark contexts)
+        accent:    ['#1a73e8',  '#6a8fae'],  // muted bluish-grey for dark
+        accentBtn: ['#1a73e8',  '#4a6a88'],  // slightly darker for active buttons
+        accentBg:  ['#e8f0fe',  '#1e2a38'],  // tinted bg for active buttons
     };
     function dk(key) { return DK[key][getDark()?1:0]; }
 
     function applyDark() {
         var d = getDark();
+        var accent = dk('accent');
         // main widget
         ui.style.background = dk('uiBg');
         ui.style.borderColor = dk('uiBorder');
@@ -216,12 +221,15 @@
         if(ct){ ct.style.background=dk('tagBg'); ct.style.color=dk('tagTxt'); }
         // finalApprox
         var fa=get('finalApprox'); if(fa) fa.style.color=dk('subtext');
+        // final result value — use accent colour
+        var fin=get('final'); if(fin) fin.style.color=accent;
+        // steps label
+        var sl=res&&res.querySelector('div[style*="color:#1a73e8"]'); if(sl) sl.style.color=accent;
         // menus
         ['histMenu','setMenu'].forEach(function(id){
             var m=get(id); if(m){ m.style.background=dk('menuBg'); m.style.borderColor=dk('menuBdr'); m.style.color=dk('text'); }
         });
         var hL=get('histList'); if(hL) hL.style.color=dk('subtext');
-        var sTitle=get('setMenu') && get('setMenu').querySelector('div[style*="font-weight:700"]');
         // inputs in inputStack
         ui.querySelectorAll('#inputStack input').forEach(function(inp){
             inp.style.background=dk('inputBg'); inp.style.borderColor=dk('inputBdr'); inp.style.color=dk('text');
@@ -236,8 +244,14 @@
         if(dl){ dl.style.background=d?'rgba(30,30,46,0.9)':'rgba(255,255,255,0.92)'; dl.style.borderColor=dk('inputBdr'); dl.style.color=dk('btnTxt'); }
         // closeHist button
         var ch=get('closeHist'); if(ch){ ch.style.background=dk('btnBg'); ch.style.color=dk('btnTxt'); }
+        // calc button — keep accent colour
+        var calcBtn=get('calc'); if(calcBtn) calcBtn.style.background=accent;
+        // copy button
+        var copyBtn=get('copy'); if(copyBtn) copyBtn.style.background=accent;
         // method buttons — rebuild to pick up new colours
         buildTriBtns(); buildGoalBtns(); buildMethodBtns();
+        // angles content spans
+        ui.querySelectorAll('#anglesContent span').forEach(function(sp){ sp.style.color=accent; });
     }
 
     // ── Error helpers ──────────────────────────────────────────────────────────
@@ -293,7 +307,6 @@
         return rad.toFixed(p)+'\u02b3';
     }
     // Compute all 3 angles from sides a, b, c (law of cosines)
-    // Returns [A, B, C] in radians opposite to sides a, b, c
     function computeAngles(a, b, c) {
         function ac(opp, adj1, adj2) {
             var val=(adj1*adj1+adj2*adj2-opp*opp)/(2*adj1*adj2);
@@ -305,7 +318,6 @@
 
     // ── Triangle classification ────────────────────────────────────────────────
     function classifyTriangle(a, b, c) {
-        // sort so c is largest
         var sides=[a,b,c].sort(function(x,y){return x-y;});
         var A=sides[0],B=sides[1],C=sides[2];
         var eps=1e-6;
@@ -320,16 +332,12 @@
     // ── Pythagorean triple check ───────────────────────────────────────────────
     function gcd(a,b){ return b<0.5?a:gcd(b,a%b); }
     function checkTriple(a, b, c) {
-        // ensure c is hypotenuse (largest)
         var sides=[a,b,c].sort(function(x,y){return x-y;});
         var A=sides[0],B=sides[1],C=sides[2];
-        // check integer-ness after dividing by GCD
         var g=gcd(gcd(Math.round(A*1000),Math.round(B*1000)),Math.round(C*1000))/1000;
         if(g<1e-9) return null;
         var pa=Math.round(A/g), pb=Math.round(B/g), pc=Math.round(C/g);
-        // verify integer ratio
         if(Math.abs(A/g-pa)>0.001||Math.abs(B/g-pb)>0.001||Math.abs(C/g-pc)>0.001) return null;
-        // verify Pythagorean: pa^2+pb^2=pc^2
         if(Math.abs(pa*pa+pb*pb-pc*pc)>1) return null;
         var scale=Math.round(A/pa*1000)/1000;
         if(Math.abs(scale-1)<0.001) return pa+'-'+pb+'-'+pc;
@@ -347,11 +355,13 @@
         scalene:     ['base','side','height','area'],
         isosceles:   ['base','side','height','area'],
         equilateral: ['height','base','area'],
-        right:       ['hypo','side','height','base']
+        // CHANGE 2: Added 'triple' as a goal for right triangles
+        right:       ['hypo','side','height','base','triple']
     };
+    // CHANGE 4: Rename "Area" goal (which uses Heron's) to "Heron's" so it's distinct from the auto-calculated area
     var goalLabel={
-        s:{base:'Base',side:'Side',height:'Height',hypo:'Hypotenuse',area:'Area'},
-        a:{base:'Base',side:'Lateral Side',height:'Altitude',hypo:'Hypotenuse',area:'Area'}
+        s:{base:'Base',side:'Side',height:'Height',hypo:'Hypotenuse',area:"Heron's",triple:'Py. Triple'},
+        a:{base:'Base',side:'Lateral Side',height:'Altitude',hypo:'Hypotenuse',area:"Heron's",triple:'Pythagorean Triple'}
     };
     var methods={
         scalene:{
@@ -410,6 +420,10 @@
             base:[
                 {id:'rt_b_cl',s:'Hypotenuse + leg',a:'Hypotenuse + leg',si:['Hypotenuse','Leg'],ai:['Hypotenuse','Leg'],toggle:false},
                 {id:'rt_b_ah',s:'Area + height',   a:'Area + altitude',  si:['Area','Height'],   ai:['Area','Altitude'],toggle:false}
+            ],
+            // CHANGE 2: New 'triple' goal for right triangles — check if 3 sides form a Pythagorean triple
+            triple:[
+                {id:'rt_triple_check',s:'Enter all three sides',a:'Enter all three sides',si:['Leg a','Leg b','Hypotenuse'],ai:['Leg a','Leg b','Hypotenuse'],toggle:false}
             ]
         }
     };
@@ -420,10 +434,22 @@
     }
 
     // ── Button styles (dark-aware) ────────────────────────────────────────────
-    function bBaseStyle()   { return 'border:2px solid '+(getDark()?'#444466':'#e0e0e0')+';border-radius:8px;padding:8px 10px;cursor:pointer;font-size:12px;font-weight:600;background:'+(getDark()?'#2a2a3e':'#fff')+';color:'+(getDark()?'#c0c0e0':'#555')+';text-align:center;'; }
-    function bActiveStyle() { return 'border:2px solid #1a73e8;border-radius:8px;padding:8px 10px;cursor:pointer;font-size:12px;font-weight:700;background:'+(getDark()?'#1e2e4e':'#e8f0fe')+';color:'+(getDark()?'#4a9eff':'#1a73e8')+';text-align:center;'; }
-    function mBaseStyle()   { return 'border:1.5px solid '+(getDark()?'#444466':'#e8e8e8')+';border-radius:7px;padding:8px 11px;cursor:pointer;font-size:12px;background:'+(getDark()?'#2a2a3e':'#fff')+';color:'+(getDark()?'#c0c0e0':'#555')+';text-align:left;font-weight:500;'; }
-    function mActiveStyle() { return 'border:1.5px solid #1a73e8;border-radius:7px;padding:8px 11px;cursor:pointer;font-size:12px;background:'+(getDark()?'#1e2e4e':'#e8f0fe')+';color:'+(getDark()?'#4a9eff':'#1a73e8')+';text-align:left;font-weight:700;'; }
+    function bBaseStyle()   {
+        var d=getDark();
+        return 'border:2px solid '+(d?'#444466':'#e0e0e0')+';border-radius:8px;padding:8px 10px;cursor:pointer;font-size:12px;font-weight:600;background:'+(d?'#2a2a3e':'#fff')+';color:'+(d?'#c0c0e0':'#555')+';text-align:center;';
+    }
+    function bActiveStyle() {
+        var d=getDark();
+        return 'border:2px solid '+dk('accent')+';border-radius:8px;padding:8px 10px;cursor:pointer;font-size:12px;font-weight:700;background:'+dk('accentBg')+';color:'+dk('accent')+';text-align:center;';
+    }
+    function mBaseStyle()   {
+        var d=getDark();
+        return 'border:1.5px solid '+(d?'#444466':'#e8e8e8')+';border-radius:7px;padding:8px 11px;cursor:pointer;font-size:12px;background:'+(d?'#2a2a3e':'#fff')+';color:'+(d?'#c0c0e0':'#555')+';text-align:left;font-weight:500;';
+    }
+    function mActiveStyle() {
+        var d=getDark();
+        return 'border:1.5px solid '+dk('accent')+';border-radius:7px;padding:8px 11px;cursor:pointer;font-size:12px;background:'+dk('accentBg')+';color:'+dk('accent')+';text-align:left;font-weight:700;';
+    }
 
     // ── Build UI ───────────────────────────────────────────────────────────────
     function buildTriBtns() {
@@ -469,7 +495,7 @@
         var d=getDark();
         get('inputStack').innerHTML=cfg.inputs.map(function(lbl,i){
             return '<div><div style="font-size:10px;font-weight:700;color:'+(d?'#7070a0':'#888')+';letter-spacing:0.6px;margin-bottom:4px;">'+lbl.toUpperCase()+'</div>'+
-                   '<input type="number" id="v'+i+'" placeholder="0" style="width:100%;padding:9px 11px;border:1.5px solid '+(d?'#444466':'#ddd')+';border-radius:7px;box-sizing:border-box;font-size:14px;outline:none;background:'+(d?'#2a2a3e':'#fff')+';color:'+(d?'#e0e0f0':'#222')+';" onfocus="this.style.borderColor=\'#1a73e8\'" onblur="this.style.borderColor=\''+(d?'#444466':'#ddd')+'\'"></div>';
+                   '<input type="number" id="v'+i+'" placeholder="0" style="width:100%;padding:9px 11px;border:1.5px solid '+(d?'#444466':'#ddd')+';border-radius:7px;box-sizing:border-box;font-size:14px;outline:none;background:'+(d?'#2a2a3e':'#fff')+';color:'+(d?'#e0e0f0':'#222')+';" onfocus="this.style.borderColor=\''+(d?dk('accent'):'#1a73e8')+'\'" onblur="this.style.borderColor=\''+(d?'#444466':'#ddd')+'\'"></div>';
         }).join('');
         cfg.inputs.forEach(function(_,i){
             var inp=get('v'+i);
@@ -491,18 +517,17 @@
     function rebuildAll(){buildTriBtns();buildGoalBtns();buildMethodBtns();renderInputs();}
 
     // ── Canvas ────────────────────────────────────────────────────────────────
-    // anglesData: optional {A, B, C} radians at vertices pA, pB, pC
     function drawTri(s1, h, b, s2, isExt, anglesData) {
         var W=canvas.width, H=canvas.height;
         ctx.clearRect(0,0,W,H);
         var d=getDark();
-        var triCol=d?'#4a9eff':'#1a73e8';
+        var triCol=d?dk('accent'):'#1a73e8';
         var raw;
         if(currentTri==='equilateral'||currentTri==='isosceles') raw=[[0,h],[b/2,0],[b,h]];
         else if(currentTri==='right') raw=[[0,h],[0,0],[b,h]];
         else { var ax=Math.sqrt(Math.max(0,s1*s1-h*h)); raw=isExt?[[0,h],[ax,0],[Math.abs(ax-b),h]]:[[0,h],[ax,0],[b,h]]; }
 
-        var pad=48;
+        var pad=52; // increased padding for angle labels
         var minX=raw[0][0],maxX=raw[0][0];
         for(var i=1;i<3;i++){if(raw[i][0]<minX)minX=raw[i][0];if(raw[i][0]>maxX)maxX=raw[i][0];}
         var rangeX=maxX-minX||1, rangeY=h||1;
@@ -514,7 +539,7 @@
 
         // fill
         ctx.beginPath();ctx.moveTo(pA[0],pA[1]);ctx.lineTo(pB[0],pB[1]);ctx.lineTo(pC[0],pC[1]);ctx.closePath();
-        ctx.fillStyle=d?'rgba(74,158,255,0.08)':'rgba(26,115,232,0.07)';ctx.fill();
+        ctx.fillStyle=d?'rgba(106,143,174,0.08)':'rgba(26,115,232,0.07)';ctx.fill();
 
         // tick marks
         function tick(ax,ay,bx,by,n){
@@ -547,39 +572,59 @@
             ctx.strokeStyle=d?'#555':'#aaa';ctx.lineWidth=1;ctx.strokeRect(pC[0]-6,pC[1],6,-6);
         }
 
-        // ── Angle arcs ──
+        // ── CHANGE 1: Angle arcs with background pill labels to avoid overlapping lines ──
         if(anglesData){
-            // Draw arc at vertex, label outside
-            // anglesData.angles = [angleAtA, angleAtB, angleAtC]
-            // vertices pA, pB, pC
             var verts=[[pA,anglesData[0]],[pB,anglesData[1]],[pC,anglesData[2]]];
             var otherVerts=[[pB,pC],[pA,pC],[pA,pB]];
             ctx.font='bold 10px system-ui';
+            var arcColor = d ? dk('accent') : '#4a90d0';
             verts.forEach(function(vinfo,vi){
                 var vp=vinfo[0], ang=vinfo[1];
                 // Skip 90deg vertex on right triangle (already shown with box)
                 if(currentTri==='right'&&vi===0&&Math.abs(ang-Math.PI/2)<0.01) return;
                 var o1=otherVerts[vi][0], o2=otherVerts[vi][1];
-                // direction vectors from vertex to each adjacent vertex
                 var d1x=o1[0]-vp[0],d1y=o1[1]-vp[1];
                 var d2x=o2[0]-vp[0],d2y=o2[1]-vp[1];
                 var a1=Math.atan2(d1y,d1x), a2=Math.atan2(d2y,d2x);
-                // arc radius
-                var r=12;
+                var r=14;
                 ctx.beginPath();
-                // ensure arc goes the short way
                 var diff=a2-a1;
                 while(diff> Math.PI) diff-=2*Math.PI;
                 while(diff<-Math.PI) diff+=2*Math.PI;
                 ctx.arc(vp[0],vp[1],r,a1,a1+diff,diff<0);
-                ctx.strokeStyle=d?'#6090c0':'#4a90d0';ctx.lineWidth=1.2;ctx.stroke();
-                // label position: midpoint of arc, pushed outward
+                ctx.strokeStyle=arcColor;ctx.lineWidth=1.2;ctx.stroke();
+
+                // CHANGE 1: Place label well outside the triangle with a background pill
                 var midA=a1+diff/2;
-                var labelR=r+11;
+                // Push label far enough out that it clears the triangle edges
+                var labelR=r+20;
                 var lx=vp[0]+Math.cos(midA)*labelR, ly=vp[1]+Math.sin(midA)*labelR;
-                ctx.fillStyle=d?'#6aafff':'#1a73e8';
-                ctx.textAlign='center';ctx.textBaseline='middle';
-                ctx.fillText(fmtAngle(ang),lx,ly);
+                var labelText=fmtAngle(ang);
+                ctx.font='bold 9px system-ui';
+                var tw=ctx.measureText(labelText).width;
+                var ph=12, pw=tw+8; // pill dimensions
+                // Draw pill background
+                var bgColor = d ? '#1e1e2e' : '#fff';
+                var borderColor = d ? dk('accent') : '#4a90d0';
+                ctx.beginPath();
+                ctx.roundRect ? ctx.roundRect(lx-pw/2, ly-ph/2, pw, ph, 4) : (function(){
+                    ctx.moveTo(lx-pw/2+4,ly-ph/2);
+                    ctx.lineTo(lx+pw/2-4,ly-ph/2);
+                    ctx.quadraticCurveTo(lx+pw/2,ly-ph/2,lx+pw/2,ly-ph/2+4);
+                    ctx.lineTo(lx+pw/2,ly+ph/2-4);
+                    ctx.quadraticCurveTo(lx+pw/2,ly+ph/2,lx+pw/2-4,ly+ph/2);
+                    ctx.lineTo(lx-pw/2+4,ly+ph/2);
+                    ctx.quadraticCurveTo(lx-pw/2,ly+ph/2,lx-pw/2,ly+ph/2-4);
+                    ctx.lineTo(lx-pw/2,ly-ph/2+4);
+                    ctx.quadraticCurveTo(lx-pw/2,ly-ph/2,lx-pw/2+4,ly-ph/2);
+                    ctx.closePath();
+                })();
+                ctx.fillStyle=bgColor; ctx.fill();
+                ctx.strokeStyle=borderColor; ctx.lineWidth=0.8; ctx.stroke();
+                // Draw text
+                ctx.fillStyle=d ? dk('accent') : '#1a73e8';
+                ctx.textAlign='center'; ctx.textBaseline='middle';
+                ctx.fillText(labelText, lx, ly);
             });
         }
 
@@ -632,6 +677,53 @@
         var isExt=posEl?posEl.value==='ext':false;
         var type=cfg.id;
         var res,area,perim,formula,s1,h,b,s2;
+
+        // CHANGE 2: Handle the new Pythagorean triple goal
+        if(type==='rt_triple_check'){
+            var legA=v0, legB=v1, hypIn=v2;
+            // Validate: hyp should be largest
+            if(hypIn<=legA||hypIn<=legB){showError('Check your values','Hypotenuse must be larger than both legs.');return;}
+            // Check if it's actually a right triangle
+            var hypCalc=Math.sqrt(legA*legA+legB*legB);
+            var isRightTri=Math.abs(hypCalc-hypIn)/hypIn<0.001;
+            var trip=checkTriple(legA,legB,hypIn);
+            s1=legA;b=legB;s2=hypIn;h=legA;
+            area=0.5*legA*legB;perim=legA+legB+hypIn;
+            if(!isRightTri){showError('Not a right triangle','These sides do not satisfy a² + b² = c². Check your values.');return;}
+            if(trip){
+                res=hypIn; // just show hypotenuse as the result value
+                formula='Checking: '+legA+'\u00b2 + '+legB+'\u00b2 = '+hypIn+'\u00b2\n'+(legA*legA)+' + '+(legB*legB)+' = '+(hypIn*hypIn)+'\n\u2713 Valid right triangle\n\u2605 Pythagorean triple: '+trip;
+                get('tripleBox').innerText='\u2605 Pythagorean triple: '+trip;
+                get('tripleBox').style.display='block';
+            } else {
+                res=hypIn;
+                formula='Checking: '+legA+'\u00b2 + '+legB+'\u00b2 = '+hypIn+'\u00b2\n'+(legA*legA)+' + '+(legB*legB)+' = '+(hypIn*hypIn)+'\n\u2713 Valid right triangle\n\u2715 Not a Pythagorean triple (sides are not integer ratios)';
+                get('tripleBox').innerText='\u2715 Not a Pythagorean triple';
+                get('tripleBox').style.display='block';
+            }
+            // Show result, angles, draw
+            var angArr=computeAngles(s1,b,s2);
+            var anglesForCanvas=[angArr[2],angArr[1],angArr[0]];
+            get('res').style.display='block';
+            get('final').innerText=trip?trip:'Not a triple';
+            get('finalApprox').style.display='none';
+            get('formulaText').innerText=formula;
+            get('areaRes').innerText=area.toFixed(p);
+            get('perimRes').innerText=perim.toFixed(p);
+            var classTag=get('classTag');
+            classTag.innerText='Right';classTag.style.display='inline-block';
+            var anglesContent=get('anglesContent'); anglesContent.innerHTML='';
+            var names=['A','B','C']; var d2=getDark();
+            angArr.forEach(function(ang,i){var sp=document.createElement('span');sp.style.cssText='font-weight:600;color:'+(d2?dk('accent'):'#1a73e8')+';';sp.innerText=names[i]+' = '+fmtAngle(ang);anglesContent.appendChild(sp);});
+            get('anglesBox').style.display='block';
+            drawTri(s1,h,b,s2,false,anglesForCanvas);
+            applyDark();
+            history.unshift({label:'Py. Triple: '+(trip||'Not a triple'),tri:currentTri,goal:currentGoal,method:currentMethod,inputs:vals.map(String),isExt:false,finalText:trip?trip:'Not a triple',approxText:'',approxVis:'none',formula:formula,area:area.toFixed(p),perim:perim.toFixed(p),ds1:s1,dh:h,db:b,ds2:s2,anglesForCanvas:anglesForCanvas});
+            if(history.length>10)history.pop();
+            get('histList').innerHTML=history.map(function(hh){return'<span style="display:block;padding:3px 0;border-bottom:1px solid #f0f0f0;">'+(hh.label||hh)+'</span>';}).join('');
+            saveSettings();
+            return;
+        }
 
         try{
         if(type==='sc_b_shs'){
@@ -712,7 +804,6 @@
             res=beq;b=beq;s1=beq;s2=beq;h=Math.sqrt(3)/2*beq;
             formula='A = (\u221a3/4) \u00d7 b\u00b2\nb = \u221a(4A / \u221a3) = '+fmtS(res);
         }else if(type==='eq_a_heron'){
-            // equilateral: all sides equal, just one input
             var seq=v0;s1=seq;s2=seq;b=seq;
             var svEq=3*seq/2;
             res=Math.sqrt(svEq*(svEq-seq)*(svEq-seq)*(svEq-seq));
@@ -779,29 +870,24 @@
         classTag.innerText=classification;
         classTag.style.display='inline-block';
 
-        // ── Pythagorean triple (right triangle only) ──
+        // ── Pythagorean triple (right triangle only, non-triple-goal) ──
         var tripleBox=get('tripleBox');
-        if(currentTri==='right'){
+        if(currentTri==='right'&&currentGoal!=='triple'){
             var trip=checkTriple(s1,b,s2);
             if(trip){tripleBox.innerText='\u2605 Pythagorean triple: '+trip;tripleBox.style.display='block';}
             else{tripleBox.style.display='none';}
-        } else { tripleBox.style.display='none'; }
+        } else if(currentGoal!=='triple') { tripleBox.style.display='none'; }
 
         // ── Angles ──
         var anglesBox=get('anglesBox'), anglesContent=get('anglesContent');
-        // Compute angles: for right tri, s1=vert leg, b=horiz leg, s2=hyp
-        // Sides: s1 opposite to angle at pC, b opposite to angle at pB, s2 opposite to angle at pA
-        // We pass sides as (a=s1, b=b, c=s2) for law of cosines
-        var angArr=computeAngles(s1, b, s2); // [opposite s1, opposite b, opposite s2]
-        // angArr[0]=angle at vertex opposite s1=pC, [1]=opposite b=pB, [2]=opposite s2=pA
-        // For canvas: pA=bottom-left, pB=apex, pC=bottom-right
-        // angArr ordered: [angleOppS1=angleAtC, angleOppB=angleAtB, angleOppS2=angleAtA]
-        var anglesForCanvas=[angArr[2], angArr[1], angArr[0]]; // [angleAtA, angleAtB, angleAtC]
+        var angArr=computeAngles(s1, b, s2);
+        var anglesForCanvas=[angArr[2], angArr[1], angArr[0]];
         anglesContent.innerHTML='';
         var names=['A','B','C'];
+        var d2=getDark();
         angArr.forEach(function(ang,i){
             var sp=document.createElement('span');
-            sp.style.cssText='font-weight:600;color:'+(getDark()?'#4a9eff':'#1a73e8')+';';
+            sp.style.cssText='font-weight:600;color:'+(d2?dk('accent'):'#1a73e8')+';';
             sp.innerText=names[i]+' = '+fmtAngle(ang);
             anglesContent.appendChild(sp);
         });
@@ -919,4 +1005,3 @@
     buildTriBtns();buildGoalBtns();buildMethodBtns();renderInputs();
     if(initDark) applyDark();
 })();
-
