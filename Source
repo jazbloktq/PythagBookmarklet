@@ -345,6 +345,13 @@
             return '<div><div style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.6px;margin-bottom:4px;">'+lbl.toUpperCase()+'</div>'+
                    '<input type="number" id="v'+i+'" placeholder="0" style="width:100%;padding:9px 11px;border:1.5px solid #ddd;border-radius:7px;box-sizing:border-box;font-size:14px;outline:none;" onfocus="this.style.borderColor=\'#1a73e8\'" onblur="this.style.borderColor=\'#ddd\'"></div>';
         }).join('');
+        // Attach Enter key directly to each input — most reliable way
+        cfg.inputs.forEach(function(_, i) {
+            var inp = get('v'+i);
+            if (inp) inp.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.keyCode === 13) { e.preventDefault(); get('calc').click(); }
+            });
+        });
         var tog = get('posToggle');
         if (cfg.toggle) {
             var adv = getAdv();
@@ -731,18 +738,6 @@
 
     // ── Keyboard shortcuts ────────────────────────────────────────────────────
     var historyIndex = -1;
-
-    // Enter on any input inside the widget → calculate
-    ui.addEventListener('keydown', function(e) {
-        var key = e.key || e.keyCode;
-        if (key === 'Enter' || key === 13) {
-            // Don't trigger if focused on a button
-            if (document.activeElement && document.activeElement.tagName === 'BUTTON') return;
-            e.preventDefault();
-            historyIndex = -1;
-            get('calc').click();
-        }
-    });
 
     function restoreEntry(entry) {
         if (!entry || !entry.tri) return;
