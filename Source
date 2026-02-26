@@ -4,7 +4,7 @@
     ui.id = 'geo-ultimate-vscroll';
     ui.style = 'position:fixed;top:20px;right:20px;width:380px;max-height:88vh;background:#fff;border:1px solid #ddd;border-radius:14px;z-index:10000;padding:0;font-family:system-ui,sans-serif;box-shadow:0 8px 32px rgba(0,0,0,0.18);color:#222;overflow:hidden;display:flex;flex-direction:column;box-sizing:border-box;';
 
-    ui.innerHTML = '<div style="padding:14px 18px;background:#1a73e8;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;border-radius:14px 14px 0 0;"><h3 style="margin:0;font-size:15px;color:#fff;font-weight:700;letter-spacing:0.3px;">&#9651; Geometry Pro</h3><div style="display:flex;gap:12px;align-items:center;"><span id="histBtn" title="History" style="cursor:pointer;font-size:16px;opacity:0.9;">&#128337;</span><span id="setBtn" title="Settings" style="cursor:pointer;font-size:16px;opacity:0.9;">&#9881;</span><span id="close" style="cursor:pointer;font-size:18px;color:#fff;opacity:0.8;line-height:1;">&times;</span></div></div><div style="padding:16px;overflow-y:auto;overflow-x:hidden;flex:1;box-sizing:border-box;"><div style="margin-bottom:14px;"><div style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;margin-bottom:7px;">FIND:</div><div id="goalBtns" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;"></div></div><div id="methodSection" style="margin-bottom:14px;"><div style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;margin-bottom:7px;">METHOD:</div><div id="methodBtns" style="display:flex;flex-direction:column;gap:5px;"></div></div><div id="posToggle" style="background:#eef3fe;padding:9px 12px;border-radius:8px;margin-bottom:14px;font-size:12px;display:none;gap:0;"><div style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;margin-bottom:6px;">HEIGHT POSITION:</div><div style="display:flex;gap:16px;"><label style="cursor:pointer;display:flex;align-items:center;gap:5px;"><input type="radio" name="pos" value="int" checked style="accent-color:#1a73e8;"> Internal</label><label style="cursor:pointer;display:flex;align-items:center;gap:5px;"><input type="radio" name="pos" value="ext" style="accent-color:#1a73e8;"> External</label></div></div><div id="inputStack" style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px;"></div><div id="canvasBox" style="position:relative;width:100%;margin-bottom:14px;border:1px solid #eee;border-radius:8px;overflow:hidden;background:#fafafa;"><canvas id="triCanvas" width="340" height="190" style="width:100%;display:block;"></canvas><button id="dlBtn" style="position:absolute;bottom:7px;right:7px;background:rgba(255,255,255,0.92);border:1px solid #ddd;padding:4px 9px;border-radius:4px;font-size:10px;cursor:pointer;font-weight:600;color:#555;">Save PNG</button></div><div style="display:flex;gap:8px;margin-bottom:14px;"><button id="calc" style="flex:2;padding:11px;background:#1a73e8;color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px;">Calculate</button><button id="clear" style="flex:1;padding:11px;background:#f1f3f4;border:none;border-radius:8px;cursor:pointer;font-size:13px;color:#555;">Clear</button></div><div id="res" style="padding:14px;background:#f0f6ff;border-radius:10px;display:none;border:1px solid #c5d8f8;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><div><div style="font-size:10px;color:#666;font-weight:600;margin-bottom:2px;">RESULT</div><strong id="final" style="font-size:26px;color:#1a73e8;"></strong></div><button id="copy" style="background:#1a73e8;border:none;color:#fff;padding:7px 13px;border-radius:6px;font-size:11px;cursor:pointer;font-weight:700;">Copy</button></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;font-size:12px;border-top:1px solid #c5d8f8;padding-top:10px;"><div style="background:#fff;padding:8px;border-radius:6px;"><div style="color:#888;font-size:10px;font-weight:600;">AREA</div><div id="areaRes" style="font-weight:700;color:#222;font-size:14px;"></div></div><div style="background:#fff;padding:8px;border-radius:6px;"><div style="color:#888;font-size:10px;font-weight:600;">PERIMETER</div><div id="perimRes" style="font-weight:700;color:#222;font-size:14px;"></div></div></div><div style="border-top:1px solid #c5d8f8;padding-top:10px;"><div style="font-size:10px;font-weight:700;color:#1a73e8;margin-bottom:5px;letter-spacing:0.5px;">STEPS:</div><code id="formulaText" style="display:block;background:#fff;padding:8px;border-radius:6px;border:1px solid #dde8fb;white-space:pre-wrap;font-family:monospace;font-size:11px;color:#333;line-height:1.5;"></code></div></div></div><div id="histMenu" style="display:none;position:absolute;top:50px;left:16px;right:16px;background:#fff;border:1px solid #ddd;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.15);padding:14px;z-index:10005;font-size:12px;"><div style="font-weight:700;margin-bottom:8px;color:#333;">Recent Calculations</div><div id="histList" style="color:#666;line-height:1.8;">No history yet.</div><button id="closeHist" style="width:100%;margin-top:10px;padding:6px;border:none;background:#f1f3f4;border-radius:6px;cursor:pointer;font-size:12px;">Dismiss</button></div><div id="setMenu" style="display:none;position:absolute;top:50px;right:16px;width:160px;background:#fff;border:1px solid #ddd;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.15);padding:14px;z-index:10005;font-size:12px;"><div style="font-weight:700;margin-bottom:8px;color:#333;">Settings</div><label style="font-size:11px;color:#666;display:block;margin-bottom:4px;">Decimal places</label><input type="number" id="prec" value="2" min="0" max="8" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:6px;box-sizing:border-box;font-size:13px;"></div>';
+    ui.innerHTML = '<div style="padding:14px 18px;background:#1a73e8;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;border-radius:14px 14px 0 0;"><h3 style="margin:0;font-size:15px;color:#fff;font-weight:700;letter-spacing:0.3px;">&#9651; Geometry Pro</h3><div style="display:flex;gap:12px;align-items:center;"><span id="histBtn" title="History" style="cursor:pointer;font-size:16px;opacity:0.9;">&#128337;</span><span id="setBtn" title="Settings" style="cursor:pointer;font-size:16px;opacity:0.9;">&#9881;</span><span id="close" style="cursor:pointer;font-size:18px;color:#fff;opacity:0.8;line-height:1;">&times;</span></div></div><div style="padding:16px;overflow-y:auto;overflow-x:hidden;flex:1;box-sizing:border-box;"><div style="margin-bottom:14px;"><div style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;margin-bottom:7px;">FIND:</div><div id="goalBtns" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;"></div></div><div id="methodSection" style="margin-bottom:14px;"><div style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;margin-bottom:7px;">METHOD:</div><div id="methodBtns" style="display:flex;flex-direction:column;gap:5px;"></div></div><div id="posToggle" style="background:#eef3fe;padding:9px 12px;border-radius:8px;margin-bottom:14px;font-size:12px;display:none;gap:0;"><div style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;margin-bottom:6px;">HEIGHT POSITION:</div><div style="display:flex;gap:16px;"><label style="cursor:pointer;display:flex;align-items:center;gap:5px;"><input type="radio" name="pos" value="int" checked style="accent-color:#1a73e8;"> Internal</label><label style="cursor:pointer;display:flex;align-items:center;gap:5px;"><input type="radio" name="pos" value="ext" style="accent-color:#1a73e8;"> External</label></div></div><div id="inputStack" style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px;"></div><div id="canvasBox" style="position:relative;width:100%;margin-bottom:14px;border:1px solid #eee;border-radius:8px;overflow:hidden;background:#fafafa;"><canvas id="triCanvas" width="340" height="190" style="width:100%;display:block;"></canvas><button id="dlBtn" style="position:absolute;bottom:7px;right:7px;background:rgba(255,255,255,0.92);border:1px solid #ddd;padding:4px 9px;border-radius:4px;font-size:10px;cursor:pointer;font-weight:600;color:#555;">Save PNG</button></div><div style="display:flex;gap:8px;margin-bottom:14px;"><button id="calc" style="flex:2;padding:11px;background:#1a73e8;color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px;">Calculate</button><button id="clear" style="flex:1;padding:11px;background:#f1f3f4;border:none;border-radius:8px;cursor:pointer;font-size:13px;color:#555;">Clear</button></div><div id="res" style="padding:14px;background:#f0f6ff;border-radius:10px;display:none;border:1px solid #c5d8f8;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><div><div style="font-size:10px;color:#666;font-weight:600;margin-bottom:2px;">RESULT</div><strong id="final" style="font-size:26px;color:#1a73e8;"></strong></div><button id="copy" style="background:#1a73e8;border:none;color:#fff;padding:7px 13px;border-radius:6px;font-size:11px;cursor:pointer;font-weight:700;">Copy</button></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;font-size:12px;border-top:1px solid #c5d8f8;padding-top:10px;"><div style="background:#fff;padding:8px;border-radius:6px;"><div style="color:#888;font-size:10px;font-weight:600;">AREA</div><div id="areaRes" style="font-weight:700;color:#222;font-size:14px;"></div></div><div style="background:#fff;padding:8px;border-radius:6px;"><div style="color:#888;font-size:10px;font-weight:600;">PERIMETER</div><div id="perimRes" style="font-weight:700;color:#222;font-size:14px;"></div></div></div><div style="border-top:1px solid #c5d8f8;padding-top:10px;"><div style="font-size:10px;font-weight:700;color:#1a73e8;margin-bottom:5px;letter-spacing:0.5px;">STEPS:</div><code id="formulaText" style="display:block;background:#fff;padding:8px;border-radius:6px;border:1px solid #dde8fb;white-space:pre-wrap;font-family:monospace;font-size:11px;color:#333;line-height:1.5;"></code></div></div></div><div id="errBox" style="display:none;margin-bottom:14px;padding:12px 14px;background:#fff5f5;border:1.5px solid #f5c2c2;border-radius:10px;box-sizing:border-box;"><div style="display:flex;align-items:flex-start;gap:10px;"><span style="font-size:18px;line-height:1;">&#9888;&#65039;</span><div><div id="errTitle" style="font-size:12px;font-weight:700;color:#c0392b;margin-bottom:3px;"></div><div id="errMsg" style="font-size:11px;color:#a93226;line-height:1.5;"></div></div></div></div><div id="histMenu" style="display:none;position:absolute;top:50px;left:16px;right:16px;background:#fff;border:1px solid #ddd;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.15);padding:14px;z-index:10005;font-size:12px;"><div style="font-weight:700;margin-bottom:8px;color:#333;">Recent Calculations</div><div id="histList" style="color:#666;line-height:1.8;">No history yet.</div><button id="closeHist" style="width:100%;margin-top:10px;padding:6px;border:none;background:#f1f3f4;border-radius:6px;cursor:pointer;font-size:12px;">Dismiss</button></div><div id="setMenu" style="display:none;position:absolute;top:50px;right:16px;width:160px;background:#fff;border:1px solid #ddd;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.15);padding:14px;z-index:10005;font-size:12px;"><div style="font-weight:700;margin-bottom:8px;color:#333;">Settings</div><label style="font-size:11px;color:#666;display:block;margin-bottom:4px;">Decimal places</label><input type="number" id="prec" value="2" min="0" max="8" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:6px;box-sizing:border-box;font-size:13px;"></div>';
 
     document.body.appendChild(ui);
     var get = function(id) { return document.getElementById(id); };
@@ -16,6 +16,16 @@
     try { saved = JSON.parse(localStorage.getItem(LS_KEY) || '{}'); } catch(e) {}
     var currentGoal = saved.goal || 'base';
     var currentMethod = saved.method || 0;
+
+    function showError(title, msg) {
+        get('errBox').style.display = 'block';
+        get('errTitle').innerText = title;
+        get('errMsg').innerText = msg;
+        get('res').style.display = 'none';
+    }
+    function clearError() {
+        get('errBox').style.display = 'none';
+    }
 
     function saveSettings() {
         try {
@@ -163,10 +173,19 @@
         labelSide(pB[0],pB[1],pC[0],pC[1], s2.toFixed(1));   // right slant
         labelSide(pA[0],pA[1],pC[0],pC[1], b.toFixed(1));    // base
 
-        // height label: to the right of the dashed line
-        var hmx = pH[0]+16, hmy = (pB[1]+pH[1])/2;
-        ctx.textAlign='left';
-        ctx.fillText('h='+h.toFixed(1), hmx, hmy);
+        // height label: place on whichever horizontal side of the dashed line has more room
+        // pH[0] is the foot x; pB[0] is the apex x (same, it's vertical)
+        // check space to left vs right of the dashed line
+        var hmy = (pB[1]+pH[1])/2;
+        var spaceRight = W - pH[0];
+        var spaceLeft  = pH[0];
+        if (spaceRight >= spaceLeft) {
+            ctx.textAlign='left';
+            ctx.fillText('h='+h.toFixed(1), pH[0]+8, hmy);
+        } else {
+            ctx.textAlign='right';
+            ctx.fillText('h='+h.toFixed(1), pH[0]-8, hmy);
+        }
     }
 
     get('setBtn').onclick = function(e) { e.stopPropagation(); var m=get('setMenu'); m.style.display=m.style.display==='none'?'block':'none'; get('histMenu').style.display='none'; };
@@ -175,72 +194,105 @@
     document.addEventListener('click', function(e) { if (!ui.contains(e.target)) { get('setMenu').style.display='none'; get('histMenu').style.display='none'; } });
 
     get('calc').onclick = function() {
-        var v0 = parseFloat(get('v0') ? get('v0').value : '');
-        var v1 = parseFloat(get('v1') ? get('v1').value : '');
-        var v2 = parseFloat(get('v2') ? get('v2').value : '');
+        clearError();
+        var config = options[currentGoal][currentMethod];
+        var inputs = config.inputs;
+        var vals = [];
+        var missing = [];
+        for (var i=0; i<inputs.length; i++) {
+            var el = get('v'+i);
+            var v = el ? parseFloat(el.value) : NaN;
+            vals.push(v);
+            if (isNaN(v) || el.value.trim() === '') missing.push(inputs[i]);
+        }
+        if (missing.length > 0) {
+            showError('Missing values', 'Please fill in: ' + missing.join(', ') + '.');
+            return;
+        }
+        for (var j=0; j<vals.length; j++) {
+            if (vals[j] <= 0) {
+                showError('Values must be positive', inputs[j] + ' must be greater than zero.');
+                return;
+            }
+        }
+        var v0=vals[0], v1=vals[1]!==undefined?vals[1]:NaN, v2=vals[2]!==undefined?vals[2]:NaN;
         var p = parseInt(get('prec').value) || 2;
         var posEl = document.querySelector('input[name="pos"]:checked');
         var isExt = posEl ? posEl.value === 'ext' : false;
-        var type = options[currentGoal][currentMethod].id;
+        var type = config.id;
         var res, area, perim, formula, s1, h, b, s2;
 
-        if (type === 'b_shs') {
-            s1=v0; h=v1; s2=v2;
-            var x=Math.sqrt(s1*s1-h*h), x2=Math.sqrt(s2*s2-h*h);
-            res = isExt ? Math.abs(x-x2) : (x+x2); b=res;
-            formula = 'Part1 = sqrt('+s1+'^2 - '+h+'^2) = '+x.toFixed(p)+'\nPart2 = sqrt('+s2+'^2 - '+h+'^2) = '+x2.toFixed(p)+'\nBase = '+x.toFixed(p)+' '+(isExt?'-':'+')+' '+x2.toFixed(p)+' = '+res.toFixed(p);
-        } else if (type === 'b_ah') {
-            res = (2*v0)/v1; b=res; h=v1; s1=Math.sqrt(h*h+(b/2)*(b/2)); s2=s1;
-            formula = 'Base = (2 x Area) / Height\n= (2 x '+v0+') / '+v1+' = '+res.toFixed(p);
-        } else if (type === 'b_as') {
-            h=Math.sqrt(v1*v1-(v0/v1)*(v0/v1)); res=(2*v0)/h; b=res; s1=v1; s2=v1;
-            formula = 'Height estimated from slant + area\nBase = (2 x '+v0+') / h';
-        } else if (type === 's_shb') {
-            s1=v0; h=v1; b=v2;
-            var xx=Math.sqrt(s1*s1-h*h), y=isExt?(b+xx):Math.abs(b-xx);
-            res=Math.sqrt(y*y+h*h); s2=res;
-            formula = 'Dist = sqrt('+s1+'^2 - '+h+'^2) = '+xx.toFixed(p)+'\nOther leg = '+(isExt?b+' + ':b+' - ')+xx.toFixed(p)+' = '+y.toFixed(p)+'\nSide = sqrt('+y.toFixed(p)+'^2 + '+h+'^2) = '+res.toFixed(p);
-        } else if (type === 's_hb') {
-            h=v0; b=v1; res=Math.sqrt(h*h+b*b); s1=res; s2=res;
-            formula = 'Side = sqrt(h^2 + base^2)\n= sqrt('+h+'^2 + '+b+'^2) = '+res.toFixed(p);
-        } else if (type === 's_ah') {
-            res = Math.sqrt(v0*v0 + (v1/2)*(v1/2)); s1=res; s2=res; h=v0; b=v1;
-            formula = 'Approx slant from area + height';
-        } else if (type === 'h_pyth') {
-            res=Math.sqrt(v0*v0+v1*v1);
-            formula='Hypotenuse = sqrt(A^2 + B^2)\n= sqrt('+v0+'^2 + '+v1+'^2) = '+res.toFixed(p);
-            s1=v0; s2=v1; b=res; h=(v0*v1)/res;
-        } else if (type === 'h_ah') {
-            var leg=v1; h=(2*v0)/leg; res=Math.sqrt(leg*leg+h*h);
-            formula='Height = (2 x Area) / Leg = '+h.toFixed(p)+'\nHyp = sqrt('+leg+'^2 + h^2) = '+res.toFixed(p);
-            s1=h; s2=leg; b=res; h=h;
-        } else if (type === 'hg_side') {
-            s1=v0; b=v1; res=Math.sqrt(v0*v0-v1*v1); h=res; s2=Math.sqrt(h*h+(b)*(b));
-            formula='Height = sqrt(Hyp^2 - Seg^2)\n= sqrt('+v0+'^2 - '+v1+'^2) = '+res.toFixed(p);
-        } else if (type === 'hg_ab') {
-            res=(2*v0)/v1; h=res; b=v1; s1=Math.sqrt(h*h+(b/2)*(b/2)); s2=s1;
-            formula='Height = (2 x Area) / Base\n= (2 x '+v0+') / '+v1+' = '+res.toFixed(p);
-        } else if (type === 'hg_ss') {
-            s1=v0; s2=v1; b=v2;
-            var x1c=Math.sqrt(s1*s1-(b/2)*(b/2));
-            res=x1c; h=res;
-            formula='Height = sqrt(S1^2 - (Base/2)^2)\n= sqrt('+s1+'^2 - '+(b/2)+'^2) = '+res.toFixed(p);
+        try {
+            if (type === 'b_shs') {
+                s1=v0; h=v1; s2=v2;
+                if (h >= s1) { showError('Impossible triangle', 'Height (' + h + ') must be shorter than Side 1 (' + s1 + ').'); return; }
+                if (h >= s2) { showError('Impossible triangle', 'Height (' + h + ') must be shorter than Side 2 (' + s2 + ').'); return; }
+                var x=Math.sqrt(s1*s1-h*h), x2=Math.sqrt(s2*s2-h*h);
+                res = isExt ? Math.abs(x-x2) : (x+x2); b=res;
+                formula = 'Part1 = sqrt('+s1+'^2 - '+h+'^2) = '+x.toFixed(p)+'\nPart2 = sqrt('+s2+'^2 - '+h+'^2) = '+x2.toFixed(p)+'\nBase = '+x.toFixed(p)+' '+(isExt?'-':'+')+' '+x2.toFixed(p)+' = '+res.toFixed(p);
+            } else if (type === 'b_ah') {
+                if (v1 <= 0) { showError('Invalid height', 'Height must be greater than zero.'); return; }
+                res = (2*v0)/v1; b=res; h=v1; s1=Math.sqrt(h*h+(b/2)*(b/2)); s2=s1;
+                formula = 'Base = (2 x Area) / Height\n= (2 x '+v0+') / '+v1+' = '+res.toFixed(p);
+            } else if (type === 'b_as') {
+                h=Math.sqrt(v1*v1-(v0/v1)*(v0/v1)); res=(2*v0)/h; b=res; s1=v1; s2=v1;
+                formula = 'Height estimated from slant + area\nBase = (2 x '+v0+') / h';
+            } else if (type === 's_shb') {
+                s1=v0; h=v1; b=v2;
+                if (h >= s1) { showError('Impossible triangle', 'Height (' + h + ') must be shorter than the known side (' + s1 + ').'); return; }
+                var xx=Math.sqrt(s1*s1-h*h), y=isExt?(b+xx):Math.abs(b-xx);
+                res=Math.sqrt(y*y+h*h); s2=res;
+                formula = 'Dist = sqrt('+s1+'^2 - '+h+'^2) = '+xx.toFixed(p)+'\nOther leg = '+(isExt?b+' + ':b+' - ')+xx.toFixed(p)+' = '+y.toFixed(p)+'\nSide = sqrt('+y.toFixed(p)+'^2 + '+h+'^2) = '+res.toFixed(p);
+            } else if (type === 's_hb') {
+                h=v0; b=v1; res=Math.sqrt(h*h+b*b); s1=res; s2=res;
+                formula = 'Side = sqrt(h^2 + base^2)\n= sqrt('+h+'^2 + '+b+'^2) = '+res.toFixed(p);
+            } else if (type === 's_ah') {
+                res = Math.sqrt(v0*v0 + (v1/2)*(v1/2)); s1=res; s2=res; h=v0; b=v1;
+                formula = 'Approx slant from area + height';
+            } else if (type === 'h_pyth') {
+                res=Math.sqrt(v0*v0+v1*v1);
+                formula='Hypotenuse = sqrt(A^2 + B^2)\n= sqrt('+v0+'^2 + '+v1+'^2) = '+res.toFixed(p);
+                s1=v0; s2=v1; b=res; h=(v0*v1)/res;
+            } else if (type === 'h_ah') {
+                var leg=v1; h=(2*v0)/leg; res=Math.sqrt(leg*leg+h*h);
+                formula='Height = (2 x Area) / Leg = '+h.toFixed(p)+'\nHyp = sqrt('+leg+'^2 + h^2) = '+res.toFixed(p);
+                s1=h; s2=leg; b=res; h=h;
+            } else if (type === 'hg_side') {
+                if (v1 >= v0) { showError('Impossible triangle', 'The base segment (' + v1 + ') must be shorter than the hypotenuse (' + v0 + ').'); return; }
+                s1=v0; b=v1; res=Math.sqrt(v0*v0-v1*v1); h=res; s2=Math.sqrt(h*h+(b)*(b));
+                formula='Height = sqrt(Hyp^2 - Seg^2)\n= sqrt('+v0+'^2 - '+v1+'^2) = '+res.toFixed(p);
+            } else if (type === 'hg_ab') {
+                res=(2*v0)/v1; h=res; b=v1; s1=Math.sqrt(h*h+(b/2)*(b/2)); s2=s1;
+                formula='Height = (2 x Area) / Base\n= (2 x '+v0+') / '+v1+' = '+res.toFixed(p);
+            } else if (type === 'hg_ss') {
+                s1=v0; s2=v1; b=v2;
+                if (b/2 >= s1) { showError('Impossible triangle', 'Base (' + b + ') is too wide for Side 1 (' + s1 + ').'); return; }
+                var x1c=Math.sqrt(s1*s1-(b/2)*(b/2));
+                res=x1c; h=res;
+                formula='Height = sqrt(S1^2 - (Base/2)^2)\n= sqrt('+s1+'^2 - '+(b/2)+'^2) = '+res.toFixed(p);
+            }
+        } catch(e) {
+            showError('Calculation error', 'Something went wrong. Double-check your values make a valid triangle.');
+            return;
         }
 
-        if (!isNaN(res) && res > 0) {
-            if (!s1) s1=res; if (!s2) s2=res; if (!b) b=res; if (!h) h=res;
-            area=0.5*b*h; perim=s1+s2+b;
-            get('res').style.display='block';
-            get('final').innerText=res.toFixed(p);
-            get('formulaText').innerText=formula;
-            get('areaRes').innerText=area.toFixed(p);
-            get('perimRes').innerText=perim.toFixed(p);
-            drawTri(s1,h,b,s2,isExt);
-            history.unshift(goals.filter(function(g){return g.id===currentGoal;})[0].label+': '+res.toFixed(p));
-            if (history.length>5) history.pop();
-            get('histList').innerHTML = history.map(function(h){ return '<span style="display:block;padding:3px 0;border-bottom:1px solid #f0f0f0;">'+h+'</span>'; }).join('');
-            saveSettings();
+        if (isNaN(res) || res <= 0 || !isFinite(res)) {
+            showError('No solution found', 'These values don\'t form a valid triangle. Check that your inputs are geometrically possible.');
+            return;
         }
+
+        if (!s1) s1=res; if (!s2) s2=res; if (!b) b=res; if (!h) h=res;
+        area=0.5*b*h; perim=s1+s2+b;
+        get('res').style.display='block';
+        get('final').innerText=res.toFixed(p);
+        get('formulaText').innerText=formula;
+        get('areaRes').innerText=area.toFixed(p);
+        get('perimRes').innerText=perim.toFixed(p);
+        drawTri(s1,h,b,s2,isExt);
+        history.unshift(goals.filter(function(g){return g.id===currentGoal;})[0].label+': '+res.toFixed(p));
+        if (history.length>5) history.pop();
+        get('histList').innerHTML = history.map(function(h){ return '<span style="display:block;padding:3px 0;border-bottom:1px solid #f0f0f0;">'+h+'</span>'; }).join('');
+        saveSettings();
     };
 
     get('copy').onclick = function() { navigator.clipboard.writeText(get('final').innerText); this.innerText='Copied!'; var self=this; setTimeout(function(){self.innerText='Copy';},1500); };
