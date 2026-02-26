@@ -1,1 +1,261 @@
-javascript:(function()%20%7B%20if%20(document.getElementById('geo-ultimate-vscroll'))%20%7B%20document.getElementById('geo-ultimate-vscroll').remove()%3B%20%7D%20var%20ui%20%3D%20document.createElement('div')%3B%20ui.id%20%3D%20'geo-ultimate-vscroll'%3B%20ui.style%20%3D%20'position%3Afixed%3Btop%3A20px%3Bright%3A20px%3Bwidth%3A380px%3Bmax-height%3A88vh%3Bbackground%3A%23fff%3Bborder%3A1px%20solid%20%23ddd%3Bborder-radius%3A14px%3Bz-index%3A10000%3Bpadding%3A0%3Bfont-family%3Asystem-ui%2Csans-serif%3Bbox-shadow%3A0%208px%2032px%20rgba(0%2C0%2C0%2C0.18)%3Bcolor%3A%23222%3Boverflow%3Ahidden%3Bdisplay%3Aflex%3Bflex-direction%3Acolumn%3Bbox-sizing%3Aborder-box%3B'%3B%20ui.innerHTML%20%3D%20'%3Cdiv%20style%3D%22padding%3A14px%2018px%3Bbackground%3A%231a73e8%3Bdisplay%3Aflex%3Bjustify-content%3Aspace-between%3Balign-items%3Acenter%3Bflex-shrink%3A0%3Bborder-radius%3A14px%2014px%200%200%3B%22%3E%3Ch3%20style%3D%22margin%3A0%3Bfont-size%3A15px%3Bcolor%3A%23fff%3Bfont-weight%3A700%3Bletter-spacing%3A0.3px%3B%22%3E%26%239651%3B%20Geometry%20Pro%3C%2Fh3%3E%3Cdiv%20style%3D%22display%3Aflex%3Bgap%3A12px%3Balign-items%3Acenter%3B%22%3E%3Cspan%20id%3D%22histBtn%22%20title%3D%22History%22%20style%3D%22cursor%3Apointer%3Bfont-size%3A16px%3Bopacity%3A0.9%3B%22%3E%26%23128337%3B%3C%2Fspan%3E%3Cspan%20id%3D%22setBtn%22%20title%3D%22Settings%22%20style%3D%22cursor%3Apointer%3Bfont-size%3A16px%3Bopacity%3A0.9%3B%22%3E%26%239881%3B%3C%2Fspan%3E%3Cspan%20id%3D%22close%22%20style%3D%22cursor%3Apointer%3Bfont-size%3A18px%3Bcolor%3A%23fff%3Bopacity%3A0.8%3Bline-height%3A1%3B%22%3E%26times%3B%3C%2Fspan%3E%3C%2Fdiv%3E%3C%2Fdiv%3E%3Cdiv%20style%3D%22padding%3A16px%3Boverflow-y%3Aauto%3Boverflow-x%3Ahidden%3Bflex%3A1%3Bbox-sizing%3Aborder-box%3B%22%3E%3Cdiv%20style%3D%22margin-bottom%3A14px%3B%22%3E%3Cdiv%20style%3D%22font-size%3A10px%3Bfont-weight%3A700%3Bcolor%3A%23888%3Bletter-spacing%3A0.8px%3Bmargin-bottom%3A7px%3B%22%3EFIND%3A%3C%2Fdiv%3E%3Cdiv%20id%3D%22goalBtns%22%20style%3D%22display%3Agrid%3Bgrid-template-columns%3A1fr%201fr%3Bgap%3A6px%3B%22%3E%3C%2Fdiv%3E%3C%2Fdiv%3E%3Cdiv%20id%3D%22methodSection%22%20style%3D%22margin-bottom%3A14px%3B%22%3E%3Cdiv%20style%3D%22font-size%3A10px%3Bfont-weight%3A700%3Bcolor%3A%23888%3Bletter-spacing%3A0.8px%3Bmargin-bottom%3A7px%3B%22%3EMETHOD%3A%3C%2Fdiv%3E%3Cdiv%20id%3D%22methodBtns%22%20style%3D%22display%3Aflex%3Bflex-direction%3Acolumn%3Bgap%3A5px%3B%22%3E%3C%2Fdiv%3E%3C%2Fdiv%3E%3Cdiv%20id%3D%22posToggle%22%20style%3D%22background%3A%23eef3fe%3Bpadding%3A9px%2012px%3Bborder-radius%3A8px%3Bmargin-bottom%3A14px%3Bfont-size%3A12px%3Bdisplay%3Anone%3Bgap%3A0%3B%22%3E%3Cdiv%20style%3D%22font-size%3A10px%3Bfont-weight%3A700%3Bcolor%3A%23888%3Bletter-spacing%3A0.8px%3Bmargin-bottom%3A6px%3B%22%3EHEIGHT%20POSITION%3A%3C%2Fdiv%3E%3Cdiv%20style%3D%22display%3Aflex%3Bgap%3A16px%3B%22%3E%3Clabel%20style%3D%22cursor%3Apointer%3Bdisplay%3Aflex%3Balign-items%3Acenter%3Bgap%3A5px%3B%22%3E%3Cinput%20type%3D%22radio%22%20name%3D%22pos%22%20value%3D%22int%22%20checked%20style%3D%22accent-color%3A%231a73e8%3B%22%3E%20Internal%3C%2Flabel%3E%3Clabel%20style%3D%22cursor%3Apointer%3Bdisplay%3Aflex%3Balign-items%3Acenter%3Bgap%3A5px%3B%22%3E%3Cinput%20type%3D%22radio%22%20name%3D%22pos%22%20value%3D%22ext%22%20style%3D%22accent-color%3A%231a73e8%3B%22%3E%20External%3C%2Flabel%3E%3C%2Fdiv%3E%3C%2Fdiv%3E%3Cdiv%20id%3D%22inputStack%22%20style%3D%22display%3Aflex%3Bflex-direction%3Acolumn%3Bgap%3A10px%3Bmargin-bottom%3A14px%3B%22%3E%3C%2Fdiv%3E%3Cdiv%20id%3D%22canvasBox%22%20style%3D%22position%3Arelative%3Bwidth%3A100%25%3Bmargin-bottom%3A14px%3Bborder%3A1px%20solid%20%23eee%3Bborder-radius%3A8px%3Boverflow%3Ahidden%3Bbackground%3A%23fafafa%3B%22%3E%3Ccanvas%20id%3D%22triCanvas%22%20width%3D%22340%22%20height%3D%22190%22%20style%3D%22width%3A100%25%3Bdisplay%3Ablock%3B%22%3E%3C%2Fcanvas%3E%3Cbutton%20id%3D%22dlBtn%22%20style%3D%22position%3Aabsolute%3Bbottom%3A7px%3Bright%3A7px%3Bbackground%3Argba(255%2C255%2C255%2C0.92)%3Bborder%3A1px%20solid%20%23ddd%3Bpadding%3A4px%209px%3Bborder-radius%3A4px%3Bfont-size%3A10px%3Bcursor%3Apointer%3Bfont-weight%3A600%3Bcolor%3A%23555%3B%22%3ESave%20PNG%3C%2Fbutton%3E%3C%2Fdiv%3E%3Cdiv%20style%3D%22display%3Aflex%3Bgap%3A8px%3Bmargin-bottom%3A14px%3B%22%3E%3Cbutton%20id%3D%22calc%22%20style%3D%22flex%3A2%3Bpadding%3A11px%3Bbackground%3A%231a73e8%3Bcolor%3Awhite%3Bborder%3Anone%3Bborder-radius%3A8px%3Bfont-weight%3A700%3Bcursor%3Apointer%3Bfont-size%3A13px%3B%22%3ECalculate%3C%2Fbutton%3E%3Cbutton%20id%3D%22clear%22%20style%3D%22flex%3A1%3Bpadding%3A11px%3Bbackground%3A%23f1f3f4%3Bborder%3Anone%3Bborder-radius%3A8px%3Bcursor%3Apointer%3Bfont-size%3A13px%3Bcolor%3A%23555%3B%22%3EClear%3C%2Fbutton%3E%3C%2Fdiv%3E%3Cdiv%20id%3D%22res%22%20style%3D%22padding%3A14px%3Bbackground%3A%23f0f6ff%3Bborder-radius%3A10px%3Bdisplay%3Anone%3Bborder%3A1px%20solid%20%23c5d8f8%3B%22%3E%3Cdiv%20style%3D%22display%3Aflex%3Bjustify-content%3Aspace-between%3Balign-items%3Acenter%3Bmargin-bottom%3A10px%3B%22%3E%3Cdiv%3E%3Cdiv%20style%3D%22font-size%3A10px%3Bcolor%3A%23666%3Bfont-weight%3A600%3Bmargin-bottom%3A2px%3B%22%3ERESULT%3C%2Fdiv%3E%3Cstrong%20id%3D%22final%22%20style%3D%22font-size%3A26px%3Bcolor%3A%231a73e8%3B%22%3E%3C%2Fstrong%3E%3C%2Fdiv%3E%3Cbutton%20id%3D%22copy%22%20style%3D%22background%3A%231a73e8%3Bborder%3Anone%3Bcolor%3A%23fff%3Bpadding%3A7px%2013px%3Bborder-radius%3A6px%3Bfont-size%3A11px%3Bcursor%3Apointer%3Bfont-weight%3A700%3B%22%3ECopy%3C%2Fbutton%3E%3C%2Fdiv%3E%3Cdiv%20style%3D%22display%3Agrid%3Bgrid-template-columns%3A1fr%201fr%3Bgap%3A8px%3Bmargin-bottom%3A10px%3Bfont-size%3A12px%3Bborder-top%3A1px%20solid%20%23c5d8f8%3Bpadding-top%3A10px%3B%22%3E%3Cdiv%20style%3D%22background%3A%23fff%3Bpadding%3A8px%3Bborder-radius%3A6px%3B%22%3E%3Cdiv%20style%3D%22color%3A%23888%3Bfont-size%3A10px%3Bfont-weight%3A600%3B%22%3EAREA%3C%2Fdiv%3E%3Cdiv%20id%3D%22areaRes%22%20style%3D%22font-weight%3A700%3Bcolor%3A%23222%3Bfont-size%3A14px%3B%22%3E%3C%2Fdiv%3E%3C%2Fdiv%3E%3Cdiv%20style%3D%22background%3A%23fff%3Bpadding%3A8px%3Bborder-radius%3A6px%3B%22%3E%3Cdiv%20style%3D%22color%3A%23888%3Bfont-size%3A10px%3Bfont-weight%3A600%3B%22%3EPERIMETER%3C%2Fdiv%3E%3Cdiv%20id%3D%22perimRes%22%20style%3D%22font-weight%3A700%3Bcolor%3A%23222%3Bfont-size%3A14px%3B%22%3E%3C%2Fdiv%3E%3C%2Fdiv%3E%3C%2Fdiv%3E%3Cdiv%20style%3D%22border-top%3A1px%20solid%20%23c5d8f8%3Bpadding-top%3A10px%3B%22%3E%3Cdiv%20style%3D%22font-size%3A10px%3Bfont-weight%3A700%3Bcolor%3A%231a73e8%3Bmargin-bottom%3A5px%3Bletter-spacing%3A0.5px%3B%22%3ESTEPS%3A%3C%2Fdiv%3E%3Ccode%20id%3D%22formulaText%22%20style%3D%22display%3Ablock%3Bbackground%3A%23fff%3Bpadding%3A8px%3Bborder-radius%3A6px%3Bborder%3A1px%20solid%20%23dde8fb%3Bwhite-space%3Apre-wrap%3Bfont-family%3Amonospace%3Bfont-size%3A11px%3Bcolor%3A%23333%3Bline-height%3A1.5%3B%22%3E%3C%2Fcode%3E%3C%2Fdiv%3E%3C%2Fdiv%3E%3C%2Fdiv%3E%3Cdiv%20id%3D%22histMenu%22%20style%3D%22display%3Anone%3Bposition%3Aabsolute%3Btop%3A50px%3Bleft%3A16px%3Bright%3A16px%3Bbackground%3A%23fff%3Bborder%3A1px%20solid%20%23ddd%3Bborder-radius%3A10px%3Bbox-shadow%3A0%206px%2020px%20rgba(0%2C0%2C0%2C0.15)%3Bpadding%3A14px%3Bz-index%3A10005%3Bfont-size%3A12px%3B%22%3E%3Cdiv%20style%3D%22font-weight%3A700%3Bmargin-bottom%3A8px%3Bcolor%3A%23333%3B%22%3ERecent%20Calculations%3C%2Fdiv%3E%3Cdiv%20id%3D%22histList%22%20style%3D%22color%3A%23666%3Bline-height%3A1.8%3B%22%3ENo%20history%20yet.%3C%2Fdiv%3E%3Cbutton%20id%3D%22closeHist%22%20style%3D%22width%3A100%25%3Bmargin-top%3A10px%3Bpadding%3A6px%3Bborder%3Anone%3Bbackground%3A%23f1f3f4%3Bborder-radius%3A6px%3Bcursor%3Apointer%3Bfont-size%3A12px%3B%22%3EDismiss%3C%2Fbutton%3E%3C%2Fdiv%3E%3Cdiv%20id%3D%22setMenu%22%20style%3D%22display%3Anone%3Bposition%3Aabsolute%3Btop%3A50px%3Bright%3A16px%3Bwidth%3A160px%3Bbackground%3A%23fff%3Bborder%3A1px%20solid%20%23ddd%3Bborder-radius%3A10px%3Bbox-shadow%3A0%206px%2020px%20rgba(0%2C0%2C0%2C0.15)%3Bpadding%3A14px%3Bz-index%3A10005%3Bfont-size%3A12px%3B%22%3E%3Cdiv%20style%3D%22font-weight%3A700%3Bmargin-bottom%3A8px%3Bcolor%3A%23333%3B%22%3ESettings%3C%2Fdiv%3E%3Clabel%20style%3D%22font-size%3A11px%3Bcolor%3A%23666%3Bdisplay%3Ablock%3Bmargin-bottom%3A4px%3B%22%3EDecimal%20places%3C%2Flabel%3E%3Cinput%20type%3D%22number%22%20id%3D%22prec%22%20value%3D%222%22%20min%3D%220%22%20max%3D%228%22%20style%3D%22width%3A100%25%3Bpadding%3A6px%3Bborder%3A1px%20solid%20%23ddd%3Bborder-radius%3A6px%3Bbox-sizing%3Aborder-box%3Bfont-size%3A13px%3B%22%3E%3C%2Fdiv%3E'%3B%20document.body.appendChild(ui)%3B%20var%20get%20%3D%20function(id)%20%7B%20return%20document.getElementById(id)%3B%20%7D%3B%20var%20canvas%20%3D%20get('triCanvas')%3B%20var%20ctx%20%3D%20canvas.getContext('2d')%3B%20var%20history%20%3D%20%5B%5D%3B%20var%20currentGoal%20%3D%20'base'%3B%20var%20currentMethod%20%3D%200%3B%20var%20goals%20%3D%20%5B%20%7B%20id%3A'base'%2C%20label%3A'Base'%20%7D%2C%20%7B%20id%3A'side'%2C%20label%3A'Slant%20Side'%20%7D%2C%20%7B%20id%3A'hypo'%2C%20label%3A'Hypotenuse'%20%7D%2C%20%7B%20id%3A'height'%2C%20label%3A'Height'%20%7D%20%5D%3B%20var%20options%20%3D%20%7B%20base%3A%20%5B%20%7B%20id%3A'b_shs'%2C%20text%3A'Two%20slant%20sides%20%2B%20height'%2C%20inputs%3A%5B'Slant%20Side%201'%2C'Height'%2C'Slant%20Side%202'%5D%2C%20toggle%3Atrue%20%7D%2C%20%7B%20id%3A'b_ah'%2C%20text%3A'Area%20%2B%20height'%2C%20inputs%3A%5B'Area'%2C'Height'%5D%2C%20toggle%3Afalse%20%7D%2C%20%7B%20id%3A'b_as'%2C%20text%3A'Area%20%2B%20slant%20side'%2C%20inputs%3A%5B'Area'%2C'Slant%20Side'%5D%2C%20toggle%3Afalse%20%7D%20%5D%2C%20side%3A%20%5B%20%7B%20id%3A's_shb'%2C%20text%3A'Height%20%2B%20other%20side%20%2B%20base'%2C%20inputs%3A%5B'Known%20Slant%20Side'%2C'Height'%2C'Total%20Base'%5D%2C%20toggle%3Atrue%20%7D%2C%20%7B%20id%3A's_hb'%2C%20text%3A'Height%20%2B%20base%20segment'%2C%20inputs%3A%5B'Height'%2C'Base%20Segment'%5D%2C%20toggle%3Afalse%20%7D%2C%20%7B%20id%3A's_ah'%2C%20text%3A'Area%20%2B%20height'%2C%20inputs%3A%5B'Area'%2C'Height'%5D%2C%20toggle%3Afalse%20%7D%20%5D%2C%20hypo%3A%20%5B%20%7B%20id%3A'h_pyth'%2C%20text%3A'Both%20legs%20(Pythagoras)'%2C%20inputs%3A%5B'Leg%20A'%2C'Leg%20B'%5D%2C%20toggle%3Afalse%20%7D%2C%20%7B%20id%3A'h_ah'%2C%20text%3A'Area%20%2B%20one%20leg'%2C%20inputs%3A%5B'Area'%2C'One%20Leg'%5D%2C%20toggle%3Afalse%20%7D%20%5D%2C%20height%3A%20%5B%20%7B%20id%3A'hg_side'%2C%20text%3A'Hypotenuse%20%2B%20base%20segment'%2C%20inputs%3A%5B'Hypotenuse'%2C'Base%20Segment'%5D%2C%20toggle%3Afalse%20%7D%2C%20%7B%20id%3A'hg_ab'%2C%20text%3A'Area%20%2B%20base'%2C%20inputs%3A%5B'Area'%2C'Base'%5D%2C%20toggle%3Afalse%20%7D%2C%20%7B%20id%3A'hg_ss'%2C%20text%3A'Two%20slant%20sides%20%2B%20base'%2C%20inputs%3A%5B'Slant%20Side%201'%2C'Slant%20Side%202'%2C'Base'%5D%2C%20toggle%3Afalse%20%7D%20%5D%20%7D%3B%20var%20btnBase%20%3D%20'border%3A2px%20solid%20%23e0e0e0%3Bborder-radius%3A8px%3Bpadding%3A8px%2010px%3Bcursor%3Apointer%3Bfont-size%3A12px%3Bfont-weight%3A600%3Bbackground%3A%23fff%3Bcolor%3A%23555%3Btext-align%3Acenter%3Btransition%3Aall%200.1s%3B'%3B%20var%20btnActive%20%3D%20'border%3A2px%20solid%20%231a73e8%3Bborder-radius%3A8px%3Bpadding%3A8px%2010px%3Bcursor%3Apointer%3Bfont-size%3A12px%3Bfont-weight%3A700%3Bbackground%3A%23e8f0fe%3Bcolor%3A%231a73e8%3Btext-align%3Acenter%3B'%3B%20var%20methodBase%20%3D%20'border%3A1.5px%20solid%20%23e8e8e8%3Bborder-radius%3A7px%3Bpadding%3A8px%2011px%3Bcursor%3Apointer%3Bfont-size%3A12px%3Bbackground%3A%23fff%3Bcolor%3A%23555%3Btext-align%3Aleft%3Bfont-weight%3A500%3B'%3B%20var%20methodActive%20%3D%20'border%3A1.5px%20solid%20%231a73e8%3Bborder-radius%3A7px%3Bpadding%3A8px%2011px%3Bcursor%3Apointer%3Bfont-size%3A12px%3Bbackground%3A%23e8f0fe%3Bcolor%3A%231a73e8%3Btext-align%3Aleft%3Bfont-weight%3A700%3B'%3B%20function%20buildGoalBtns()%20%7B%20var%20el%20%3D%20get('goalBtns')%3B%20el.innerHTML%20%3D%20''%3B%20goals.forEach(function(g%2C%20i)%20%7B%20var%20b%20%3D%20document.createElement('button')%3B%20b.style.cssText%20%3D%20g.id%20%3D%3D%3D%20currentGoal%20%3F%20btnActive%20%3A%20btnBase%3B%20b.innerText%20%3D%20g.label%3B%20b.onclick%20%3D%20function()%20%7B%20currentGoal%20%3D%20g.id%3B%20currentMethod%20%3D%200%3B%20buildGoalBtns()%3B%20buildMethodBtns()%3B%20renderInputs()%3B%20%7D%3B%20el.appendChild(b)%3B%20%7D)%3B%20%7D%20function%20buildMethodBtns()%20%7B%20var%20el%20%3D%20get('methodBtns')%3B%20el.innerHTML%20%3D%20''%3B%20var%20list%20%3D%20options%5BcurrentGoal%5D%3B%20get('methodSection').style.display%20%3D%20list.length%20%3E%201%20%3F%20'block'%20%3A%20'none'%3B%20list.forEach(function(m%2C%20i)%20%7B%20var%20b%20%3D%20document.createElement('button')%3B%20b.style.cssText%20%3D%20i%20%3D%3D%3D%20currentMethod%20%3F%20methodActive%20%3A%20methodBase%3B%20b.innerText%20%3D%20m.text%3B%20b.onclick%20%3D%20function()%20%7B%20currentMethod%20%3D%20i%3B%20buildMethodBtns()%3B%20renderInputs()%3B%20%7D%3B%20el.appendChild(b)%3B%20%7D)%3B%20%7D%20function%20renderInputs()%20%7B%20var%20config%20%3D%20options%5BcurrentGoal%5D%5BcurrentMethod%5D%3B%20get('inputStack').innerHTML%20%3D%20config.inputs.map(function(label%2C%20i)%20%7B%20return%20'%3Cdiv%3E%3Cdiv%20style%3D%22font-size%3A10px%3Bfont-weight%3A700%3Bcolor%3A%23888%3Bletter-spacing%3A0.6px%3Bmargin-bottom%3A4px%3B%22%3E'%20%2B%20label.toUpperCase()%20%2B%20'%3C%2Fdiv%3E%3Cinput%20type%3D%22number%22%20id%3D%22v'%20%2B%20i%20%2B%20'%22%20placeholder%3D%220%22%20style%3D%22width%3A100%25%3Bpadding%3A9px%2011px%3Bborder%3A1.5px%20solid%20%23ddd%3Bborder-radius%3A7px%3Bbox-sizing%3Aborder-box%3Bfont-size%3A14px%3Boutline%3Anone%3B%22%20onfocus%3D%22this.style.borderColor%3D%5C'%231a73e8%5C'%22%20onblur%3D%22this.style.borderColor%3D%5C'%23ddd%5C'%22%3E%3C%2Fdiv%3E'%3B%20%7D).join('')%3B%20get('posToggle').style.display%20%3D%20config.toggle%20%3F%20'block'%20%3A%20'none'%3B%20get('res').style.display%20%3D%20'none'%3B%20ctx.clearRect(0%2C0%2C340%2C190)%3B%20%7D%20function%20drawTri(s1%2C%20h%2C%20b%2C%20s2%2C%20isExt)%20%7B%20var%20W%20%3D%20canvas.width%2C%20H%20%3D%20canvas.height%3B%20ctx.clearRect(0%2C0%2CW%2CH)%3B%20var%20x1%20%3D%20Math.sqrt(Math.max(0%2C%20s1*s1%20-%20h*h))%3B%20var%20raw%20%3D%20isExt%20%3F%20%5B%5B0%2Ch%5D%2C%5Bx1%2C0%5D%2C%5BMath.abs(x1-b)%2Ch%5D%5D%20%3A%20%5B%5B0%2Ch%5D%2C%5Bx1%2C0%5D%2C%5Bb%2Ch%5D%5D%3B%20var%20pad%20%3D%2042%3B%20var%20minX%20%3D%20Math.min(raw%5B0%5D%5B0%5D%2Craw%5B1%5D%5B0%5D%2Craw%5B2%5D%5B0%5D)%3B%20var%20maxX%20%3D%20Math.max(raw%5B0%5D%5B0%5D%2Craw%5B1%5D%5B0%5D%2Craw%5B2%5D%5B0%5D)%3B%20var%20rangeX%20%3D%20maxX%20-%20minX%20%7C%7C%201%3B%20var%20rangeY%20%3D%20h%20%7C%7C%201%3B%20var%20scale%20%3D%20Math.min((W%20-%20pad*2)%20%2F%20rangeX%2C%20(H%20-%20pad*2)%20%2F%20rangeY)%3B%20var%20triW%20%3D%20rangeX%20*%20scale%3B%20var%20triH%20%3D%20rangeY%20*%20scale%3B%20var%20offX%20%3D%20(W%20-%20triW)%20%2F%202%20-%20minX%20*%20scale%3B%20var%20offY%20%3D%20(H%20-%20triH)%20%2F%202%3B%20function%20tr(p)%20%7B%20return%20%5Bp%5B0%5D*scale%20%2B%20offX%2C%20p%5B1%5D*scale%20%2B%20offY%5D%3B%20%7D%20var%20pA%3Dtr(raw%5B0%5D)%2C%20pB%3Dtr(raw%5B1%5D)%2C%20pC%3Dtr(raw%5B2%5D)%3B%20var%20pH%3D%5BpB%5B0%5D%2C%20pA%5B1%5D%5D%3B%20ctx.beginPath()%3B%20ctx.moveTo(pA%5B0%5D%2CpA%5B1%5D)%3B%20ctx.lineTo(pB%5B0%5D%2CpB%5B1%5D)%3B%20ctx.lineTo(pC%5B0%5D%2CpC%5B1%5D)%3B%20ctx.closePath()%3B%20ctx.fillStyle%3D'rgba(26%2C115%2C232%2C0.06)'%3B%20ctx.fill()%3B%20ctx.strokeStyle%3D'%231a73e8'%3B%20ctx.lineWidth%3D2.5%3B%20ctx.lineJoin%3D'round'%3B%20ctx.beginPath()%3B%20ctx.moveTo(pA%5B0%5D%2CpA%5B1%5D)%3B%20ctx.lineTo(pB%5B0%5D%2CpB%5B1%5D)%3B%20ctx.lineTo(pC%5B0%5D%2CpC%5B1%5D)%3B%20ctx.closePath()%3B%20ctx.stroke()%3B%20ctx.setLineDash(%5B4%2C4%5D)%3B%20ctx.lineWidth%3D1.5%3B%20ctx.strokeStyle%3D'%23aaa'%3B%20ctx.beginPath()%3B%20ctx.moveTo(pB%5B0%5D%2CpB%5B1%5D)%3B%20ctx.lineTo(pH%5B0%5D%2CpH%5B1%5D)%3B%20ctx.stroke()%3B%20ctx.setLineDash(%5B%5D)%3B%20var%20sq%3D6%3B%20ctx.strokeStyle%3D'%23aaa'%3B%20ctx.lineWidth%3D1%3B%20ctx.strokeRect(pH%5B0%5D%2C%20pH%5B1%5D%2C%20sq%2C%20sq)%3B%20var%20LABEL%20%3D%20'%231a73e8'%3B%20ctx.fillStyle%20%3D%20LABEL%3B%20ctx.font%20%3D%20'bold%2011px%20system-ui'%3B%20ctx.textAlign%20%3D%20'center'%3B%20ctx.textBaseline%20%3D%20'middle'%3B%20var%20OUT%20%3D%2014%3B%20function%20labelSide(ax%2Cay%2Cbxp%2Cby%2Clbl)%20%7B%20var%20mx%3D(ax%2Bbxp)%2F2%2C%20my%3D(ay%2Bby)%2F2%3B%20var%20dx%3Dbxp-ax%2C%20dy%3Dby-ay%2C%20len%3DMath.sqrt(dx*dx%2Bdy*dy)%7C%7C1%3B%20var%20cx%3D(pA%5B0%5D%2BpB%5B0%5D%2BpC%5B0%5D)%2F3%2C%20cy%3D(pA%5B1%5D%2BpB%5B1%5D%2BpC%5B1%5D)%2F3%3B%20var%20nx%3D-dy%2Flen%2C%20ny%3Ddx%2Flen%3B%20if%20((mx%2Bnx-cx)*nx%2B(my%2Bny-cy)*ny%20%3C%200)%20%7B%20nx%3D-nx%3B%20ny%3D-ny%3B%20%7D%20ctx.fillText(lbl%2C%20mx%2Bnx*OUT%2C%20my%2Bny*OUT)%3B%20%7D%20labelSide(pA%5B0%5D%2CpA%5B1%5D%2CpB%5B0%5D%2CpB%5B1%5D%2C%20s1.toFixed(1))%3B%20labelSide(pB%5B0%5D%2CpB%5B1%5D%2CpC%5B0%5D%2CpC%5B1%5D%2C%20s2.toFixed(1))%3B%20labelSide(pA%5B0%5D%2CpA%5B1%5D%2CpC%5B0%5D%2CpC%5B1%5D%2C%20b.toFixed(1))%3B%20var%20hmx%20%3D%20pH%5B0%5D%2B16%2C%20hmy%20%3D%20(pB%5B1%5D%2BpH%5B1%5D)%2F2%3B%20ctx.textAlign%3D'left'%3B%20ctx.fillText('h%3D'%2Bh.toFixed(1)%2C%20hmx%2C%20hmy)%3B%20%7D%20get('setBtn').onclick%20%3D%20function(e)%20%7B%20e.stopPropagation()%3B%20var%20m%3Dget('setMenu')%3B%20m.style.display%3Dm.style.display%3D%3D%3D'none'%3F'block'%3A'none'%3B%20get('histMenu').style.display%3D'none'%3B%20%7D%3B%20get('histBtn').onclick%20%3D%20function(e)%20%7B%20e.stopPropagation()%3B%20var%20m%3Dget('histMenu')%3B%20m.style.display%3Dm.style.display%3D%3D%3D'none'%3F'block'%3A'none'%3B%20get('setMenu').style.display%3D'none'%3B%20%7D%3B%20get('closeHist').onclick%20%3D%20function()%20%7B%20get('histMenu').style.display%3D'none'%3B%20%7D%3B%20document.addEventListener('click'%2C%20function(e)%20%7B%20if%20(!ui.contains(e.target))%20%7B%20get('setMenu').style.display%3D'none'%3B%20get('histMenu').style.display%3D'none'%3B%20%7D%20%7D)%3B%20get('calc').onclick%20%3D%20function()%20%7B%20var%20v0%20%3D%20parseFloat(get('v0')%20%3F%20get('v0').value%20%3A%20'')%3B%20var%20v1%20%3D%20parseFloat(get('v1')%20%3F%20get('v1').value%20%3A%20'')%3B%20var%20v2%20%3D%20parseFloat(get('v2')%20%3F%20get('v2').value%20%3A%20'')%3B%20var%20p%20%3D%20parseInt(get('prec').value)%20%7C%7C%202%3B%20var%20posEl%20%3D%20document.querySelector('input%5Bname%3D%22pos%22%5D%3Achecked')%3B%20var%20isExt%20%3D%20posEl%20%3F%20posEl.value%20%3D%3D%3D%20'ext'%20%3A%20false%3B%20var%20type%20%3D%20options%5BcurrentGoal%5D%5BcurrentMethod%5D.id%3B%20var%20res%2C%20area%2C%20perim%2C%20formula%2C%20s1%2C%20h%2C%20b%2C%20s2%3B%20if%20(type%20%3D%3D%3D%20'b_shs')%20%7B%20s1%3Dv0%3B%20h%3Dv1%3B%20s2%3Dv2%3B%20var%20x%3DMath.sqrt(s1*s1-h*h)%2C%20x2%3DMath.sqrt(s2*s2-h*h)%3B%20res%20%3D%20isExt%20%3F%20Math.abs(x-x2)%20%3A%20(x%2Bx2)%3B%20b%3Dres%3B%20formula%20%3D%20'Part1%20%3D%20sqrt('%2Bs1%2B'%5E2%20-%20'%2Bh%2B'%5E2)%20%3D%20'%2Bx.toFixed(p)%2B'%5CnPart2%20%3D%20sqrt('%2Bs2%2B'%5E2%20-%20'%2Bh%2B'%5E2)%20%3D%20'%2Bx2.toFixed(p)%2B'%5CnBase%20%3D%20'%2Bx.toFixed(p)%2B'%20'%2B(isExt%3F'-'%3A'%2B')%2B'%20'%2Bx2.toFixed(p)%2B'%20%3D%20'%2Bres.toFixed(p)%3B%20%7D%20else%20if%20(type%20%3D%3D%3D%20'b_ah')%20%7B%20res%20%3D%20(2*v0)%2Fv1%3B%20b%3Dres%3B%20h%3Dv1%3B%20s1%3DMath.sqrt(h*h%2B(b%2F2)*(b%2F2))%3B%20s2%3Ds1%3B%20formula%20%3D%20'Base%20%3D%20(2%20x%20Area)%20%2F%20Height%5Cn%3D%20(2%20x%20'%2Bv0%2B')%20%2F%20'%2Bv1%2B'%20%3D%20'%2Bres.toFixed(p)%3B%20%7D%20else%20if%20(type%20%3D%3D%3D%20'b_as')%20%7B%20h%3DMath.sqrt(v1*v1-(v0%2Fv1)*(v0%2Fv1))%3B%20res%3D(2*v0)%2Fh%3B%20b%3Dres%3B%20s1%3Dv1%3B%20s2%3Dv1%3B%20formula%20%3D%20'Height%20estimated%20from%20slant%20%2B%20area%5CnBase%20%3D%20(2%20x%20'%2Bv0%2B')%20%2F%20h'%3B%20%7D%20else%20if%20(type%20%3D%3D%3D%20's_shb')%20%7B%20s1%3Dv0%3B%20h%3Dv1%3B%20b%3Dv2%3B%20var%20xx%3DMath.sqrt(s1*s1-h*h)%2C%20y%3DisExt%3F(b%2Bxx)%3AMath.abs(b-xx)%3B%20res%3DMath.sqrt(y*y%2Bh*h)%3B%20s2%3Dres%3B%20formula%20%3D%20'Dist%20%3D%20sqrt('%2Bs1%2B'%5E2%20-%20'%2Bh%2B'%5E2)%20%3D%20'%2Bxx.toFixed(p)%2B'%5CnOther%20leg%20%3D%20'%2B(isExt%3Fb%2B'%20%2B%20'%3Ab%2B'%20-%20')%2Bxx.toFixed(p)%2B'%20%3D%20'%2By.toFixed(p)%2B'%5CnSide%20%3D%20sqrt('%2By.toFixed(p)%2B'%5E2%20%2B%20'%2Bh%2B'%5E2)%20%3D%20'%2Bres.toFixed(p)%3B%20%7D%20else%20if%20(type%20%3D%3D%3D%20's_hb')%20%7B%20h%3Dv0%3B%20b%3Dv1%3B%20res%3DMath.sqrt(h*h%2Bb*b)%3B%20s1%3Dres%3B%20s2%3Dres%3B%20formula%20%3D%20'Side%20%3D%20sqrt(h%5E2%20%2B%20base%5E2)%5Cn%3D%20sqrt('%2Bh%2B'%5E2%20%2B%20'%2Bb%2B'%5E2)%20%3D%20'%2Bres.toFixed(p)%3B%20%7D%20else%20if%20(type%20%3D%3D%3D%20's_ah')%20%7B%20res%20%3D%20Math.sqrt(v0*v0%20%2B%20(v1%2F2)*(v1%2F2))%3B%20s1%3Dres%3B%20s2%3Dres%3B%20h%3Dv0%3B%20b%3Dv1%3B%20formula%20%3D%20'Approx%20slant%20from%20area%20%2B%20height'%3B%20%7D%20else%20if%20(type%20%3D%3D%3D%20'h_pyth')%20%7B%20res%3DMath.sqrt(v0*v0%2Bv1*v1)%3B%20formula%3D'Hypotenuse%20%3D%20sqrt(A%5E2%20%2B%20B%5E2)%5Cn%3D%20sqrt('%2Bv0%2B'%5E2%20%2B%20'%2Bv1%2B'%5E2)%20%3D%20'%2Bres.toFixed(p)%3B%20s1%3Dv0%3B%20s2%3Dv1%3B%20b%3Dres%3B%20h%3D(v0*v1)%2Fres%3B%20%7D%20else%20if%20(type%20%3D%3D%3D%20'h_ah')%20%7B%20var%20leg%3Dv1%3B%20h%3D(2*v0)%2Fleg%3B%20res%3DMath.sqrt(leg*leg%2Bh*h)%3B%20formula%3D'Height%20%3D%20(2%20x%20Area)%20%2F%20Leg%20%3D%20'%2Bh.toFixed(p)%2B'%5CnHyp%20%3D%20sqrt('%2Bleg%2B'%5E2%20%2B%20h%5E2)%20%3D%20'%2Bres.toFixed(p)%3B%20s1%3Dh%3B%20s2%3Dleg%3B%20b%3Dres%3B%20h%3Dh%3B%20%7D%20else%20if%20(type%20%3D%3D%3D%20'hg_side')%20%7B%20s1%3Dv0%3B%20b%3Dv1%3B%20res%3DMath.sqrt(v0*v0-v1*v1)%3B%20h%3Dres%3B%20s2%3DMath.sqrt(h*h%2B(b)*(b))%3B%20formula%3D'Height%20%3D%20sqrt(Hyp%5E2%20-%20Seg%5E2)%5Cn%3D%20sqrt('%2Bv0%2B'%5E2%20-%20'%2Bv1%2B'%5E2)%20%3D%20'%2Bres.toFixed(p)%3B%20%7D%20else%20if%20(type%20%3D%3D%3D%20'hg_ab')%20%7B%20res%3D(2*v0)%2Fv1%3B%20h%3Dres%3B%20b%3Dv1%3B%20s1%3DMath.sqrt(h*h%2B(b%2F2)*(b%2F2))%3B%20s2%3Ds1%3B%20formula%3D'Height%20%3D%20(2%20x%20Area)%20%2F%20Base%5Cn%3D%20(2%20x%20'%2Bv0%2B')%20%2F%20'%2Bv1%2B'%20%3D%20'%2Bres.toFixed(p)%3B%20%7D%20else%20if%20(type%20%3D%3D%3D%20'hg_ss')%20%7B%20s1%3Dv0%3B%20s2%3Dv1%3B%20b%3Dv2%3B%20var%20x1c%3DMath.sqrt(s1*s1-(b%2F2)*(b%2F2))%3B%20res%3Dx1c%3B%20h%3Dres%3B%20formula%3D'Height%20%3D%20sqrt(S1%5E2%20-%20(Base%2F2)%5E2)%5Cn%3D%20sqrt('%2Bs1%2B'%5E2%20-%20'%2B(b%2F2)%2B'%5E2)%20%3D%20'%2Bres.toFixed(p)%3B%20%7D%20if%20(!isNaN(res)%20%26%26%20res%20%3E%200)%20%7B%20if%20(!s1)%20s1%3Dres%3B%20if%20(!s2)%20s2%3Dres%3B%20if%20(!b)%20b%3Dres%3B%20if%20(!h)%20h%3Dres%3B%20area%3D0.5*b*h%3B%20perim%3Ds1%2Bs2%2Bb%3B%20get('res').style.display%3D'block'%3B%20get('final').innerText%3Dres.toFixed(p)%3B%20get('formulaText').innerText%3Dformula%3B%20get('areaRes').innerText%3Darea.toFixed(p)%3B%20get('perimRes').innerText%3Dperim.toFixed(p)%3B%20drawTri(s1%2Ch%2Cb%2Cs2%2CisExt)%3B%20history.unshift(goals.filter(function(g)%7Breturn%20g.id%3D%3D%3DcurrentGoal%3B%7D)%5B0%5D.label%2B'%3A%20'%2Bres.toFixed(p))%3B%20if%20(history.length%3E5)%20history.pop()%3B%20get('histList').innerHTML%20%3D%20history.map(function(h)%7B%20return%20'%3Cspan%20style%3D%22display%3Ablock%3Bpadding%3A3px%200%3Bborder-bottom%3A1px%20solid%20%23f0f0f0%3B%22%3E'%2Bh%2B'%3C%2Fspan%3E'%3B%20%7D).join('')%3B%20%7D%20%7D%3B%20get('copy').onclick%20%3D%20function()%20%7B%20navigator.clipboard.writeText(get('final').innerText)%3B%20this.innerText%3D'Copied!'%3B%20var%20self%3Dthis%3B%20setTimeout(function()%7Bself.innerText%3D'Copy'%3B%7D%2C1500)%3B%20%7D%3B%20get('dlBtn').onclick%20%3D%20function()%20%7B%20var%20link%3Ddocument.createElement('a')%3B%20link.download%3D'triangle.png'%3B%20link.href%3Dcanvas.toDataURL()%3B%20link.click()%3B%20%7D%3B%20get('clear').onclick%20%3D%20function()%20%7B%20document.querySelectorAll('%23inputStack%20input').forEach(function(i)%7Bi.value%3D''%3B%7D)%3B%20get('res').style.display%3D'none'%3B%20ctx.clearRect(0%2C0%2C340%2C190)%3B%20%7D%3B%20get('close').onclick%20%3D%20function()%20%7B%20ui.remove()%3B%20%7D%3B%20buildGoalBtns()%3B%20buildMethodBtns()%3B%20renderInputs()%3B%20%7D)()%3B
+(function() {
+    if (document.getElementById('geo-ultimate-vscroll')) { document.getElementById('geo-ultimate-vscroll').remove(); }
+    var ui = document.createElement('div');
+    ui.id = 'geo-ultimate-vscroll';
+    ui.style = 'position:fixed;top:20px;right:20px;width:380px;max-height:88vh;background:#fff;border:1px solid #ddd;border-radius:14px;z-index:10000;padding:0;font-family:system-ui,sans-serif;box-shadow:0 8px 32px rgba(0,0,0,0.18);color:#222;overflow:hidden;display:flex;flex-direction:column;box-sizing:border-box;';
+
+    ui.innerHTML = '<div style="padding:14px 18px;background:#1a73e8;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;border-radius:14px 14px 0 0;"><h3 style="margin:0;font-size:15px;color:#fff;font-weight:700;letter-spacing:0.3px;">&#9651; Geometry Pro</h3><div style="display:flex;gap:12px;align-items:center;"><span id="histBtn" title="History" style="cursor:pointer;font-size:16px;opacity:0.9;">&#128337;</span><span id="setBtn" title="Settings" style="cursor:pointer;font-size:16px;opacity:0.9;">&#9881;</span><span id="close" style="cursor:pointer;font-size:18px;color:#fff;opacity:0.8;line-height:1;">&times;</span></div></div><div style="padding:16px;overflow-y:auto;overflow-x:hidden;flex:1;box-sizing:border-box;"><div style="margin-bottom:14px;"><div style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;margin-bottom:7px;">FIND:</div><div id="goalBtns" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;"></div></div><div id="methodSection" style="margin-bottom:14px;"><div style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;margin-bottom:7px;">METHOD:</div><div id="methodBtns" style="display:flex;flex-direction:column;gap:5px;"></div></div><div id="posToggle" style="background:#eef3fe;padding:9px 12px;border-radius:8px;margin-bottom:14px;font-size:12px;display:none;gap:0;"><div style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;margin-bottom:6px;">HEIGHT POSITION:</div><div style="display:flex;gap:16px;"><label style="cursor:pointer;display:flex;align-items:center;gap:5px;"><input type="radio" name="pos" value="int" checked style="accent-color:#1a73e8;"> Internal</label><label style="cursor:pointer;display:flex;align-items:center;gap:5px;"><input type="radio" name="pos" value="ext" style="accent-color:#1a73e8;"> External</label></div></div><div id="inputStack" style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px;"></div><div id="canvasBox" style="position:relative;width:100%;margin-bottom:14px;border:1px solid #eee;border-radius:8px;overflow:hidden;background:#fafafa;"><canvas id="triCanvas" width="340" height="190" style="width:100%;display:block;"></canvas><button id="dlBtn" style="position:absolute;bottom:7px;right:7px;background:rgba(255,255,255,0.92);border:1px solid #ddd;padding:4px 9px;border-radius:4px;font-size:10px;cursor:pointer;font-weight:600;color:#555;">Save PNG</button></div><div style="display:flex;gap:8px;margin-bottom:14px;"><button id="calc" style="flex:2;padding:11px;background:#1a73e8;color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px;">Calculate</button><button id="clear" style="flex:1;padding:11px;background:#f1f3f4;border:none;border-radius:8px;cursor:pointer;font-size:13px;color:#555;">Clear</button></div><div id="res" style="padding:14px;background:#f0f6ff;border-radius:10px;display:none;border:1px solid #c5d8f8;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><div><div style="font-size:10px;color:#666;font-weight:600;margin-bottom:2px;">RESULT</div><strong id="final" style="font-size:26px;color:#1a73e8;"></strong></div><button id="copy" style="background:#1a73e8;border:none;color:#fff;padding:7px 13px;border-radius:6px;font-size:11px;cursor:pointer;font-weight:700;">Copy</button></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;font-size:12px;border-top:1px solid #c5d8f8;padding-top:10px;"><div style="background:#fff;padding:8px;border-radius:6px;"><div style="color:#888;font-size:10px;font-weight:600;">AREA</div><div id="areaRes" style="font-weight:700;color:#222;font-size:14px;"></div></div><div style="background:#fff;padding:8px;border-radius:6px;"><div style="color:#888;font-size:10px;font-weight:600;">PERIMETER</div><div id="perimRes" style="font-weight:700;color:#222;font-size:14px;"></div></div></div><div style="border-top:1px solid #c5d8f8;padding-top:10px;"><div style="font-size:10px;font-weight:700;color:#1a73e8;margin-bottom:5px;letter-spacing:0.5px;">STEPS:</div><code id="formulaText" style="display:block;background:#fff;padding:8px;border-radius:6px;border:1px solid #dde8fb;white-space:pre-wrap;font-family:monospace;font-size:11px;color:#333;line-height:1.5;"></code></div></div></div><div id="histMenu" style="display:none;position:absolute;top:50px;left:16px;right:16px;background:#fff;border:1px solid #ddd;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.15);padding:14px;z-index:10005;font-size:12px;"><div style="font-weight:700;margin-bottom:8px;color:#333;">Recent Calculations</div><div id="histList" style="color:#666;line-height:1.8;">No history yet.</div><button id="closeHist" style="width:100%;margin-top:10px;padding:6px;border:none;background:#f1f3f4;border-radius:6px;cursor:pointer;font-size:12px;">Dismiss</button></div><div id="setMenu" style="display:none;position:absolute;top:50px;right:16px;width:160px;background:#fff;border:1px solid #ddd;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.15);padding:14px;z-index:10005;font-size:12px;"><div style="font-weight:700;margin-bottom:8px;color:#333;">Settings</div><label style="font-size:11px;color:#666;display:block;margin-bottom:4px;">Decimal places</label><input type="number" id="prec" value="2" min="0" max="8" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:6px;box-sizing:border-box;font-size:13px;"></div>';
+
+    document.body.appendChild(ui);
+    var get = function(id) { return document.getElementById(id); };
+    var canvas = get('triCanvas');
+    var ctx = canvas.getContext('2d');
+    var history = [];
+    var LS_KEY = 'geoPro_settings';
+    var saved = {};
+    try { saved = JSON.parse(localStorage.getItem(LS_KEY) || '{}'); } catch(e) {}
+    var currentGoal = saved.goal || 'base';
+    var currentMethod = saved.method || 0;
+
+    function saveSettings() {
+        try {
+            var precEl = document.getElementById('prec');
+            localStorage.setItem(LS_KEY, JSON.stringify({
+                goal: currentGoal,
+                method: currentMethod,
+                prec: precEl ? precEl.value : '2'
+            }));
+        } catch(e) {}
+    }
+
+    var goals = [
+        { id:'base',   label:'Base' },
+        { id:'side',   label:'Slant Side' },
+        { id:'hypo',   label:'Hypotenuse' },
+        { id:'height', label:'Height' }
+    ];
+
+    var options = {
+        base: [
+            { id:'b_shs', text:'Two slant sides + height', inputs:['Slant Side 1','Height','Slant Side 2'], toggle:true },
+            { id:'b_ah',  text:'Area + height',            inputs:['Area','Height'], toggle:false },
+            { id:'b_as',  text:'Area + slant side',        inputs:['Area','Slant Side'], toggle:false }
+        ],
+        side: [
+            { id:'s_shb', text:'Height + other side + base', inputs:['Known Slant Side','Height','Total Base'], toggle:true },
+            { id:'s_hb',  text:'Height + base segment',      inputs:['Height','Base Segment'], toggle:false },
+            { id:'s_ah',  text:'Area + height',              inputs:['Area','Height'], toggle:false }
+        ],
+        hypo: [
+            { id:'h_pyth', text:'Both legs (Pythagoras)', inputs:['Leg A','Leg B'], toggle:false },
+            { id:'h_ah',   text:'Area + one leg',         inputs:['Area','One Leg'], toggle:false }
+        ],
+        height: [
+            { id:'hg_side', text:'Hypotenuse + base segment', inputs:['Hypotenuse','Base Segment'], toggle:false },
+            { id:'hg_ab',   text:'Area + base',               inputs:['Area','Base'], toggle:false },
+            { id:'hg_ss',   text:'Two slant sides + base',    inputs:['Slant Side 1','Slant Side 2','Base'], toggle:false }
+        ]
+    };
+
+    var btnBase = 'border:2px solid #e0e0e0;border-radius:8px;padding:8px 10px;cursor:pointer;font-size:12px;font-weight:600;background:#fff;color:#555;text-align:center;transition:all 0.1s;';
+    var btnActive = 'border:2px solid #1a73e8;border-radius:8px;padding:8px 10px;cursor:pointer;font-size:12px;font-weight:700;background:#e8f0fe;color:#1a73e8;text-align:center;';
+    var methodBase = 'border:1.5px solid #e8e8e8;border-radius:7px;padding:8px 11px;cursor:pointer;font-size:12px;background:#fff;color:#555;text-align:left;font-weight:500;';
+    var methodActive = 'border:1.5px solid #1a73e8;border-radius:7px;padding:8px 11px;cursor:pointer;font-size:12px;background:#e8f0fe;color:#1a73e8;text-align:left;font-weight:700;';
+
+    function buildGoalBtns() {
+        var el = get('goalBtns');
+        el.innerHTML = '';
+        goals.forEach(function(g, i) {
+            var b = document.createElement('button');
+            b.style.cssText = g.id === currentGoal ? btnActive : btnBase;
+            b.innerText = g.label;
+            b.onclick = function() { currentGoal = g.id; currentMethod = 0; buildGoalBtns(); buildMethodBtns(); renderInputs(); saveSettings(); };
+            el.appendChild(b);
+        });
+    }
+
+    function buildMethodBtns() {
+        var el = get('methodBtns');
+        el.innerHTML = '';
+        var list = options[currentGoal];
+        // hide method section if only 1 option
+        get('methodSection').style.display = list.length > 1 ? 'block' : 'none';
+        list.forEach(function(m, i) {
+            var b = document.createElement('button');
+            b.style.cssText = i === currentMethod ? methodActive : methodBase;
+            b.innerText = m.text;
+            b.onclick = function() { currentMethod = i; buildMethodBtns(); renderInputs(); saveSettings(); };
+            el.appendChild(b);
+        });
+    }
+
+    function renderInputs() {
+        var config = options[currentGoal][currentMethod];
+        get('inputStack').innerHTML = config.inputs.map(function(label, i) {
+            return '<div><div style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.6px;margin-bottom:4px;">' + label.toUpperCase() + '</div><input type="number" id="v' + i + '" placeholder="0" style="width:100%;padding:9px 11px;border:1.5px solid #ddd;border-radius:7px;box-sizing:border-box;font-size:14px;outline:none;" onfocus="this.style.borderColor=\'#1a73e8\'" onblur="this.style.borderColor=\'#ddd\'"></div>';
+        }).join('');
+        get('posToggle').style.display = config.toggle ? 'block' : 'none';
+        get('res').style.display = 'none';
+        ctx.clearRect(0,0,340,190);
+    }
+
+    function drawTri(s1, h, b, s2, isExt) {
+        var W = canvas.width, H = canvas.height;
+        ctx.clearRect(0,0,W,H);
+
+        var x1 = Math.sqrt(Math.max(0, s1*s1 - h*h));
+        // raw triangle points (y=0 is top of triangle, y=h is base)
+        var raw = isExt ? [[0,h],[x1,0],[Math.abs(x1-b),h]] : [[0,h],[x1,0],[b,h]];
+
+        var pad = 42; // padding so labels have room
+        var minX = Math.min(raw[0][0],raw[1][0],raw[2][0]);
+        var maxX = Math.max(raw[0][0],raw[1][0],raw[2][0]);
+        var rangeX = maxX - minX || 1;
+        var rangeY = h || 1;
+        var scale = Math.min((W - pad*2) / rangeX, (H - pad*2) / rangeY);
+
+        // center the scaled triangle in the canvas
+        var triW = rangeX * scale;
+        var triH = rangeY * scale;
+        var offX = (W - triW) / 2 - minX * scale;
+        var offY = (H - triH) / 2;
+
+        function tr(p) { return [p[0]*scale + offX, p[1]*scale + offY]; }
+        var pA=tr(raw[0]), pB=tr(raw[1]), pC=tr(raw[2]);
+        var pH=[pB[0], pA[1]]; // foot of height on base
+
+        // fill
+        ctx.beginPath(); ctx.moveTo(pA[0],pA[1]); ctx.lineTo(pB[0],pB[1]); ctx.lineTo(pC[0],pC[1]); ctx.closePath();
+        ctx.fillStyle='rgba(26,115,232,0.06)'; ctx.fill();
+
+        // triangle stroke
+        ctx.strokeStyle='#1a73e8'; ctx.lineWidth=2.5; ctx.lineJoin='round';
+        ctx.beginPath(); ctx.moveTo(pA[0],pA[1]); ctx.lineTo(pB[0],pB[1]); ctx.lineTo(pC[0],pC[1]); ctx.closePath(); ctx.stroke();
+
+        // height dashed line
+        ctx.setLineDash([4,4]); ctx.lineWidth=1.5; ctx.strokeStyle='#aaa';
+        ctx.beginPath(); ctx.moveTo(pB[0],pB[1]); ctx.lineTo(pH[0],pH[1]); ctx.stroke(); ctx.setLineDash([]);
+
+        // right angle box
+        var sq=6; ctx.strokeStyle='#aaa'; ctx.lineWidth=1;
+        ctx.strokeRect(pH[0], pH[1], sq, sq);
+
+        // --- labels: all same color, pushed outward from each side ---
+        var LABEL = '#1a73e8';
+        ctx.fillStyle = LABEL;
+        ctx.font = 'bold 11px system-ui';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        var OUT = 14; // outward offset in px
+
+        // helper: midpoint + outward normal offset
+        function labelSide(ax,ay,bxp,by,lbl) {
+            var mx=(ax+bxp)/2, my=(ay+by)/2;
+            var dx=bxp-ax, dy=by-ay, len=Math.sqrt(dx*dx+dy*dy)||1;
+            // normal pointing away from triangle centroid
+            var cx=(pA[0]+pB[0]+pC[0])/3, cy=(pA[1]+pB[1]+pC[1])/3;
+            var nx=-dy/len, ny=dx/len;
+            if ((mx+nx-cx)*nx+(my+ny-cy)*ny < 0) { nx=-nx; ny=-ny; }
+            ctx.fillText(lbl, mx+nx*OUT, my+ny*OUT);
+        }
+
+        labelSide(pA[0],pA[1],pB[0],pB[1], s1.toFixed(1));   // left slant
+        labelSide(pB[0],pB[1],pC[0],pC[1], s2.toFixed(1));   // right slant
+        labelSide(pA[0],pA[1],pC[0],pC[1], b.toFixed(1));    // base
+
+        // height label: to the right of the dashed line
+        var hmx = pH[0]+16, hmy = (pB[1]+pH[1])/2;
+        ctx.textAlign='left';
+        ctx.fillText('h='+h.toFixed(1), hmx, hmy);
+    }
+
+    get('setBtn').onclick = function(e) { e.stopPropagation(); var m=get('setMenu'); m.style.display=m.style.display==='none'?'block':'none'; get('histMenu').style.display='none'; };
+    get('histBtn').onclick = function(e) { e.stopPropagation(); var m=get('histMenu'); m.style.display=m.style.display==='none'?'block':'none'; get('setMenu').style.display='none'; };
+    get('closeHist').onclick = function() { get('histMenu').style.display='none'; };
+    document.addEventListener('click', function(e) { if (!ui.contains(e.target)) { get('setMenu').style.display='none'; get('histMenu').style.display='none'; } });
+
+    get('calc').onclick = function() {
+        var v0 = parseFloat(get('v0') ? get('v0').value : '');
+        var v1 = parseFloat(get('v1') ? get('v1').value : '');
+        var v2 = parseFloat(get('v2') ? get('v2').value : '');
+        var p = parseInt(get('prec').value) || 2;
+        var posEl = document.querySelector('input[name="pos"]:checked');
+        var isExt = posEl ? posEl.value === 'ext' : false;
+        var type = options[currentGoal][currentMethod].id;
+        var res, area, perim, formula, s1, h, b, s2;
+
+        if (type === 'b_shs') {
+            s1=v0; h=v1; s2=v2;
+            var x=Math.sqrt(s1*s1-h*h), x2=Math.sqrt(s2*s2-h*h);
+            res = isExt ? Math.abs(x-x2) : (x+x2); b=res;
+            formula = 'Part1 = sqrt('+s1+'^2 - '+h+'^2) = '+x.toFixed(p)+'\nPart2 = sqrt('+s2+'^2 - '+h+'^2) = '+x2.toFixed(p)+'\nBase = '+x.toFixed(p)+' '+(isExt?'-':'+')+' '+x2.toFixed(p)+' = '+res.toFixed(p);
+        } else if (type === 'b_ah') {
+            res = (2*v0)/v1; b=res; h=v1; s1=Math.sqrt(h*h+(b/2)*(b/2)); s2=s1;
+            formula = 'Base = (2 x Area) / Height\n= (2 x '+v0+') / '+v1+' = '+res.toFixed(p);
+        } else if (type === 'b_as') {
+            h=Math.sqrt(v1*v1-(v0/v1)*(v0/v1)); res=(2*v0)/h; b=res; s1=v1; s2=v1;
+            formula = 'Height estimated from slant + area\nBase = (2 x '+v0+') / h';
+        } else if (type === 's_shb') {
+            s1=v0; h=v1; b=v2;
+            var xx=Math.sqrt(s1*s1-h*h), y=isExt?(b+xx):Math.abs(b-xx);
+            res=Math.sqrt(y*y+h*h); s2=res;
+            formula = 'Dist = sqrt('+s1+'^2 - '+h+'^2) = '+xx.toFixed(p)+'\nOther leg = '+(isExt?b+' + ':b+' - ')+xx.toFixed(p)+' = '+y.toFixed(p)+'\nSide = sqrt('+y.toFixed(p)+'^2 + '+h+'^2) = '+res.toFixed(p);
+        } else if (type === 's_hb') {
+            h=v0; b=v1; res=Math.sqrt(h*h+b*b); s1=res; s2=res;
+            formula = 'Side = sqrt(h^2 + base^2)\n= sqrt('+h+'^2 + '+b+'^2) = '+res.toFixed(p);
+        } else if (type === 's_ah') {
+            res = Math.sqrt(v0*v0 + (v1/2)*(v1/2)); s1=res; s2=res; h=v0; b=v1;
+            formula = 'Approx slant from area + height';
+        } else if (type === 'h_pyth') {
+            res=Math.sqrt(v0*v0+v1*v1);
+            formula='Hypotenuse = sqrt(A^2 + B^2)\n= sqrt('+v0+'^2 + '+v1+'^2) = '+res.toFixed(p);
+            s1=v0; s2=v1; b=res; h=(v0*v1)/res;
+        } else if (type === 'h_ah') {
+            var leg=v1; h=(2*v0)/leg; res=Math.sqrt(leg*leg+h*h);
+            formula='Height = (2 x Area) / Leg = '+h.toFixed(p)+'\nHyp = sqrt('+leg+'^2 + h^2) = '+res.toFixed(p);
+            s1=h; s2=leg; b=res; h=h;
+        } else if (type === 'hg_side') {
+            s1=v0; b=v1; res=Math.sqrt(v0*v0-v1*v1); h=res; s2=Math.sqrt(h*h+(b)*(b));
+            formula='Height = sqrt(Hyp^2 - Seg^2)\n= sqrt('+v0+'^2 - '+v1+'^2) = '+res.toFixed(p);
+        } else if (type === 'hg_ab') {
+            res=(2*v0)/v1; h=res; b=v1; s1=Math.sqrt(h*h+(b/2)*(b/2)); s2=s1;
+            formula='Height = (2 x Area) / Base\n= (2 x '+v0+') / '+v1+' = '+res.toFixed(p);
+        } else if (type === 'hg_ss') {
+            s1=v0; s2=v1; b=v2;
+            var x1c=Math.sqrt(s1*s1-(b/2)*(b/2));
+            res=x1c; h=res;
+            formula='Height = sqrt(S1^2 - (Base/2)^2)\n= sqrt('+s1+'^2 - '+(b/2)+'^2) = '+res.toFixed(p);
+        }
+
+        if (!isNaN(res) && res > 0) {
+            if (!s1) s1=res; if (!s2) s2=res; if (!b) b=res; if (!h) h=res;
+            area=0.5*b*h; perim=s1+s2+b;
+            get('res').style.display='block';
+            get('final').innerText=res.toFixed(p);
+            get('formulaText').innerText=formula;
+            get('areaRes').innerText=area.toFixed(p);
+            get('perimRes').innerText=perim.toFixed(p);
+            drawTri(s1,h,b,s2,isExt);
+            history.unshift(goals.filter(function(g){return g.id===currentGoal;})[0].label+': '+res.toFixed(p));
+            if (history.length>5) history.pop();
+            get('histList').innerHTML = history.map(function(h){ return '<span style="display:block;padding:3px 0;border-bottom:1px solid #f0f0f0;">'+h+'</span>'; }).join('');
+            saveSettings();
+        }
+    };
+
+    get('copy').onclick = function() { navigator.clipboard.writeText(get('final').innerText); this.innerText='Copied!'; var self=this; setTimeout(function(){self.innerText='Copy';},1500); };
+    get('dlBtn').onclick = function() { var link=document.createElement('a'); link.download='triangle.png'; link.href=canvas.toDataURL(); link.click(); };
+    get('clear').onclick = function() { document.querySelectorAll('#inputStack input').forEach(function(i){i.value='';}); get('res').style.display='none'; ctx.clearRect(0,0,340,190); };
+    get('close').onclick = function() { ui.remove(); };
+    // save prec on change
+    document.addEventListener('change', function(e) { if (e.target && e.target.id === 'prec') saveSettings(); });
+
+    buildGoalBtns();
+    buildMethodBtns();
+    renderInputs();
+    // restore saved prec after DOM is built
+    if (saved.prec) { var precEl = document.getElementById('prec'); if (precEl) precEl.value = saved.prec; }
+    // restore saved method index safely
+    var methodList = options[currentGoal];
+    if (currentMethod >= methodList.length) currentMethod = 0;
+})();
