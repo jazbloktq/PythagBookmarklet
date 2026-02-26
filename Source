@@ -658,9 +658,22 @@
 
         var adv=getAdv();
         var gLbl=((adv?goalLabel.a:goalLabel.s)[currentGoal])||currentGoal;
-        history.unshift(gLbl+': '+get('final').innerText);
-        if(history.length>5)history.pop();
-        get('histList').innerHTML=history.map(function(hh){return'<span style="display:block;padding:3px 0;border-bottom:1px solid #f0f0f0;">'+hh+'</span>';}).join('');
+        // Store full state so left-arrow can restore it
+        var inputVals=[];
+        cfg.inputs.forEach(function(_,i){var el=get('v'+i);inputVals.push(el?el.value:'');});
+        history.unshift({
+            label: gLbl+': '+get('final').innerText,
+            tri: currentTri, goal: currentGoal, method: currentMethod,
+            inputs: inputVals, isExt: isExt,
+            // result display state
+            finalText: get('final').innerText,
+            approxText: approxEl.innerText, approxVis: approxEl.style.display,
+            formula: formula||'', area: area.toFixed(p), perim: perim.toFixed(p),
+            // draw params
+            ds1: currentTri==='right'?s1:s1, dh: currentTri==='right'?s1:h, db: b, ds2: s2
+        });
+        if(history.length>10)history.pop();
+        get('histList').innerHTML=history.map(function(hh){return'<span style="display:block;padding:3px 0;border-bottom:1px solid #f0f0f0;">'+(hh.label||hh)+'</span>';}).join('');
         saveSettings();
     };
 
@@ -715,6 +728,79 @@
     get('optSurd').addEventListener('change', saveSettings);
     get('optSimplify').addEventListener('change', saveSettings);
     get('optAdvanced').addEventListener('change', function(){rebuildAll();saveSettings();});
+
+    // ── Keyboard shortcuts ────────────────────────────────────────────────────
+    var historyIndex = -1; // tracks which history entry we're browsing
+    document.addEventListener('keydown', function(e) {
+        // Only act if focus is inside the widget or no input is focused elsewhere
+        var active = document.activeElement;
+        var focusedElsewhere = active && active !== document.body && !ui.contains(active);
+        if (focusedElsewhere) return;
+
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            historyIndex = -1;
+            get('calc').click();
+        } else if (e.key === 'ArrowLeft') {
+            if (!history.length) return;
+            e.preventDefault();
+            historyIndex = Math.min(historyIndex + 1, history.length - 1);
+            var entry = history[historyIndex];
+            if (!entry || !entry.tri) return;
+            // Restore triangle type + goal + method
+            currentTri    = entry.tri;
+            currentGoal   = entry.goal;
+            currentMethod = entry.method;
+            buildTriBtns(); buildGoalBtns(); buildMethodBtns(); renderInputs();
+            // Restore input values
+            entry.inputs.forEach(function(val, i) {
+                var el = get('v' + i); if (el) el.value = val;
+            });
+            // Restore position toggle
+            if (entry.isExt) {
+                var extRadio = ui.querySelector('input[name="geopro_pos"][value="ext"]');
+                if (extRadio) extRadio.checked = true;
+            }
+            // Restore result panel
+            get('final').innerText = entry.finalText;
+            var approxEl = get('finalApprox');
+            approxEl.innerText = entry.approxText;
+            approxEl.style.display = entry.approxVis;
+            get('formulaText').innerText = entry.formula;
+            get('areaRes').innerText = entry.area;
+            get('perimRes').innerText = entry.perim;
+            get('res').style.display = 'block';
+            // Restore canvas
+            drawTri(entry.ds1, entry.dh, entry.db, entry.ds2, entry.isExt);
+        } else if (e.key === 'ArrowRight') {
+            // Go forward in history (towards more recent)
+            if (historyIndex <= 0) { historyIndex = -1; return; }
+            e.preventDefault();
+            historyIndex--;
+            var entry = history[historyIndex];
+            if (!entry || !entry.tri) return;
+            currentTri    = entry.tri;
+            currentGoal   = entry.goal;
+            currentMethod = entry.method;
+            buildTriBtns(); buildGoalBtns(); buildMethodBtns(); renderInputs();
+            entry.inputs.forEach(function(val, i) {
+                var el = get('v' + i); if (el) el.value = val;
+            });
+            if (entry.isExt) {
+                var extRadio2 = ui.querySelector('input[name="geopro_pos"][value="ext"]');
+                if (extRadio2) extRadio2.checked = true;
+            }
+            get('final').innerText = entry.finalText;
+            var approxEl2 = get('finalApprox');
+            approxEl2.innerText = entry.approxText;
+            approxEl2.style.display = entry.approxVis;
+            get('formulaText').innerText = entry.formula;
+            get('areaRes').innerText = entry.area;
+            get('perimRes').innerText = entry.perim;
+            get('res').style.display = 'block';
+            drawTri(entry.ds1, entry.dh, entry.ds2, entry.isExt);
+        }
+    });
 
     // ── Initial build ─────────────────────────────────────────────────────────
     if(triGoals[currentTri].indexOf(currentGoal)<0) currentGoal=triGoals[currentTri][0];
