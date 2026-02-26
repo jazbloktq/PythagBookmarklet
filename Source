@@ -662,8 +662,41 @@
     get('errClose').onclick= function(){clearError();};
     get('setBtn').onclick  = function(e){e.stopPropagation();var m=get('setMenu');m.style.display=m.style.display==='none'?'block':'none';get('histMenu').style.display='none';};
     get('histBtn').onclick = function(e){e.stopPropagation();var m=get('histMenu');m.style.display=m.style.display==='none'?'block':'none';get('setMenu').style.display='none';};
+
+    // ── Draggable header ──────────────────────────────────────────────────────
+    var header = ui.querySelector('div[style*="background:#1a73e8"]');
+    header.style.cursor = 'grab';
+    var dragState = null;
+    header.addEventListener('mousedown', function(e) {
+        if (e.target !== header && e.target.tagName !== 'H3') return;
+        e.preventDefault();
+        var rect = ui.getBoundingClientRect();
+        dragState = { startX: e.clientX - rect.left, startY: e.clientY - rect.top };
+        header.style.cursor = 'grabbing';
+        ui.style.right = 'auto';
+        ui.style.left  = rect.left + 'px';
+        ui.style.top   = rect.top  + 'px';
+    });
+    document.addEventListener('mousemove', function(e) {
+        if (!dragState) return;
+        var x = e.clientX - dragState.startX;
+        var y = e.clientY - dragState.startY;
+        x = Math.max(0, Math.min(window.innerWidth  - ui.offsetWidth,  x));
+        y = Math.max(0, Math.min(window.innerHeight - ui.offsetHeight, y));
+        ui.style.left = x + 'px';
+        ui.style.top  = y + 'px';
+    });
+    document.addEventListener('mouseup', function() {
+        if (!dragState) return;
+        dragState = null;
+        header.style.cursor = 'grab';
+    });
     get('closeHist').onclick=function(){get('histMenu').style.display='none';};
-    document.addEventListener('click',function(e){if(!ui.contains(e.target)){get('setMenu').style.display='none';get('histMenu').style.display='none';}});
+    document.addEventListener('click',function(e){
+        var sm=get('setMenu'),hm=get('histMenu'),sb=get('setBtn'),hb=get('histBtn');
+        if(sm.style.display!=='none'&&!sm.contains(e.target)&&e.target!==sb) sm.style.display='none';
+        if(hm.style.display!=='none'&&!hm.contains(e.target)&&e.target!==hb) hm.style.display='none';
+    });
 
     // Settings listeners — direct element bindings, not document-level
     get('prec').addEventListener('change', saveSettings);
