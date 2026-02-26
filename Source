@@ -11,6 +11,7 @@
     var currentTri    = saved.tri    || 'scalene';
     var initSurd      = saved.surd     === true;
     var initAdvanced  = saved.advanced === true;
+    var initSimplify  = saved.simplify === true;  // off by default — show √3300 not 10√33
     var initPrec      = saved.prec     !== undefined ? String(saved.prec) : '2';
 
     // ── DOM scaffold ──────────────────────────────────────────────────────────
@@ -76,6 +77,7 @@
           '<input type="number" id="prec" min="0" max="8" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:6px;box-sizing:border-box;font-size:13px;margin-bottom:10px;">',
           '<div style="border-top:1px solid #eee;padding-top:10px;display:flex;flex-direction:column;gap:8px;">',
             '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optSurd"     style="accent-color:#1a73e8;width:14px;height:14px;"> Surd form output</label>',
+            '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optSimplify" style="accent-color:#1a73e8;width:14px;height:14px;"> Simplify surds (e.g. 10\u221a33)</label>',
             '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optAdvanced" style="accent-color:#1a73e8;width:14px;height:14px;"> Advanced wording</label>',
           '</div>',
         '</div>'
@@ -93,14 +95,16 @@
     var history = [];
 
     // ── Apply saved settings to DOM ───────────────────────────────────────────
-    get('prec').value          = initPrec;
-    get('optSurd').checked     = initSurd;
-    get('optAdvanced').checked = initAdvanced;
+    get('prec').value           = initPrec;
+    get('optSurd').checked      = initSurd;
+    get('optSimplify').checked  = initSimplify;
+    get('optAdvanced').checked  = initAdvanced;
 
     // ── Accessors ─────────────────────────────────────────────────────────────
-    function getAdv()  { return get('optAdvanced').checked; }
-    function getSurd() { return get('optSurd').checked; }
-    function getPrec() { return parseInt(get('prec').value) || 2; }
+    function getAdv()      { return get('optAdvanced').checked; }
+    function getSurd()     { return get('optSurd').checked; }
+    function getSimplify() { return get('optSimplify').checked; }
+    function getPrec()     { return parseInt(get('prec').value) || 2; }
 
     // ── Persist ───────────────────────────────────────────────────────────────
     function saveSettings() {
@@ -109,6 +113,7 @@
                 goal: currentGoal, method: currentMethod, tri: currentTri,
                 prec: get('prec').value,
                 surd: get('optSurd').checked,
+                simplify: get('optSimplify').checked,
                 advanced: get('optAdvanced').checked
             }));
         } catch(e) {}
@@ -136,14 +141,16 @@
         }
         return { coeff: coeff, rad: rad };
     }
-    // Try to express `value` as a simplified surd. Returns string or null.
+    // Try to express `value` as a surd. Returns string or null.
+    // If simplify is off, returns √N (raw). If on, returns simplified a√b.
     function toSurdStr(value) {
         var sq = value * value;
         var sqR = Math.round(sq);
         if (Math.abs(sq - sqR) > 1e-7 || sqR <= 0) return null;
         var s = simplifySqrt(sqR);
         if (s.rad === 1) return null; // perfect square, just show integer
-        return (s.coeff === 1 ? '' : s.coeff) + '\u221a' + s.rad;
+        if (!getSimplify()) return '\u221a' + sqR; // unsimplified: √3300
+        return (s.coeff === 1 ? '' : s.coeff) + '\u221a' + s.rad; // simplified: 10√33
     }
     // Format a computed value for display (main result + step strings)
     // In surd mode, show simplified surd; for steps show sqrt(original radicand)
@@ -162,7 +169,10 @@
             var sq = value * value, sqR = Math.round(sq);
             if (Math.abs(sq - sqR) < 1e-7 && sqR > 0) {
                 var s = simplifySqrt(sqR);
-                if (s.rad !== 1) return (s.coeff===1?'':s.coeff)+'\u221a'+s.rad;
+                if (s.rad !== 1) {
+                    if (!getSimplify()) return '\u221a' + sqR; // unsimplified: √3300
+                    return (s.coeff===1?'':s.coeff)+'\u221a'+s.rad; // simplified: 10√33
+                }
                 if (Math.abs(value - Math.round(value)) < 1e-9) return String(Math.round(value));
             }
         }
@@ -662,6 +672,8 @@
     get('errClose').onclick= function(){clearError();};
     get('setBtn').onclick  = function(e){e.stopPropagation();var m=get('setMenu');m.style.display=m.style.display==='none'?'block':'none';get('histMenu').style.display='none';};
     get('histBtn').onclick = function(e){e.stopPropagation();var m=get('histMenu');m.style.display=m.style.display==='none'?'block':'none';get('setMenu').style.display='none';};
+    get('setMenu').addEventListener('click',  function(e){e.stopPropagation();});
+    get('histMenu').addEventListener('click', function(e){e.stopPropagation();});
 
     // ── Draggable header ──────────────────────────────────────────────────────
     var header = ui.querySelector('div[style*="background:#1a73e8"]');
@@ -701,6 +713,7 @@
     // Settings listeners — direct element bindings, not document-level
     get('prec').addEventListener('change', saveSettings);
     get('optSurd').addEventListener('change', saveSettings);
+    get('optSimplify').addEventListener('change', saveSettings);
     get('optAdvanced').addEventListener('change', function(){rebuildAll();saveSettings();});
 
     // ── Initial build ─────────────────────────────────────────────────────────
