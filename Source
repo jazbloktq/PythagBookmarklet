@@ -345,12 +345,16 @@
             return '<div><div style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.6px;margin-bottom:4px;">'+lbl.toUpperCase()+'</div>'+
                    '<input type="number" id="v'+i+'" placeholder="0" style="width:100%;padding:9px 11px;border:1.5px solid #ddd;border-radius:7px;box-sizing:border-box;font-size:14px;outline:none;" onfocus="this.style.borderColor=\'#1a73e8\'" onblur="this.style.borderColor=\'#ddd\'"></div>';
         }).join('');
-        // Attach Enter key directly to each input — most reliable way
+        // Attach Enter key in capture phase so page can't absorb it first
         cfg.inputs.forEach(function(_, i) {
             var inp = get('v'+i);
             if (inp) inp.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter' || e.keyCode === 13) { e.preventDefault(); get('calc').click(); }
-            });
+                if (e.key === 'Enter' || e.keyCode === 13) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    get('calc').click();
+                }
+            }, true);
         });
         var tog = get('posToggle');
         if (cfg.toggle) {
@@ -762,27 +766,27 @@
         drawTri(entry.ds1, entry.dh, entry.db, entry.ds2, entry.isExt);
     }
 
-    // Arrow keys — listen on document but ignore when a number input has focus
+    // Arrow keys — capture phase so page can't absorb them first
     document.addEventListener('keydown', function(e) {
         var key = e.key || e.keyCode;
         var active = document.activeElement;
-        // If an input/textarea outside the widget has focus, do nothing
         if (active && !ui.contains(active) && active !== document.body) return;
-        // If a number input inside the widget has focus, don't intercept arrows
         if (active && active.type === 'number' && (key === 'ArrowLeft' || key === 37 || key === 'ArrowRight' || key === 39)) return;
 
         if (key === 'ArrowLeft' || key === 37) {
             if (!history.length) return;
             e.preventDefault();
+            e.stopPropagation();
             historyIndex = Math.min(historyIndex + 1, history.length - 1);
             restoreEntry(history[historyIndex]);
         } else if (key === 'ArrowRight' || key === 39) {
             if (historyIndex <= 0) { historyIndex = -1; return; }
             e.preventDefault();
+            e.stopPropagation();
             historyIndex--;
             restoreEntry(history[historyIndex]);
         }
-    });
+    }, true);
 
     // ── Initial build ─────────────────────────────────────────────────────────
     if(triGoals[currentTri].indexOf(currentGoal)<0) currentGoal=triGoals[currentTri][0];
