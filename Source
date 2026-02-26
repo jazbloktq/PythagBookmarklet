@@ -1,128 +1,326 @@
 (function() {
     if (document.getElementById('geo-ultimate-vscroll')) { document.getElementById('geo-ultimate-vscroll').remove(); }
+
+    // ── State (load BEFORE building UI so checkboxes start correct) ───────────
+    var LS_KEY = 'geoPro_settings';
+    var saved = {};
+    try { saved = JSON.parse(localStorage.getItem(LS_KEY) || '{}'); } catch(e) {}
+
+    var currentGoal   = saved.goal   || 'base';
+    var currentMethod = saved.method || 0;
+    var currentTri    = saved.tri    || 'scalene';
+    var initSurd      = saved.surd     === true;
+    var initAdvanced  = saved.advanced === true;
+    var initPrec      = saved.prec     !== undefined ? String(saved.prec) : '2';
+
+    // ── DOM scaffold ──────────────────────────────────────────────────────────
     var ui = document.createElement('div');
     ui.id = 'geo-ultimate-vscroll';
-    ui.style = 'position:fixed;top:20px;right:20px;width:380px;max-height:88vh;background:#fff;border:1px solid #ddd;border-radius:14px;z-index:10000;padding:0;font-family:system-ui,sans-serif;box-shadow:0 8px 32px rgba(0,0,0,0.18);color:#222;overflow:hidden;display:flex;flex-direction:column;box-sizing:border-box;';
-
-    ui.innerHTML = '<div style="padding:14px 18px;background:#1a73e8;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;border-radius:14px 14px 0 0;"><h3 style="margin:0;font-size:15px;color:#fff;font-weight:700;letter-spacing:0.3px;">&#9651; Geometry Pro</h3><div style="display:flex;gap:12px;align-items:center;"><span id="histBtn" title="History" style="cursor:pointer;font-size:16px;opacity:0.9;">&#128337;</span><span id="setBtn" title="Settings" style="cursor:pointer;font-size:16px;opacity:0.9;">&#9881;</span><span id="close" style="cursor:pointer;font-size:18px;color:#fff;opacity:0.8;line-height:1;">&times;</span></div></div><div style="padding:16px;overflow-y:auto;overflow-x:hidden;flex:1;box-sizing:border-box;"><div style="margin-bottom:14px;"><div style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;margin-bottom:7px;">FIND:</div><div id="goalBtns" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;"></div></div><div id="methodSection" style="margin-bottom:14px;"><div style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;margin-bottom:7px;">METHOD:</div><div id="methodBtns" style="display:flex;flex-direction:column;gap:5px;"></div></div><div id="posToggle" style="background:#eef3fe;padding:9px 12px;border-radius:8px;margin-bottom:14px;font-size:12px;display:none;gap:0;"><div style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;margin-bottom:6px;">HEIGHT POSITION:</div><div style="display:flex;gap:16px;"><label style="cursor:pointer;display:flex;align-items:center;gap:5px;"><input type="radio" name="pos" value="int" checked style="accent-color:#1a73e8;"> Internal</label><label style="cursor:pointer;display:flex;align-items:center;gap:5px;"><input type="radio" name="pos" value="ext" style="accent-color:#1a73e8;"> External</label></div></div><div id="inputStack" style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px;"></div><div id="canvasBox" style="position:relative;width:100%;margin-bottom:14px;border:1px solid #eee;border-radius:8px;overflow:hidden;background:#fafafa;"><canvas id="triCanvas" width="340" height="190" style="width:100%;display:block;"></canvas><button id="dlBtn" style="position:absolute;bottom:7px;right:7px;background:rgba(255,255,255,0.92);border:1px solid #ddd;padding:4px 9px;border-radius:4px;font-size:10px;cursor:pointer;font-weight:600;color:#555;">Save PNG</button></div><div style="display:flex;gap:8px;margin-bottom:14px;"><button id="calc" style="flex:2;padding:11px;background:#1a73e8;color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px;">Calculate</button><button id="clear" style="flex:1;padding:11px;background:#f1f3f4;border:none;border-radius:8px;cursor:pointer;font-size:13px;color:#555;">Clear</button></div><div id="res" style="padding:14px;background:#f0f6ff;border-radius:10px;display:none;border:1px solid #c5d8f8;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><div><div style="font-size:10px;color:#666;font-weight:600;margin-bottom:2px;">RESULT</div><strong id="final" style="font-size:26px;color:#1a73e8;"></strong></div><button id="copy" style="background:#1a73e8;border:none;color:#fff;padding:7px 13px;border-radius:6px;font-size:11px;cursor:pointer;font-weight:700;">Copy</button></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;font-size:12px;border-top:1px solid #c5d8f8;padding-top:10px;"><div style="background:#fff;padding:8px;border-radius:6px;"><div style="color:#888;font-size:10px;font-weight:600;">AREA</div><div id="areaRes" style="font-weight:700;color:#222;font-size:14px;"></div></div><div style="background:#fff;padding:8px;border-radius:6px;"><div style="color:#888;font-size:10px;font-weight:600;">PERIMETER</div><div id="perimRes" style="font-weight:700;color:#222;font-size:14px;"></div></div></div><div style="border-top:1px solid #c5d8f8;padding-top:10px;"><div style="font-size:10px;font-weight:700;color:#1a73e8;margin-bottom:5px;letter-spacing:0.5px;">STEPS:</div><code id="formulaText" style="display:block;background:#fff;padding:8px;border-radius:6px;border:1px solid #dde8fb;white-space:pre-wrap;font-family:monospace;font-size:11px;color:#333;line-height:1.5;"></code></div></div></div><div id="histMenu" style="display:none;position:absolute;top:50px;left:16px;right:16px;background:#fff;border:1px solid #ddd;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.15);padding:14px;z-index:10005;font-size:12px;"><div style="font-weight:700;margin-bottom:8px;color:#333;">Recent Calculations</div><div id="histList" style="color:#666;line-height:1.8;">No history yet.</div><button id="closeHist" style="width:100%;margin-top:10px;padding:6px;border:none;background:#f1f3f4;border-radius:6px;cursor:pointer;font-size:12px;">Dismiss</button></div><div id="setMenu" style="display:none;position:absolute;top:50px;right:16px;width:160px;background:#fff;border:1px solid #ddd;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.15);padding:14px;z-index:10005;font-size:12px;"><div style="font-weight:700;margin-bottom:8px;color:#333;">Settings</div><label style="font-size:11px;color:#666;display:block;margin-bottom:4px;">Decimal places</label><input type="number" id="prec" value="2" min="0" max="8" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:6px;box-sizing:border-box;font-size:13px;"></div>';
-
+    ui.style.cssText = 'position:fixed;top:20px;right:20px;width:380px;max-height:88vh;background:#fff;border:1px solid #ddd;border-radius:14px;z-index:10000;padding:0;font-family:system-ui,sans-serif;box-shadow:0 8px 32px rgba(0,0,0,0.18);color:#222;overflow:hidden;display:flex;flex-direction:column;box-sizing:border-box;';
+    ui.innerHTML = [
+        '<div style="padding:14px 18px;background:#1a73e8;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;border-radius:14px 14px 0 0;">',
+          '<h3 style="margin:0;font-size:15px;color:#fff;font-weight:700;letter-spacing:0.3px;">&#9651; Geometry Pro</h3>',
+          '<div style="display:flex;gap:12px;align-items:center;">',
+            '<span id="histBtn" title="History" style="cursor:pointer;font-size:16px;opacity:0.9;">&#128337;</span>',
+            '<span id="setBtn"  title="Settings" style="cursor:pointer;font-size:16px;opacity:0.9;">&#9881;</span>',
+            '<span id="close"   style="cursor:pointer;font-size:18px;color:#fff;opacity:0.8;line-height:1;">&times;</span>',
+          '</div>',
+        '</div>',
+        '<div style="padding:16px;overflow-y:auto;overflow-x:hidden;flex:1;box-sizing:border-box;">',
+          '<div style="margin-bottom:14px;"><div style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;margin-bottom:7px;">TRIANGLE TYPE:</div><div id="triBtns" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;"></div></div>',
+          '<div style="margin-bottom:14px;"><div style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;margin-bottom:7px;">FIND:</div><div id="goalBtns" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;"></div></div>',
+          '<div id="methodSection" style="margin-bottom:14px;"><div style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;margin-bottom:7px;">METHOD:</div><div id="methodBtns" style="display:flex;flex-direction:column;gap:5px;"></div></div>',
+          '<div id="posToggle" style="background:#eef3fe;padding:9px 12px;border-radius:8px;margin-bottom:14px;font-size:12px;display:none;">',
+            '<div id="posTitle" style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;margin-bottom:6px;">HEIGHT POSITION:</div>',
+            '<div style="display:flex;gap:16px;">',
+              '<label style="cursor:pointer;display:flex;align-items:center;gap:5px;"><input type="radio" name="geopro_pos" value="int" checked style="accent-color:#1a73e8;"> <span id="posInt">Internal</span></label>',
+              '<label style="cursor:pointer;display:flex;align-items:center;gap:5px;"><input type="radio" name="geopro_pos" value="ext" style="accent-color:#1a73e8;"> <span id="posExt">External</span></label>',
+            '</div>',
+          '</div>',
+          '<div id="inputStack" style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px;"></div>',
+          '<div id="canvasBox" style="position:relative;width:100%;margin-bottom:14px;border:1px solid #eee;border-radius:8px;overflow:hidden;background:#fafafa;">',
+            '<canvas id="triCanvas" width="340" height="190" style="width:100%;display:block;"></canvas>',
+            '<button id="dlBtn" style="position:absolute;bottom:7px;right:7px;background:rgba(255,255,255,0.92);border:1px solid #ddd;padding:4px 9px;border-radius:4px;font-size:10px;cursor:pointer;font-weight:600;color:#555;">Save PNG</button>',
+          '</div>',
+          '<div style="display:flex;gap:8px;margin-bottom:14px;">',
+            '<button id="calc"  style="flex:2;padding:11px;background:#1a73e8;color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px;">Calculate</button>',
+            '<button id="clear" style="flex:1;padding:11px;background:#f1f3f4;border:none;border-radius:8px;cursor:pointer;font-size:13px;color:#555;">Clear</button>',
+          '</div>',
+          '<div id="res" style="padding:14px;background:#f0f6ff;border-radius:10px;display:none;border:1px solid #c5d8f8;">',
+            '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">',
+              '<div>',
+                '<div style="font-size:10px;color:#666;font-weight:600;margin-bottom:2px;">RESULT</div>',
+                '<strong id="final" style="font-size:26px;color:#1a73e8;"></strong>',
+                '<div id="finalApprox" style="font-size:11px;color:#666;margin-top:2px;display:none;"></div>',
+              '</div>',
+              '<button id="copy" style="background:#1a73e8;border:none;color:#fff;padding:7px 13px;border-radius:6px;font-size:11px;cursor:pointer;font-weight:700;">Copy</button>',
+            '</div>',
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;font-size:12px;border-top:1px solid #c5d8f8;padding-top:10px;">',
+              '<div style="background:#fff;padding:8px;border-radius:6px;"><div style="color:#888;font-size:10px;font-weight:600;">AREA</div><div id="areaRes" style="font-weight:700;color:#222;font-size:14px;"></div></div>',
+              '<div style="background:#fff;padding:8px;border-radius:6px;"><div style="color:#888;font-size:10px;font-weight:600;">PERIMETER</div><div id="perimRes" style="font-weight:700;color:#222;font-size:14px;"></div></div>',
+            '</div>',
+            '<div style="border-top:1px solid #c5d8f8;padding-top:10px;">',
+              '<div style="font-size:10px;font-weight:700;color:#1a73e8;margin-bottom:5px;letter-spacing:0.5px;">STEPS:</div>',
+              '<code id="formulaText" style="display:block;background:#fff;padding:8px;border-radius:6px;border:1px solid #dde8fb;white-space:pre-wrap;font-family:monospace;font-size:11px;color:#333;line-height:1.5;"></code>',
+            '</div>',
+          '</div>',
+        '</div>',
+        '<div id="histMenu" style="display:none;position:absolute;top:50px;left:16px;right:16px;background:#fff;border:1px solid #ddd;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.15);padding:14px;z-index:10005;font-size:12px;">',
+          '<div style="font-weight:700;margin-bottom:8px;color:#333;">Recent Calculations</div>',
+          '<div id="histList" style="color:#666;line-height:1.8;">No history yet.</div>',
+          '<button id="closeHist" style="width:100%;margin-top:10px;padding:6px;border:none;background:#f1f3f4;border-radius:6px;cursor:pointer;font-size:12px;">Dismiss</button>',
+        '</div>',
+        '<div id="setMenu" style="display:none;position:absolute;top:50px;right:16px;width:210px;background:#fff;border:1px solid #ddd;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.15);padding:14px;z-index:10005;font-size:12px;">',
+          '<div style="font-weight:700;margin-bottom:10px;color:#333;">Settings</div>',
+          '<label style="font-size:11px;color:#666;display:block;margin-bottom:4px;">Decimal places</label>',
+          '<input type="number" id="prec" min="0" max="8" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:6px;box-sizing:border-box;font-size:13px;margin-bottom:10px;">',
+          '<div style="border-top:1px solid #eee;padding-top:10px;display:flex;flex-direction:column;gap:8px;">',
+            '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optSurd"     style="accent-color:#1a73e8;width:14px;height:14px;"> Surd form output</label>',
+            '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optAdvanced" style="accent-color:#1a73e8;width:14px;height:14px;"> Advanced wording</label>',
+          '</div>',
+        '</div>'
+    ].join('');
     document.body.appendChild(ui);
 
-    // Create errBox as direct child of ui so it doesn't scroll
     var errBox = document.createElement('div');
     errBox.id = 'errBox';
     errBox.style.cssText = 'display:none;position:absolute;bottom:46px;left:16px;right:16px;padding:11px 14px;background:#fff5f5;border:1.5px solid #f5c2c2;border-radius:10px;box-shadow:0 4px 18px rgba(180,30,30,0.13);z-index:10010;box-sizing:border-box;transition:opacity 0.4s;';
     errBox.innerHTML = '<div style="display:flex;align-items:flex-start;gap:10px;"><span style="font-size:16px;line-height:1.3;">&#9888;&#65039;</span><div style="flex:1;"><div id="errTitle" style="font-size:12px;font-weight:700;color:#c0392b;margin-bottom:2px;"></div><div id="errMsg" style="font-size:11px;color:#a93226;line-height:1.5;"></div></div><span id="errClose" style="cursor:pointer;font-size:16px;color:#c0392b;opacity:0.6;line-height:1;padding-left:4px;">&times;</span></div>';
     ui.appendChild(errBox);
+
     var get = function(id) { return document.getElementById(id); };
-    var canvas = get('triCanvas');
-    var ctx = canvas.getContext('2d');
+    var canvas = get('triCanvas'), ctx = canvas.getContext('2d');
     var history = [];
-    var LS_KEY = 'geoPro_settings';
-    var saved = {};
-    try { saved = JSON.parse(localStorage.getItem(LS_KEY) || '{}'); } catch(e) {}
-    var currentGoal = saved.goal || 'base';
-    var currentMethod = saved.method || 0;
 
-    var errTimer = null;
-    function showError(title, msg) {
-        var box = get('errBox');
-        get('errTitle').innerText = title;
-        get('errMsg').innerText = msg;
-        get('res').style.display = 'none';
-        // align horizontally to canvasBox
-        var cb = get('canvasBox');
-        if (cb) {
-            var cbRect = cb.getBoundingClientRect();
-            var uiRect = ui.getBoundingClientRect();
-            var l = cbRect.left - uiRect.left;
-            var r = uiRect.right - cbRect.right;
-            box.style.left = l + 'px';
-            box.style.right = r + 'px';
-        }
-        box.style.opacity = '1';
-        box.style.display = 'block';
-        if (errTimer) clearTimeout(errTimer);
-        errTimer = setTimeout(function() { dismissError(); }, 4000);
-    }
-    function dismissError() {
-        var box = get('errBox');
-        box.style.opacity = '0';
-        setTimeout(function() { box.style.display = 'none'; box.style.opacity = '1'; }, 400);
-    }
-    function clearError() {
-        if (errTimer) { clearTimeout(errTimer); errTimer = null; }
-        var box = get('errBox');
-        box.style.display = 'none';
-        box.style.opacity = '1';
-    }
+    // ── Apply saved settings to DOM ───────────────────────────────────────────
+    get('prec').value          = initPrec;
+    get('optSurd').checked     = initSurd;
+    get('optAdvanced').checked = initAdvanced;
 
+    // ── Accessors ─────────────────────────────────────────────────────────────
+    function getAdv()  { return get('optAdvanced').checked; }
+    function getSurd() { return get('optSurd').checked; }
+    function getPrec() { return parseInt(get('prec').value) || 2; }
+
+    // ── Persist ───────────────────────────────────────────────────────────────
     function saveSettings() {
         try {
-            var precEl = document.getElementById('prec');
             localStorage.setItem(LS_KEY, JSON.stringify({
-                goal: currentGoal,
-                method: currentMethod,
-                prec: precEl ? precEl.value : '2'
+                goal: currentGoal, method: currentMethod, tri: currentTri,
+                prec: get('prec').value,
+                surd: get('optSurd').checked,
+                advanced: get('optAdvanced').checked
             }));
         } catch(e) {}
     }
 
-    var goals = [
-        { id:'base',   label:'Base' },
-        { id:'side',   label:'Slant Side' },
-        { id:'hypo',   label:'Hypotenuse' },
-        { id:'height', label:'Height' }
-    ];
+    // ── Error helpers ─────────────────────────────────────────────────────────
+    var errTimer = null;
+    function showError(title, msg) {
+        get('errTitle').innerText = title; get('errMsg').innerText = msg;
+        get('res').style.display = 'none';
+        errBox.style.opacity = '1'; errBox.style.display = 'block';
+        if (errTimer) clearTimeout(errTimer);
+        errTimer = setTimeout(dismissErr, 4000);
+    }
+    function dismissErr() { errBox.style.opacity='0'; setTimeout(function(){errBox.style.display='none';errBox.style.opacity='1';},400); }
+    function clearError() { if(errTimer){clearTimeout(errTimer);errTimer=null;} errBox.style.display='none'; errBox.style.opacity='1'; }
 
-    var options = {
-        base: [
-            { id:'b_shs', text:'Two slant sides + height', inputs:['Slant Side 1','Height','Slant Side 2'], toggle:true },
-            { id:'b_ah',  text:'Area + height',            inputs:['Area','Height'], toggle:false },
-            { id:'b_as',  text:'Area + slant side',        inputs:['Area','Slant Side'], toggle:false }
-        ],
-        side: [
-            { id:'s_shb', text:'Height + other side + base', inputs:['Known Slant Side','Height','Total Base'], toggle:true },
-            { id:'s_hb',  text:'Height + base segment',      inputs:['Height','Base Segment'], toggle:false },
-            { id:'s_ah',  text:'Area + height',              inputs:['Area','Height'], toggle:false }
-        ],
-        hypo: [
-            { id:'h_pyth', text:'Both legs (Pythagoras)', inputs:['Leg A','Leg B'], toggle:false },
-            { id:'h_ah',   text:'Area + one leg',         inputs:['Area','One Leg'], toggle:false }
-        ],
-        height: [
-            { id:'hg_side', text:'Hypotenuse + base segment', inputs:['Hypotenuse','Base Segment'], toggle:false },
-            { id:'hg_ab',   text:'Area + base',               inputs:['Area','Base'], toggle:false },
-            { id:'hg_ss',   text:'Two slant sides + base',    inputs:['Slant Side 1','Slant Side 2','Base'], toggle:false }
-        ]
+    // ── Surd helpers ──────────────────────────────────────────────────────────
+    // Simplify sqrt(n) into a*sqrt(b) where b is square-free
+    function simplifySqrt(n) {
+        // n must be a positive integer
+        var coeff = 1, rad = n;
+        for (var p = 2; p * p <= rad; p++) {
+            while (rad % (p*p) === 0) { rad /= p*p; coeff *= p; }
+        }
+        return { coeff: coeff, rad: rad };
+    }
+    // Try to express `value` as a simplified surd. Returns string or null.
+    function toSurdStr(value) {
+        var sq = value * value;
+        var sqR = Math.round(sq);
+        if (Math.abs(sq - sqR) > 1e-7 || sqR <= 0) return null;
+        var s = simplifySqrt(sqR);
+        if (s.rad === 1) return null; // perfect square, just show integer
+        return (s.coeff === 1 ? '' : s.coeff) + '\u221a' + s.rad;
+    }
+    // Format a computed value for display (main result + step strings)
+    // In surd mode, show simplified surd; for steps show sqrt(original radicand)
+    function fmt(value) {
+        if (getSurd()) {
+            var ss = toSurdStr(value);
+            if (ss) return ss;
+            var sqR = Math.round(value * value);
+            if (Math.abs(value * value - sqR) < 1e-7 && Math.abs(value - Math.round(value)) < 1e-9) return String(Math.round(value));
+        }
+        return value.toFixed(getPrec());
+    }
+    // For step strings: in surd mode show sqrt(n) keeping the radicand explicit before simplification
+    function fmtS(value) {
+        if (getSurd()) {
+            var sq = value * value, sqR = Math.round(sq);
+            if (Math.abs(sq - sqR) < 1e-7 && sqR > 0) {
+                var s = simplifySqrt(sqR);
+                if (s.rad !== 1) return (s.coeff===1?'':s.coeff)+'\u221a'+s.rad;
+                if (Math.abs(value - Math.round(value)) < 1e-9) return String(Math.round(value));
+            }
+        }
+        return value.toFixed(getPrec());
+    }
+
+    // ── Triangle type & goal/method tables ────────────────────────────────────
+    var triTypes = [
+        {id:'scalene',     label:'Scalene'},
+        {id:'isosceles',   label:'Isosceles'},
+        {id:'equilateral', label:'Equilateral'},
+        {id:'right',       label:'Right'}
+    ];
+    var triGoals = {
+        scalene:     ['base','side','height'],
+        isosceles:   ['base','side','height'],
+        equilateral: ['height','base'],
+        right:       ['hypo','side','height','base']
+    };
+    var goalLabel = {
+        s:{ base:'Base', side:'Side', height:'Height', hypo:'Hypotenuse' },
+        a:{ base:'Base', side:'Lateral Side', height:'Altitude', hypo:'Hypotenuse' }
+    };
+    // Methods: { id, s (simple text), a (advanced text), si (simple inputs), ai (advanced inputs), toggle }
+    var methods = {
+        scalene: {
+            base:[
+                {id:'sc_b_shs', s:'Two sides + height',  a:'Two lateral sides + altitude',
+                 si:['Side 1','Height','Side 2'], ai:['Lateral Side 1','Altitude','Lateral Side 2'], toggle:true},
+                {id:'sc_b_ah',  s:'Area + height',        a:'Area + altitude',
+                 si:['Area','Height'],            ai:['Area','Altitude'], toggle:false}
+            ],
+            side:[
+                {id:'sc_s_shb', s:'Known side + height + base', a:'Known lateral side + altitude + base',
+                 si:['Known Side','Height','Base'],               ai:['Known Lateral Side','Altitude','Base'], toggle:true},
+                {id:'sc_s_hb',  s:'Height + base segment',      a:'Altitude + base projection',
+                 si:['Height','Base Segment'],                   ai:['Altitude','Base Projection'], toggle:false}
+            ],
+            height:[
+                {id:'sc_h_ab',  s:'Area + base',      a:'Area + base',
+                 si:['Area','Base'],               ai:['Area','Base'], toggle:false},
+                {id:'sc_h_ssb', s:'Two sides + base', a:'Two lateral sides + base',
+                 si:['Side 1','Side 2','Base'],    ai:['Lateral Side 1','Lateral Side 2','Base'], toggle:false}
+            ]
+        },
+        isosceles: {
+            base:[
+                {id:'is_b_sh',  s:'Leg + height',     a:'Leg + altitude',
+                 si:['Leg','Height'],              ai:['Leg','Altitude'], toggle:false},
+                {id:'is_b_ah',  s:'Area + height',    a:'Area + altitude',
+                 si:['Area','Height'],             ai:['Area','Altitude'], toggle:false},
+                {id:'is_b_al',  s:'Area + leg',       a:'Area + leg',
+                 si:['Area','Leg'],                ai:['Area','Leg'], toggle:false}
+            ],
+            side:[
+                {id:'is_s_bh',  s:'Base + height',    a:'Base + altitude',
+                 si:['Base','Height'],             ai:['Base','Altitude'], toggle:false},
+                {id:'is_s_ab',  s:'Area + base',      a:'Area + base',
+                 si:['Area','Base'],               ai:['Area','Base'], toggle:false}
+            ],
+            height:[
+                {id:'is_h_bl',  s:'Base + leg',       a:'Base + leg',
+                 si:['Base','Leg'],                ai:['Base','Leg'], toggle:false},
+                {id:'is_h_ab',  s:'Area + base',      a:'Area + base',
+                 si:['Area','Base'],               ai:['Area','Base'], toggle:false}
+            ]
+        },
+        equilateral: {
+            height:[
+                {id:'eq_h_s',   s:'From side',        a:'From side',
+                 si:['Side'],                     ai:['Side'], toggle:false}
+            ],
+            base:[
+                {id:'eq_b_ah',  s:'Area + height',    a:'Area + altitude',
+                 si:['Area','Height'],             ai:['Area','Altitude'], toggle:false}
+            ]
+        },
+        right: {
+            hypo:[
+                {id:'rt_c_ll',  s:'Both legs (Pythagoras)',         a:'Both legs (Pythagorean theorem)',
+                 si:['Leg a','Leg b'],                              ai:['Leg a','Leg b'], toggle:false},
+                {id:'rt_c_al',  s:'Area + one leg',                 a:'Area + one leg',
+                 si:['Area','Leg'],                                 ai:['Area','Leg'], toggle:false}
+            ],
+            side:[
+                {id:'rt_l_cl',  s:'Hypotenuse + other leg',        a:'Hypotenuse + other leg',
+                 si:['Hypotenuse','Other Leg'],                     ai:['Hypotenuse','Other Leg'], toggle:false},
+                {id:'rt_l_ac',  s:'Area + hypotenuse',             a:'Area + hypotenuse',
+                 si:['Area','Hypotenuse'],                          ai:['Area','Hypotenuse'], toggle:false}
+            ],
+            height:[
+                {id:'rt_h_ll',  s:'Both legs',                     a:'Both legs',
+                 si:['Leg a','Leg b'],                              ai:['Leg a','Leg b'], toggle:false},
+                {id:'rt_h_ac',  s:'Area + hypotenuse',             a:'Area + hypotenuse',
+                 si:['Area','Hypotenuse'],                          ai:['Area','Hypotenuse'], toggle:false}
+            ],
+            base:[
+                {id:'rt_b_cl',  s:'Hypotenuse + leg',              a:'Hypotenuse + leg',
+                 si:['Hypotenuse','Leg'],                           ai:['Hypotenuse','Leg'], toggle:false},
+                {id:'rt_b_ah',  s:'Area + height',                 a:'Area + altitude',
+                 si:['Area','Height'],                              ai:['Area','Altitude'], toggle:false}
+            ]
+        }
     };
 
-    var btnBase = 'border:2px solid #e0e0e0;border-radius:8px;padding:8px 10px;cursor:pointer;font-size:12px;font-weight:600;background:#fff;color:#555;text-align:center;transition:all 0.1s;';
-    var btnActive = 'border:2px solid #1a73e8;border-radius:8px;padding:8px 10px;cursor:pointer;font-size:12px;font-weight:700;background:#e8f0fe;color:#1a73e8;text-align:center;';
-    var methodBase = 'border:1.5px solid #e8e8e8;border-radius:7px;padding:8px 11px;cursor:pointer;font-size:12px;background:#fff;color:#555;text-align:left;font-weight:500;';
-    var methodActive = 'border:1.5px solid #1a73e8;border-radius:7px;padding:8px 11px;cursor:pointer;font-size:12px;background:#e8f0fe;color:#1a73e8;text-align:left;font-weight:700;';
+    function getMethodList() {
+        var adv = getAdv();
+        var list = (methods[currentTri] || {})[currentGoal] || [];
+        return list.map(function(m) {
+            return { id:m.id, text:adv?m.a:m.s, inputs:adv?m.ai:m.si, toggle:m.toggle };
+        });
+    }
+
+    // ── Button style constants ────────────────────────────────────────────────
+    var bBase   = 'border:2px solid #e0e0e0;border-radius:8px;padding:8px 10px;cursor:pointer;font-size:12px;font-weight:600;background:#fff;color:#555;text-align:center;';
+    var bActive = 'border:2px solid #1a73e8;border-radius:8px;padding:8px 10px;cursor:pointer;font-size:12px;font-weight:700;background:#e8f0fe;color:#1a73e8;text-align:center;';
+    var mBase   = 'border:1.5px solid #e8e8e8;border-radius:7px;padding:8px 11px;cursor:pointer;font-size:12px;background:#fff;color:#555;text-align:left;font-weight:500;';
+    var mActive = 'border:1.5px solid #1a73e8;border-radius:7px;padding:8px 11px;cursor:pointer;font-size:12px;background:#e8f0fe;color:#1a73e8;text-align:left;font-weight:700;';
+
+    // ── Build UI sections ─────────────────────────────────────────────────────
+    function buildTriBtns() {
+        var el = get('triBtns'); el.innerHTML = '';
+        triTypes.forEach(function(t) {
+            var b = document.createElement('button');
+            b.style.cssText = t.id === currentTri ? bActive : bBase;
+            b.innerText = t.label;
+            b.onclick = function() {
+                currentTri = t.id;
+                if (triGoals[currentTri].indexOf(currentGoal) < 0) currentGoal = triGoals[currentTri][0];
+                currentMethod = 0;
+                buildTriBtns(); buildGoalBtns(); buildMethodBtns(); renderInputs(); saveSettings();
+            };
+            el.appendChild(b);
+        });
+    }
 
     function buildGoalBtns() {
-        var el = get('goalBtns');
-        el.innerHTML = '';
-        goals.forEach(function(g, i) {
+        var el = get('goalBtns'); el.innerHTML = '';
+        var adv = getAdv();
+        triGoals[currentTri].forEach(function(gid) {
             var b = document.createElement('button');
-            b.style.cssText = g.id === currentGoal ? btnActive : btnBase;
-            b.innerText = g.label;
-            b.onclick = function() { currentGoal = g.id; currentMethod = 0; buildGoalBtns(); buildMethodBtns(); renderInputs(); saveSettings(); };
+            b.style.cssText = gid === currentGoal ? bActive : bBase;
+            b.innerText = (adv ? goalLabel.a : goalLabel.s)[gid] || gid;
+            b.onclick = function() {
+                currentGoal = gid; currentMethod = 0;
+                buildGoalBtns(); buildMethodBtns(); renderInputs(); saveSettings();
+            };
             el.appendChild(b);
         });
     }
 
     function buildMethodBtns() {
-        var el = get('methodBtns');
-        el.innerHTML = '';
-        var list = options[currentGoal];
-        // hide method section if only 1 option
+        var el = get('methodBtns'); el.innerHTML = '';
+        var list = getMethodList();
         get('methodSection').style.display = list.length > 1 ? 'block' : 'none';
         list.forEach(function(m, i) {
             var b = document.createElement('button');
-            b.style.cssText = i === currentMethod ? methodActive : methodBase;
+            b.style.cssText = i === currentMethod ? mActive : mBase;
             b.innerText = m.text;
             b.onclick = function() { currentMethod = i; buildMethodBtns(); renderInputs(); saveSettings(); };
             el.appendChild(b);
@@ -130,259 +328,353 @@
     }
 
     function renderInputs() {
-        var config = options[currentGoal][currentMethod];
-        get('inputStack').innerHTML = config.inputs.map(function(label, i) {
-            return '<div><div style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.6px;margin-bottom:4px;">' + label.toUpperCase() + '</div><input type="number" id="v' + i + '" placeholder="0" style="width:100%;padding:9px 11px;border:1.5px solid #ddd;border-radius:7px;box-sizing:border-box;font-size:14px;outline:none;" onfocus="this.style.borderColor=\'#1a73e8\'" onblur="this.style.borderColor=\'#ddd\'"></div>';
+        var list = getMethodList();
+        if (!list.length) { get('inputStack').innerHTML = '<div style="color:#999;font-size:12px;">No methods for this combination.</div>'; return; }
+        var cfg = list[Math.min(currentMethod, list.length-1)];
+        get('inputStack').innerHTML = cfg.inputs.map(function(lbl, i) {
+            return '<div><div style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.6px;margin-bottom:4px;">'+lbl.toUpperCase()+'</div>'+
+                   '<input type="number" id="v'+i+'" placeholder="0" style="width:100%;padding:9px 11px;border:1.5px solid #ddd;border-radius:7px;box-sizing:border-box;font-size:14px;outline:none;" onfocus="this.style.borderColor=\'#1a73e8\'" onblur="this.style.borderColor=\'#ddd\'"></div>';
         }).join('');
-        get('posToggle').style.display = config.toggle ? 'block' : 'none';
+        var tog = get('posToggle');
+        if (cfg.toggle) {
+            var adv = getAdv();
+            get('posTitle').innerText = adv ? 'ALTITUDE FOOT:' : 'HEIGHT POSITION:';
+            get('posInt').innerText   = adv ? 'Interior foot'  : 'Internal';
+            get('posExt').innerText   = adv ? 'Exterior foot'  : 'External';
+            tog.style.display = 'block';
+        } else {
+            tog.style.display = 'none';
+        }
         get('res').style.display = 'none';
-        ctx.clearRect(0,0,340,190);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
 
+    function rebuildAll() { buildTriBtns(); buildGoalBtns(); buildMethodBtns(); renderInputs(); }
+
+    // ── Canvas ────────────────────────────────────────────────────────────────
+    // drawTri(s1, h, b, s2, isExt)
+    // s1=left side, h=altitude, b=base, s2=right side
+    // Shape overridden per triangle type
     function drawTri(s1, h, b, s2, isExt) {
         var W = canvas.width, H = canvas.height;
-        ctx.clearRect(0,0,W,H);
+        ctx.clearRect(0, 0, W, H);
+        var raw;
 
-        var x1 = Math.sqrt(Math.max(0, s1*s1 - h*h));
-        // raw triangle points (y=0 is top of triangle, y=h is base)
-        var raw = isExt ? [[0,h],[x1,0],[Math.abs(x1-b),h]] : [[0,h],[x1,0],[b,h]];
+        if (currentTri === 'equilateral') {
+            raw = [[0,h],[b/2,0],[b,h]];
+        } else if (currentTri === 'isosceles') {
+            raw = [[0,h],[b/2,0],[b,h]];
+        } else if (currentTri === 'right') {
+            // right angle at bottom-left: vertical leg up, horizontal leg right
+            raw = [[0,h],[0,0],[b,h]];
+        } else {
+            // scalene: compute apex x from s1 and h
+            var ax = Math.sqrt(Math.max(0, s1*s1 - h*h));
+            raw = isExt ? [[0,h],[ax,0],[Math.abs(ax-b),h]] : [[0,h],[ax,0],[b,h]];
+        }
 
-        var pad = 42; // padding so labels have room
-        var minX = Math.min(raw[0][0],raw[1][0],raw[2][0]);
-        var maxX = Math.max(raw[0][0],raw[1][0],raw[2][0]);
-        var rangeX = maxX - minX || 1;
-        var rangeY = h || 1;
-        var scale = Math.min((W - pad*2) / rangeX, (H - pad*2) / rangeY);
-
-        // center the scaled triangle in the canvas
-        var triW = rangeX * scale;
-        var triH = rangeY * scale;
-        var offX = (W - triW) / 2 - minX * scale;
-        var offY = (H - triH) / 2;
-
-        function tr(p) { return [p[0]*scale + offX, p[1]*scale + offY]; }
+        var pad = 44;
+        var minX=raw[0][0], maxX=raw[0][0];
+        for(var i=1;i<3;i++){if(raw[i][0]<minX)minX=raw[i][0];if(raw[i][0]>maxX)maxX=raw[i][0];}
+        var rangeX = maxX - minX || 1, rangeY = h || 1;
+        var scale = Math.min((W-pad*2)/rangeX, (H-pad*2)/rangeY);
+        var offX = (W - rangeX*scale)/2 - minX*scale;
+        var offY = (H - rangeY*scale)/2;
+        function tr(pt){return[pt[0]*scale+offX, pt[1]*scale+offY];}
         var pA=tr(raw[0]), pB=tr(raw[1]), pC=tr(raw[2]);
-        var pH=[pB[0], pA[1]]; // foot of height on base
+        var pH=[pB[0],pA[1]]; // altitude foot on base
 
         // fill
-        ctx.beginPath(); ctx.moveTo(pA[0],pA[1]); ctx.lineTo(pB[0],pB[1]); ctx.lineTo(pC[0],pC[1]); ctx.closePath();
-        ctx.fillStyle='rgba(26,115,232,0.06)'; ctx.fill();
+        ctx.beginPath();ctx.moveTo(pA[0],pA[1]);ctx.lineTo(pB[0],pB[1]);ctx.lineTo(pC[0],pC[1]);ctx.closePath();
+        ctx.fillStyle='rgba(26,115,232,0.07)';ctx.fill();
 
-        // triangle stroke
-        ctx.strokeStyle='#1a73e8'; ctx.lineWidth=2.5; ctx.lineJoin='round';
-        ctx.beginPath(); ctx.moveTo(pA[0],pA[1]); ctx.lineTo(pB[0],pB[1]); ctx.lineTo(pC[0],pC[1]); ctx.closePath(); ctx.stroke();
+        // Equal-side tick marks
+        function tick(ax,ay,bx,by,n){
+            var mx=(ax+bx)/2,my=(ay+by)/2,dx=bx-ax,dy=by-ay,len=Math.sqrt(dx*dx+dy*dy)||1;
+            var nx=-dy/len*5,ny=dx/len*5,gap=4;
+            ctx.strokeStyle='#1a73e8';ctx.lineWidth=1.5;
+            for(var t=0;t<n;t++){var o=(t-(n-1)/2)*gap,ox=dx/len*o,oy=dy/len*o;ctx.beginPath();ctx.moveTo(mx+ox-nx,my+oy-ny);ctx.lineTo(mx+ox+nx,my+oy+ny);ctx.stroke();}
+        }
+        if(currentTri==='equilateral'){tick(pA[0],pA[1],pB[0],pB[1],2);tick(pB[0],pB[1],pC[0],pC[1],2);tick(pA[0],pA[1],pC[0],pC[1],2);}
+        else if(currentTri==='isosceles'){tick(pA[0],pA[1],pB[0],pB[1],1);tick(pB[0],pB[1],pC[0],pC[1],1);}
 
-        // detect right triangle in raw coords (exact, not pixel-approximate)
-        var rawEPS = 0.0001;
-        var heightOnLeft  = Math.abs(raw[0][0] - raw[1][0]) < rawEPS; // apex x == left base x
-        var heightOnRight = Math.abs(raw[2][0] - raw[1][0]) < rawEPS; // apex x == right base x
-        var isRightTri = heightOnLeft || heightOnRight;
+        // triangle outline
+        ctx.strokeStyle='#1a73e8';ctx.lineWidth=2.5;ctx.lineJoin='round';
+        ctx.beginPath();ctx.moveTo(pA[0],pA[1]);ctx.lineTo(pB[0],pB[1]);ctx.lineTo(pC[0],pC[1]);ctx.closePath();ctx.stroke();
 
-        // only draw dashed height line if it isn't already a side of the triangle
-        if (!isRightTri) {
-            ctx.setLineDash([4,4]); ctx.lineWidth=1.5; ctx.strokeStyle='#aaa';
-            ctx.beginPath(); ctx.moveTo(pB[0],pB[1]); ctx.lineTo(pH[0],pH[1]); ctx.stroke(); ctx.setLineDash([]);
+        // Right angle box
+        if(currentTri==='right'){
+            var sq=7;ctx.strokeStyle='#888';ctx.lineWidth=1.2;
+            ctx.strokeRect(pA[0],pA[1]-sq,sq,sq);
         }
 
-        // right angle box: place at foot, but only if not already shown by triangle corner
-        var sq=6; ctx.strokeStyle='#aaa'; ctx.lineWidth=1;
-        if (!isRightTri) {
-            ctx.strokeRect(pH[0], pH[1], sq, sq);
-        } else if (heightOnLeft) {
-            ctx.strokeRect(pA[0], pA[1], sq, -sq);
+        // Scalene: detect if altitude falls on a side (right angle at base corner)
+        var altOnLeft=false, altOnRight=false;
+        if(currentTri==='scalene'){
+            var eps=0.002*scale;
+            altOnLeft  = Math.abs(pB[0]-pA[0])<eps;
+            altOnRight = Math.abs(pB[0]-pC[0])<eps;
+        }
+
+        // Dashed altitude line
+        var drawAlt = (currentTri==='isosceles'||currentTri==='equilateral'||
+                      (currentTri==='scalene'&&!altOnLeft&&!altOnRight));
+        if(drawAlt){
+            ctx.setLineDash([4,4]);ctx.lineWidth=1.5;ctx.strokeStyle='#aaa';
+            ctx.beginPath();ctx.moveTo(pB[0],pB[1]);ctx.lineTo(pH[0],pH[1]);ctx.stroke();
+            ctx.setLineDash([]);
+            var sq2=6;ctx.strokeStyle='#aaa';ctx.lineWidth=1;
+            ctx.strokeRect(pH[0],pH[1],sq2,sq2);
+        } else if(currentTri==='scalene'&&altOnLeft){
+            ctx.strokeStyle='#aaa';ctx.lineWidth=1;ctx.strokeRect(pA[0],pA[1],6,-6);
+        } else if(currentTri==='scalene'&&altOnRight){
+            ctx.strokeStyle='#aaa';ctx.lineWidth=1;ctx.strokeRect(pC[0]-6,pC[1],6,-6);
+        }
+
+        // Labels
+        ctx.fillStyle='#1a73e8';ctx.font='bold 11px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';
+        var OUT=14, adv=getAdv(), hLbl=adv?'alt=':'h=';
+
+        function labelSide(ax,ay,bx,by,lbl){
+            var mx=(ax+bx)/2,my=(ay+by)/2,dx=bx-ax,dy=by-ay,len=Math.sqrt(dx*dx+dy*dy)||1;
+            var cx=(pA[0]+pB[0]+pC[0])/3,cy=(pA[1]+pB[1]+pC[1])/3;
+            var nx=-dy/len,ny=dx/len;
+            if((mx+nx-cx)*nx+(my+ny-cy)*ny<0){nx=-nx;ny=-ny;}
+            ctx.fillText(lbl,mx+nx*OUT,my+ny*OUT);
+        }
+
+        function altLabel(hVal){
+            var hmy=(pB[1]+pH[1])/2;
+            if(W-pH[0]>=pH[0]){ctx.textAlign='left';ctx.fillText(hLbl+hVal,pH[0]+8,hmy);}
+            else{ctx.textAlign='right';ctx.fillText(hLbl+hVal,pH[0]-8,hmy);}
+        }
+
+        var s1L=fmt(s1),s2L=fmt(s2),bL=fmt(b),hL=fmt(h);
+
+        if(currentTri==='equilateral'){
+            labelSide(pA[0],pA[1],pB[0],pB[1],s1L);
+            labelSide(pB[0],pB[1],pC[0],pC[1],s1L);
+            labelSide(pA[0],pA[1],pC[0],pC[1],s1L);
+            altLabel(hL);
+        } else if(currentTri==='isosceles'){
+            labelSide(pA[0],pA[1],pB[0],pB[1],s1L);
+            labelSide(pB[0],pB[1],pC[0],pC[1],s1L);
+            labelSide(pA[0],pA[1],pC[0],pC[1],bL);
+            altLabel(hL);
+        } else if(currentTri==='right'){
+            // s1=vertical leg, b=horizontal leg, s2=hypotenuse
+            labelSide(pA[0],pA[1],pB[0],pB[1],s1L);
+            labelSide(pA[0],pA[1],pC[0],pC[1],bL);
+            labelSide(pB[0],pB[1],pC[0],pC[1],s2L);
         } else {
-            ctx.strokeRect(pC[0]-sq, pC[1], sq, -sq);
-        }
-
-        // --- labels: all same color, pushed outward from each side ---
-        var LABEL = '#1a73e8';
-        ctx.fillStyle = LABEL;
-        ctx.font = 'bold 11px system-ui';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        var OUT = 14; // outward offset in px
-
-        // helper: midpoint + outward normal offset
-        function labelSide(ax,ay,bxp,by,lbl) {
-            var mx=(ax+bxp)/2, my=(ay+by)/2;
-            var dx=bxp-ax, dy=by-ay, len=Math.sqrt(dx*dx+dy*dy)||1;
-            var cx=(pA[0]+pB[0]+pC[0])/3, cy=(pA[1]+pB[1]+pC[1])/3;
-            var nx=-dy/len, ny=dx/len;
-            if ((mx+nx-cx)*nx+(my+ny-cy)*ny < 0) { nx=-nx; ny=-ny; }
-            ctx.fillText(lbl, mx+nx*OUT, my+ny*OUT);
-        }
-
-        // Label each side. For right triangles, the height IS one of the legs —
-        // show both the side value AND h= only if they are the same number.
-        // If they differ (e.g. h_pyth where s1/s2 are legs but h is computed differently),
-        // just show the side value and skip the redundant h= label on that leg.
-        var numEPS = 0.01;
-        if (heightOnLeft) {
-            var leftLbl = (Math.abs(s1 - h) < numEPS) ? 'h='+h.toFixed(1) : s1.toFixed(1);
-            labelSide(pA[0],pA[1],pB[0],pB[1], leftLbl);
-            labelSide(pB[0],pB[1],pC[0],pC[1], s2.toFixed(1));
-            labelSide(pA[0],pA[1],pC[0],pC[1], b.toFixed(1));
-        } else if (heightOnRight) {
-            var rightLbl = (Math.abs(s2 - h) < numEPS) ? 'h='+h.toFixed(1) : s2.toFixed(1);
-            labelSide(pA[0],pA[1],pB[0],pB[1], s1.toFixed(1));
-            labelSide(pB[0],pB[1],pC[0],pC[1], rightLbl);
-            labelSide(pA[0],pA[1],pC[0],pC[1], b.toFixed(1));
-        } else {
-            labelSide(pA[0],pA[1],pB[0],pB[1], s1.toFixed(1));
-            labelSide(pB[0],pB[1],pC[0],pC[1], s2.toFixed(1));
-            labelSide(pA[0],pA[1],pC[0],pC[1], b.toFixed(1));
-            // floating height label beside the dashed line
-            var hmy = (pB[1]+pH[1])/2;
-            if (W - pH[0] >= pH[0]) {
-                ctx.textAlign='left';
-                ctx.fillText('h='+h.toFixed(1), pH[0]+8, hmy);
-            } else {
-                ctx.textAlign='right';
-                ctx.fillText('h='+h.toFixed(1), pH[0]-8, hmy);
-            }
+            labelSide(pA[0],pA[1],pB[0],pB[1],s1L);
+            labelSide(pB[0],pB[1],pC[0],pC[1],s2L);
+            labelSide(pA[0],pA[1],pC[0],pC[1],bL);
+            if(!altOnLeft&&!altOnRight) altLabel(hL);
         }
     }
 
-    get('setBtn').onclick = function(e) { e.stopPropagation(); var m=get('setMenu'); m.style.display=m.style.display==='none'?'block':'none'; get('histMenu').style.display='none'; };
-    get('histBtn').onclick = function(e) { e.stopPropagation(); var m=get('histMenu'); m.style.display=m.style.display==='none'?'block':'none'; get('setMenu').style.display='none'; };
-    get('closeHist').onclick = function() { get('histMenu').style.display='none'; };
-    document.addEventListener('click', function(e) { if (!ui.contains(e.target)) { get('setMenu').style.display='none'; get('histMenu').style.display='none'; } });
-
+    // ── Calculate ─────────────────────────────────────────────────────────────
     get('calc').onclick = function() {
         clearError();
-        var config = options[currentGoal][currentMethod];
-        var inputs = config.inputs;
-        var vals = [];
-        var missing = [];
-        for (var i=0; i<inputs.length; i++) {
-            var el = get('v'+i);
-            var v = el ? parseFloat(el.value) : NaN;
+        var list = getMethodList();
+        if(!list.length){showError('Not available','No formula for this combination.');return;}
+        var cfg = list[Math.min(currentMethod,list.length-1)];
+        var vals=[], missing=[];
+        cfg.inputs.forEach(function(lbl,i){
+            var el=get('v'+i), v=el?parseFloat(el.value):NaN;
             vals.push(v);
-            if (isNaN(v) || el.value.trim() === '') missing.push(inputs[i]);
-        }
-        if (missing.length > 0) {
-            showError('Missing values', 'Please fill in: ' + missing.join(', ') + '.');
-            return;
-        }
-        for (var j=0; j<vals.length; j++) {
-            if (vals[j] <= 0) {
-                showError('Values must be positive', inputs[j] + ' must be greater than zero.');
-                return;
-            }
-        }
-        var v0=vals[0], v1=vals[1]!==undefined?vals[1]:NaN, v2=vals[2]!==undefined?vals[2]:NaN;
-        var p = parseInt(get('prec').value) || 2;
-        var posEl = document.querySelector('input[name="pos"]:checked');
-        var isExt = posEl ? posEl.value === 'ext' : false;
-        var type = config.id;
+            if(isNaN(v)||!el||el.value.trim()==='') missing.push(lbl);
+        });
+        if(missing.length){showError('Missing values','Please fill in: '+missing.join(', ')+'.');return;}
+        for(var j=0;j<vals.length;j++) if(vals[j]<=0){showError('Values must be positive',cfg.inputs[j]+' must be greater than zero.');return;}
+
+        var v0=vals[0], v1=vals.length>1?vals[1]:NaN, v2=vals.length>2?vals[2]:NaN;
+        var p=getPrec(), useSurd=getSurd();
+        var posEl=ui.querySelector('input[name="geopro_pos"]:checked');
+        var isExt=posEl?posEl.value==='ext':false;
+        var type=cfg.id;
         var res, area, perim, formula, s1, h, b, s2;
 
-        try {
-            if (type === 'b_shs') {
-                s1=v0; h=v1; s2=v2;
-                if (h >= s1) { showError('Impossible triangle', 'Height (' + h + ') must be shorter than Side 1 (' + s1 + ').'); return; }
-                if (h >= s2) { showError('Impossible triangle', 'Height (' + h + ') must be shorter than Side 2 (' + s2 + ').'); return; }
-                var x=Math.sqrt(s1*s1-h*h), x2=Math.sqrt(s2*s2-h*h);
-                res = isExt ? Math.abs(x-x2) : (x+x2); b=res;
-                formula = 'Part1 = sqrt('+s1+'^2 - '+h+'^2) = '+x.toFixed(p)+'\nPart2 = sqrt('+s2+'^2 - '+h+'^2) = '+x2.toFixed(p)+'\nBase = '+x.toFixed(p)+' '+(isExt?'-':'+')+' '+x2.toFixed(p)+' = '+res.toFixed(p);
-            } else if (type === 'b_ah') {
-                if (v1 <= 0) { showError('Invalid height', 'Height must be greater than zero.'); return; }
-                res = (2*v0)/v1; b=res; h=v1; s1=Math.sqrt(h*h+(b/2)*(b/2)); s2=s1;
-                formula = 'Base = (2 x Area) / Height\n= (2 x '+v0+') / '+v1+' = '+res.toFixed(p);
-            } else if (type === 'b_as') {
-                h=Math.sqrt(v1*v1-(v0/v1)*(v0/v1)); res=(2*v0)/h; b=res; s1=v1; s2=v1;
-                formula = 'Height estimated from slant + area\nBase = (2 x '+v0+') / h';
-            } else if (type === 's_shb') {
-                s1=v0; h=v1; b=v2;
-                if (h >= s1) { showError('Impossible triangle', 'Height (' + h + ') must be shorter than the known side (' + s1 + ').'); return; }
-                var xx=Math.sqrt(s1*s1-h*h);
-                if (isExt) {
-                    if (xx <= b) { showError('Impossible triangle', 'For an external height the known side must be long enough that its horizontal reach (' + xx.toFixed(p) + ') exceeds the base (' + b + ').'); return; }
-                    res=Math.sqrt(b*b+h*h); s2=res;
-                    formula = 'Horiz reach = sqrt('+s1+'^2 - '+h+'^2) = '+xx.toFixed(p)+'\nSide 2 = sqrt(base^2 + h^2) = sqrt('+b+'^2 + '+h+'^2) = '+res.toFixed(p);
-                } else {
-                    var y=Math.abs(b-xx);
-                    res=Math.sqrt(y*y+h*h); s2=res;
-                    formula = 'Horiz reach = sqrt('+s1+'^2 - '+h+'^2) = '+xx.toFixed(p)+'\nOther leg = |'+b+' - '+xx.toFixed(p)+'| = '+y.toFixed(p)+'\nSide 2 = sqrt('+y.toFixed(p)+'^2 + '+h+'^2) = '+res.toFixed(p);
-                }
-            } else if (type === 's_hb') {
-                h=v0; b=v1; res=Math.sqrt(h*h+b*b); s1=res; s2=res;
-                formula = 'Side = sqrt(h^2 + base^2)\n= sqrt('+h+'^2 + '+b+'^2) = '+res.toFixed(p);
-            } else if (type === 's_ah') {
-                res = Math.sqrt(v0*v0 + (v1/2)*(v1/2)); s1=res; s2=res; h=v0; b=v1;
-                formula = 'Approx slant from area + height';
-            } else if (type === 'h_pyth') {
-                res=Math.sqrt(v0*v0+v1*v1);
-                formula='Hypotenuse = sqrt(A^2 + B^2)\n= sqrt('+v0+'^2 + '+v1+'^2) = '+res.toFixed(p);
-                s1=v0; s2=v1; b=res; h=(v0*v1)/res;
-            } else if (type === 'h_ah') {
-                var leg=v1; h=(2*v0)/leg; res=Math.sqrt(leg*leg+h*h);
-                formula='Height = (2 x Area) / Leg = '+h.toFixed(p)+'\nHyp = sqrt('+leg+'^2 + h^2) = '+res.toFixed(p);
-                s1=h; s2=res; b=leg;
-            } else if (type === 'hg_side') {
-                if (v1 >= v0) { showError('Impossible triangle', 'The base segment (' + v1 + ') must be shorter than the hypotenuse (' + v0 + ').'); return; }
-                s1=v0; b=v1; res=Math.sqrt(v0*v0-v1*v1); h=res; s2=Math.sqrt(h*h+(b)*(b));
-                formula='Height = sqrt(Hyp^2 - Seg^2)\n= sqrt('+v0+'^2 - '+v1+'^2) = '+res.toFixed(p);
-            } else if (type === 'hg_ab') {
-                res=(2*v0)/v1; h=res; b=v1; s1=Math.sqrt(h*h+(b/2)*(b/2)); s2=s1;
-                formula='Height = (2 x Area) / Base\n= (2 x '+v0+') / '+v1+' = '+res.toFixed(p);
-            } else if (type === 'hg_ss') {
-                s1=v0; s2=v1; b=v2;
-                if (b/2 >= s1) { showError('Impossible triangle', 'Base (' + b + ') is too wide for Side 1 (' + s1 + ').'); return; }
-                var x1c=Math.sqrt(s1*s1-(b/2)*(b/2));
-                res=x1c; h=res;
-                formula='Height = sqrt(S1^2 - (Base/2)^2)\n= sqrt('+s1+'^2 - '+(b/2)+'^2) = '+res.toFixed(p);
+        try{
+        // ─ Scalene ─────────────────────────────────────────────────────────
+        if(type==='sc_b_shs'){
+            s1=v0;h=v1;s2=v2;
+            if(h>=s1){showError('Impossible','Height must be less than Side 1.');return;}
+            if(h>=s2){showError('Impossible','Height must be less than Side 2.');return;}
+            var xA=Math.sqrt(s1*s1-h*h),xB=Math.sqrt(s2*s2-h*h);
+            res=isExt?Math.abs(xA-xB):(xA+xB); b=res;
+            formula='Part1 = \u221a('+s1+'\u00b2 \u2212 '+h+'\u00b2) = '+fmtS(xA)+
+                    '\nPart2 = \u221a('+s2+'\u00b2 \u2212 '+h+'\u00b2) = '+fmtS(xB)+
+                    '\nBase = '+fmtS(xA)+(isExt?' \u2212 ':' + ')+fmtS(xB)+' = '+fmtS(res);
+        }else if(type==='sc_b_ah'){
+            res=(2*v0)/v1;b=res;h=v1;s1=Math.sqrt(h*h+(b/2)*(b/2));s2=s1;
+            formula='Base = (2 \u00d7 Area) / Height\n= (2 \u00d7 '+v0+') / '+v1+' = '+fmtS(res);
+        }else if(type==='sc_s_shb'){
+            s1=v0;h=v1;b=v2;
+            if(h>=s1){showError('Impossible','Height must be less than Known Side.');return;}
+            var xxS=Math.sqrt(s1*s1-h*h);
+            if(isExt){
+                if(xxS<=b){showError('Impossible','Side\'s horizontal reach ('+fmtS(xxS)+') must exceed base.');return;}
+                res=Math.sqrt(b*b+h*h);s2=res;
+                formula='Reach = \u221a('+s1+'\u00b2 \u2212 '+h+'\u00b2) = '+fmtS(xxS)+'\nSide 2 = \u221a('+b+'\u00b2 + '+h+'\u00b2) = '+fmtS(res);
+            }else{
+                var yS=Math.abs(b-xxS);
+                res=Math.sqrt(yS*yS+h*h);s2=res;
+                formula='Reach = \u221a('+s1+'\u00b2 \u2212 '+h+'\u00b2) = '+fmtS(xxS)+'\nSeg = |'+b+' \u2212 '+fmtS(xxS)+'| = '+fmtS(yS)+'\nSide 2 = \u221a('+fmtS(yS)+'\u00b2 + '+h+'\u00b2) = '+fmtS(res);
             }
-        } catch(e) {
-            showError('Calculation error', 'Something went wrong. Double-check your values make a valid triangle.');
-            return;
+        }else if(type==='sc_s_hb'){
+            h=v0;b=v1;res=Math.sqrt(h*h+b*b);s1=res;s2=res;
+            formula='Side = \u221a(h\u00b2 + seg\u00b2)\n= \u221a('+h+'\u00b2 + '+b+'\u00b2) = '+fmtS(res);
+        }else if(type==='sc_h_ab'){
+            res=(2*v0)/v1;h=res;b=v1;s1=Math.sqrt(h*h+(b/2)*(b/2));s2=s1;
+            formula='Height = (2 \u00d7 Area) / Base\n= (2 \u00d7 '+v0+') / '+v1+' = '+fmtS(res);
+        }else if(type==='sc_h_ssb'){
+            s1=v0;s2=v1;b=v2;
+            if(b/2>=s1){showError('Impossible','Base is too wide for Side 1.');return;}
+            res=Math.sqrt(s1*s1-(b/2)*(b/2));h=res;
+            formula='Height = \u221a(S1\u00b2 \u2212 (Base/2)\u00b2)\n= \u221a('+s1+'\u00b2 \u2212 '+(b/2)+'\u00b2) = '+fmtS(res);
+        // ─ Isosceles ───────────────────────────────────────────────────────
+        }else if(type==='is_b_sh'){
+            s1=v0;h=v1;s2=v0;
+            if(h>=s1){showError('Impossible','Height must be less than Leg.');return;}
+            var hfI=Math.sqrt(s1*s1-h*h);
+            res=2*hfI;b=res;
+            formula='Half-base = \u221a('+s1+'\u00b2 \u2212 '+h+'\u00b2) = '+fmtS(hfI)+'\nBase = 2 \u00d7 '+fmtS(hfI)+' = '+fmtS(res);
+        }else if(type==='is_b_ah'){
+            res=(2*v0)/v1;b=res;h=v1;s1=Math.sqrt(h*h+(b/2)*(b/2));s2=s1;
+            formula='Base = (2 \u00d7 Area) / Height\n= (2 \u00d7 '+v0+') / '+v1+' = '+fmtS(res);
+        }else if(type==='is_b_al'){
+            // A=0.5*b*sqrt(s^2-(b/2)^2) => b^4/4 - b^2*s^2 + 4A^2 = 0 => let u=b^2
+            // u = 2s^2 - sqrt(4s^4-16A^2)  (smaller root = real base)
+            var Ai=v0,Si=v1;
+            var inner=4*Si*Si*Si*Si-16*Ai*Ai;
+            if(inner<0){showError('Impossible','Area too large for that leg.');return;}
+            var u=2*Si*Si-Math.sqrt(inner);
+            if(u<=0){showError('Impossible','No valid solution.');return;}
+            res=Math.sqrt(u);b=res;s1=Si;s2=Si;h=(2*Ai)/b;
+            formula='b\u00b2 = 2s\u00b2 \u2212 \u221a(4s\u2074\u22124A\u00b2)\nBase = \u221a'+fmtS(res)+' (approx)';
+        }else if(type==='is_s_bh'){
+            b=v0;h=v1;res=Math.sqrt(h*h+(b/2)*(b/2));s1=res;s2=res;
+            formula='Leg = \u221a(h\u00b2 + (b/2)\u00b2)\n= \u221a('+h+'\u00b2 + '+(b/2)+'\u00b2) = '+fmtS(res);
+        }else if(type==='is_s_ab'){
+            var Ais=v0,bis=v1;h=(2*Ais)/bis;res=Math.sqrt(h*h+(bis/2)*(bis/2));s1=res;s2=res;b=bis;
+            formula='h = 2A/b = '+fmtS(h)+'\nLeg = \u221a(h\u00b2+(b/2)\u00b2) = '+fmtS(res);
+        }else if(type==='is_h_bl'){
+            b=v0;s1=v1;s2=v1;
+            if(b/2>=s1){showError('Impossible','Base too wide for Leg.');return;}
+            res=Math.sqrt(s1*s1-(b/2)*(b/2));h=res;
+            formula='Height = \u221a(Leg\u00b2 \u2212 (Base/2)\u00b2)\n= \u221a('+s1+'\u00b2 \u2212 '+(b/2)+'\u00b2) = '+fmtS(res);
+        }else if(type==='is_h_ab'){
+            res=(2*v0)/v1;h=res;b=v1;s1=Math.sqrt(h*h+(b/2)*(b/2));s2=s1;
+            formula='Height = (2 \u00d7 Area) / Base\n= (2 \u00d7 '+v0+') / '+v1+' = '+fmtS(res);
+        // ─ Equilateral ─────────────────────────────────────────────────────
+        }else if(type==='eq_h_s'){
+            var side=v0;b=side;s1=side;s2=side;
+            h=Math.sqrt(3)/2*side;
+            if(currentGoal==='height'){res=h;}else{res=side;}
+            formula='Height = (\u221a3 / 2) \u00d7 '+side+(useSurd?' = '+fmtS(h):' \u2248 '+h.toFixed(p));
+        }else if(type==='eq_b_ah'){
+            // A = sqrt(3)/4 * b^2 => b = 2*sqrt(A/sqrt(3)*2) = 2*sqrt(2A/sqrt(3))
+            var beq=2*Math.sqrt(v0/(Math.sqrt(3)/2));
+            // from A=0.5*beq*v1 check consistency — use side formula
+            // Actually just use A=(sqrt(3)/4)*b^2 => b=2*sqrt(A/sqrt(3)*2)
+            beq=Math.sqrt(4*v0/Math.sqrt(3));
+            res=beq;b=beq;s1=beq;s2=beq;h=Math.sqrt(3)/2*beq;
+            formula='A = (\u221a3/4) \u00d7 b\u00b2\nb = \u221a(4A / \u221a3) = '+fmtS(res);
+        // ─ Right ───────────────────────────────────────────────────────────
+        }else if(type==='rt_c_ll'){
+            s1=v0;b=v1;res=Math.sqrt(s1*s1+b*b);s2=res;h=s1;
+            formula='c = \u221a(a\u00b2 + b\u00b2)\n= \u221a('+s1+'\u00b2 + '+b+'\u00b2)\n= \u221a'+(s1*s1+b*b)+' = '+fmtS(res);
+        }else if(type==='rt_c_al'){
+            var legA=v1;h=(2*v0)/legA;res=Math.sqrt(legA*legA+h*h);s1=h;b=legA;s2=res;
+            formula='Other leg = (2A)/known = '+fmtS(h)+'\nc = \u221a('+legA+'\u00b2 + '+fmtS(h)+'\u00b2) = '+fmtS(res);
+        }else if(type==='rt_l_cl'){
+            var hyp=v0,oLeg=v1;
+            if(oLeg>=hyp){showError('Impossible','Leg must be shorter than hypotenuse.');return;}
+            res=Math.sqrt(hyp*hyp-oLeg*oLeg);s1=res;b=oLeg;s2=hyp;h=res;
+            formula='Leg = \u221a(c\u00b2 \u2212 b\u00b2)\n= \u221a('+hyp+'\u00b2 \u2212 '+oLeg+'\u00b2)\n= \u221a'+(hyp*hyp-oLeg*oLeg)+' = '+fmtS(res);
+        }else if(type==='rt_l_ac'){
+            var hypR=v1;res=(2*v0)/hypR;s1=res;h=res;
+            b=Math.sqrt(Math.max(0,hypR*hypR-res*res));s2=hypR;
+            formula='Leg = (2A) / c = (2 \u00d7 '+v0+') / '+hypR+' = '+fmtS(res);
+        }else if(type==='rt_h_ll'){
+            s1=v0;b=v1;var hyp2=Math.sqrt(s1*s1+b*b);
+            res=(s1*b)/hyp2;h=res;s2=hyp2;
+            formula='Altitude = (a \u00d7 b) / c\n= ('+s1+' \u00d7 '+b+') / \u221a'+(s1*s1+b*b)+' = '+fmtS(res);
+        }else if(type==='rt_h_ac'){
+            var hypH=v1;res=(2*v0)/hypH;h=res;
+            s1=Math.sqrt(Math.max(0,hypH*hypH/4+Math.sqrt(Math.max(0,(hypH*hypH/4)*(hypH*hypH/4)-h*h*hypH*hypH/4))));
+            b=Math.sqrt(Math.max(0,hypH*hypH-s1*s1));s2=hypH;
+            formula='Altitude = (2A) / c = (2 \u00d7 '+v0+') / '+hypH+' = '+fmtS(res);
+        }else if(type==='rt_b_cl'){
+            var hypB=v0,legB=v1;
+            if(legB>=hypB){showError('Impossible','Leg must be shorter than hypotenuse.');return;}
+            res=Math.sqrt(hypB*hypB-legB*legB);b=res;s1=legB;s2=hypB;h=legB;
+            formula='Base = \u221a(c\u00b2 \u2212 leg\u00b2)\n= \u221a('+hypB+'\u00b2 \u2212 '+legB+'\u00b2)\n= \u221a'+(hypB*hypB-legB*legB)+' = '+fmtS(res);
+        }else if(type==='rt_b_ah'){
+            res=(2*v0)/v1;b=res;h=v1;s1=h;s2=Math.sqrt(h*h+b*b);
+            formula='Base = (2A) / height\n= (2 \u00d7 '+v0+') / '+v1+' = '+fmtS(res);
         }
+        }catch(e){showError('Calculation error','Double-check your values form a valid triangle.');return;}
 
-        if (isNaN(res) || res <= 0 || !isFinite(res)) {
-            showError('No solution found', 'These values don\'t form a valid triangle. Check that your inputs are geometrically possible.');
-            return;
-        }
+        if(isNaN(res)||res<=0||!isFinite(res)){showError('No solution','These values don\'t form a valid triangle.');return;}
+        if(!s1||isNaN(s1))s1=res; if(!s2||isNaN(s2))s2=res;
+        if(!b||isNaN(b))b=res;   if(!h||isNaN(h))h=res;
 
-        if (!s1) s1=res; if (!s2) s2=res; if (!b) b=res; if (!h) h=res;
         area=0.5*b*h; perim=s1+s2+b;
         get('res').style.display='block';
-        get('final').innerText=res.toFixed(p);
-        get('formulaText').innerText=formula;
+
+        // Display result with surd
+        var approxEl=get('finalApprox');
+        if(useSurd){
+            var ss=toSurdStr(res);
+            if(ss){get('final').innerText=ss;approxEl.innerText='\u2248 '+res.toFixed(p);approxEl.style.display='block';}
+            else{get('final').innerText=fmt(res);approxEl.style.display='none';}
+        }else{
+            get('final').innerText=res.toFixed(p);approxEl.style.display='none';
+        }
+        get('formulaText').innerText=formula||'';
         get('areaRes').innerText=area.toFixed(p);
         get('perimRes').innerText=perim.toFixed(p);
-        // Map calculation variables to correct drawTri parameters.
-        // drawTri(leftSlant, height, base, rightSlant, isExt) where leftSlant/rightSlant
-        // are the sides from each base corner up to the apex.
-        var _ds1, _dh, _db, _ds2;
-        if (type === 's_hb' || type === 'hg_side' || type === 'h_ah') {
-            // Right triangle: vertical leg=h (left), horizontal leg=base, hypotenuse=right slant
-            // s1=h ensures x1=sqrt(h^2-h^2)=0 -> right angle detected at left corner
-            _ds1 = h; _dh = h; _db = b; _ds2 = Math.sqrt(h*h + b*b);
-        } else {
-            // All other types: s1,h,b,s2 are already correct drawTri parameters
-            _ds1 = s1; _dh = h; _db = b; _ds2 = s2;
+
+        // Draw canvas
+        if(currentTri==='right'){
+            // s1=vertical leg, b=horizontal leg, s2=hypotenuse; h=s1 for drawTri
+            drawTri(s1, s1, b, s2, false);
+        }else{
+            drawTri(s1, h, b, s2, isExt);
         }
-        drawTri(_ds1, _dh, _db, _ds2, isExt);
-        history.unshift(goals.filter(function(g){return g.id===currentGoal;})[0].label+': '+res.toFixed(p));
-        if (history.length>5) history.pop();
-        get('histList').innerHTML = history.map(function(h){ return '<span style="display:block;padding:3px 0;border-bottom:1px solid #f0f0f0;">'+h+'</span>'; }).join('');
+
+        var adv=getAdv();
+        var gLbl=((adv?goalLabel.a:goalLabel.s)[currentGoal])||currentGoal;
+        history.unshift(gLbl+': '+get('final').innerText);
+        if(history.length>5)history.pop();
+        get('histList').innerHTML=history.map(function(hh){return'<span style="display:block;padding:3px 0;border-bottom:1px solid #f0f0f0;">'+hh+'</span>';}).join('');
         saveSettings();
     };
 
-    get('copy').onclick = function() { navigator.clipboard.writeText(get('final').innerText); this.innerText='Copied!'; var self=this; setTimeout(function(){self.innerText='Copy';},1500); };
-    get('dlBtn').onclick = function() { var link=document.createElement('a'); link.download='triangle.png'; link.href=canvas.toDataURL(); link.click(); };
-    get('clear').onclick = function() { document.querySelectorAll('#inputStack input').forEach(function(i){i.value='';}); get('res').style.display='none'; ctx.clearRect(0,0,340,190); };
-    get('close').onclick = function() { ui.remove(); };
-    get('errClose').onclick = function() { clearError(); };
-    // save prec on change
-    document.addEventListener('change', function(e) { if (e.target && e.target.id === 'prec') saveSettings(); });
+    // ── Other handlers ────────────────────────────────────────────────────────
+    get('copy').onclick    = function(){navigator.clipboard.writeText(get('final').innerText);this.innerText='Copied!';var self=this;setTimeout(function(){self.innerText='Copy';},1500);};
+    get('dlBtn').onclick   = function(){var l=document.createElement('a');l.download='triangle.png';l.href=canvas.toDataURL();l.click();};
+    get('clear').onclick   = function(){ui.querySelectorAll('#inputStack input').forEach(function(i){i.value='';});get('res').style.display='none';ctx.clearRect(0,0,canvas.width,canvas.height);};
+    get('close').onclick   = function(){ui.remove();};
+    get('errClose').onclick= function(){clearError();};
+    get('setBtn').onclick  = function(e){e.stopPropagation();var m=get('setMenu');m.style.display=m.style.display==='none'?'block':'none';get('histMenu').style.display='none';};
+    get('histBtn').onclick = function(e){e.stopPropagation();var m=get('histMenu');m.style.display=m.style.display==='none'?'block':'none';get('setMenu').style.display='none';};
+    get('closeHist').onclick=function(){get('histMenu').style.display='none';};
+    document.addEventListener('click',function(e){if(!ui.contains(e.target)){get('setMenu').style.display='none';get('histMenu').style.display='none';}});
 
-    buildGoalBtns();
-    buildMethodBtns();
-    renderInputs();
-    // restore saved prec after DOM is built
-    if (saved.prec) { var precEl = document.getElementById('prec'); if (precEl) precEl.value = saved.prec; }
-    // restore saved method index safely
-    var methodList = options[currentGoal];
-    if (currentMethod >= methodList.length) currentMethod = 0;
+    // Settings listeners — direct element bindings, not document-level
+    get('prec').addEventListener('change', saveSettings);
+    get('optSurd').addEventListener('change', saveSettings);
+    get('optAdvanced').addEventListener('change', function(){rebuildAll();saveSettings();});
+
+    // ── Initial build ─────────────────────────────────────────────────────────
+    if(triGoals[currentTri].indexOf(currentGoal)<0) currentGoal=triGoals[currentTri][0];
+    var mLen=(methods[currentTri]&&methods[currentTri][currentGoal]?methods[currentTri][currentGoal].length:0);
+    if(currentMethod>=mLen) currentMethod=0;
+
+    buildTriBtns(); buildGoalBtns(); buildMethodBtns(); renderInputs();
 })();
+
