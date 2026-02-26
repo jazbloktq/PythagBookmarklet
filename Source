@@ -1,0 +1,192 @@
+(function() {
+    const ui = document.createElement('div');
+    ui.id = 'geo-ultimate-vscroll';
+    ui.style = `position: fixed; top: 20px; right: 20px; width: 400px; max-height: 85vh; background: #fff; border: 1px solid #ccc; border-radius: 12px; z-index: 10000; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; box-shadow: 0 10px 40px rgba(0,0,0,0.3); color: #333; overflow: hidden; display: flex; flex-direction: column; box-sizing: border-box;`;
+
+    ui.innerHTML = `
+        <div style="padding: 15px 20px; background: #fff; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
+            <h3 style="margin:0; font-size:16px; color:#1a73e8;">Geometry Pro</h3>
+            <div style="display:flex; gap:15px; align-items:center;">
+                <span id="histBtn" style="cursor:pointer; font-size:18px;">⏳</span>
+                <span id="setBtn" style="cursor:pointer; font-size:18px;">⚙️</span>
+            </div>
+            <div id="setMenu" style="display:none; position:absolute; top:45px; right:20px; width:150px; background:#fff; border:1px solid #ddd; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.15); padding:10px; z-index:10002;">
+                <p style="margin:0 0 5px 0; font-size:11px; font-weight:bold;">Decimals</p>
+                <input type="number" id="prec" value="2" style="width:100%; padding:4px; box-sizing:border-box;">
+            </div>
+        </div>
+
+        <div style="padding: 20px; overflow-y: auto; overflow-x: hidden; flex: 1; box-sizing: border-box;">
+            <div style="margin-bottom:15px;">
+                <label style="font-size:10px; font-weight:bold; color:#666; display:block; margin-bottom:4px;">I WANT TO FIND:</label>
+                <select id="goalSelect" style="width:100%; padding:10px; border-radius:6px; border:1px solid #ccc; background:#f8f9fa; font-weight:bold; color:#1a73e8; cursor:pointer; box-sizing:border-box;">
+                    <option value="base">The Base (Bottom Side)</option>
+                    <option value="side">A Slanted Side</option>
+                    <option value="hypo">The Hypotenuse (Right Triangle)</option>
+                    <option value="height">The Height (Altitude)</option>
+                </select>
+            </div>
+
+            <div id="infoBox" style="margin-bottom:15px;">
+                <label style="font-size:10px; font-weight:bold; color:#666; display:block; margin-bottom:4px;">BASED ON WHAT I HAVE:</label>
+                <select id="haveSelect" style="width:100%; padding:10px; border-radius:6px; border:1px solid #ccc; background:#fff; cursor:pointer; box-sizing:border-box;"></select>
+            </div>
+
+            <div id="posToggle" style="background:#e8f0fe; padding:10px; border-radius:8px; margin-bottom:15px; font-size:12px; display:none; gap:15px; box-sizing:border-box;">
+                <label style="cursor:pointer;"><input type="radio" name="pos" value="int" checked> Internal Height</label>
+                <label style="cursor:pointer; margin-left:15px;"><input type="radio" name="pos" value="ext"> External Height</label>
+            </div>
+
+            <div id="inputStack" style="display:flex; flex-direction:column; gap:12px; margin-bottom:15px; box-sizing:border-box;"></div>
+
+            <div id="canvasBox" style="position:relative; width:100%; margin-bottom:15px; border:1px solid #eee; border-radius:8px; overflow:hidden; box-sizing:border-box;">
+                <canvas id="triCanvas" width="340" height="200" style="background:#fcfcfc; width:100%; display:block;"></canvas>
+                <button id="dlBtn" style="position:absolute; bottom:8px; right:8px; background:rgba(255,255,255,0.9); border:1px solid #ccc; padding:5px 10px; border-radius:4px; font-size:10px; cursor:pointer; font-weight:bold;">Download</button>
+            </div>
+
+            <div style="display:flex; gap:10px; margin-bottom:15px;">
+                <button id="calc" style="flex:2; padding:12px; background:#1a73e8; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">Calculate</button>
+                <button id="clear" style="flex:1; padding:12px; background:#f1f3f4; border:none; border-radius:8px; cursor:pointer;">Clear</button>
+            </div>
+
+            <div id="res" style="padding:15px; background:#f8f9fa; border-radius:8px; display:none; border:1px solid #e0e0e0; box-sizing:border-box;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <div><span id="resLabel" style="font-size:11px; color:#666;">Answer:</span><br><strong id="final" style="font-size:24px; color:#1a73e8;"></strong></div>
+                    <button id="copy" style="background:#e8f0fe; border:none; color:#1a73e8; padding:8px 12px; border-radius:6px; font-size:11px; cursor:pointer; font-weight:bold;">Copy</button>
+                </div>
+                
+                <div id="propBox" style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px; font-size:12px; border-top:1px solid #ddd; padding-top:10px;">
+                    <div><strong>Area:</strong> <span id="areaRes"></span></div>
+                    <div><strong>Perimeter:</strong> <span id="perimRes"></span></div>
+                </div>
+
+                <div id="formulaBox" style="border-top:1px solid #ddd; padding-top:10px; font-size:11px; color:#555;">
+                    <p style="font-weight:bold; margin-bottom:4px; color:#1a73e8;">Operation:</p>
+                    <code id="formulaText" style="display:block; background:#fff; padding:8px; border-radius:4px; border:1px solid #eee; white-space:pre-wrap; font-family: monospace;"></code>
+                </div>
+            </div>
+        </div>
+
+        <div style="padding: 10px; border-top: 1px solid #eee; text-align: center; background: #fff; flex-shrink:0;">
+            <p id="close" style="font-size:11px; color:#d93025; cursor:pointer; margin:0; text-decoration:underline;">Close Solver</p>
+        </div>
+
+        <div id="histMenu" style="display:none; position:absolute; top:60px; left:20px; right:20px; background:#fff; border:1px solid #ddd; border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,0.2); padding:15px; z-index:10005; font-size:11px; box-sizing:border-box;">
+            <p style="margin:0 0 8px 0; font-weight:bold;">Recent Calculations</p>
+            <div id="histList" style="color:#666; line-height:1.6;">No history yet.</div>
+            <button id="closeHist" style="width:100%; margin-top:10px; padding:5px; border:none; background:#f1f3f4; border-radius:4px; cursor:pointer;">Dismiss</button>
+        </div>
+    `;
+
+    document.body.appendChild(ui);
+    const get = id => document.getElementById(id), canvas = get('triCanvas'), ctx = canvas.getContext('2d');
+    let history = [];
+
+    const options = {
+        base: [{ id: 'b_shs', text: 'Height + Both Slanted Sides', inputs: ['Side 1 (Hypo)', 'Height', 'Side 2 (Hypo)'], toggle: true }],
+        side: [{ id: 's_shb', text: 'Height + Known Side + Base', inputs: ['Known Side (Hypo)', 'Height', 'Total Base'], toggle: true }],
+        hypo: [{ id: 'h_pyth', text: 'Leg A + Leg B (Standard Pythag)', inputs: ['Leg A', 'Leg B'] }],
+        height: [{ id: 'hg_side', text: 'Hypotenuse + Base Segment', inputs: ['Hypotenuse', 'Base Segment'] }]
+    };
+
+    const updateUI = () => {
+        const goal = get('goalSelect').value;
+        const haveList = options[goal];
+        get('haveSelect').innerHTML = haveList.map(opt => `<option value="${opt.id}">${opt.text}</option>`).join('');
+        renderInputs();
+    };
+
+    const renderInputs = () => {
+        const goal = get('goalSelect').value;
+        const selectedId = get('haveSelect').value;
+        const config = options[goal].find(opt => opt.id === selectedId);
+        get('inputStack').innerHTML = config.inputs.map((label, i) => `
+            <div>
+                <label style="font-size:10px; font-weight:bold; color:#666; display:block; margin-bottom:4px;">${label.toUpperCase()}</label>
+                <input type="number" id="v${i}" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box;">
+            </div>
+        `).join('');
+        get('posToggle').style.display = config.toggle ? 'flex' : 'none';
+    };
+
+    const drawTri = (s1, h, b, s2, isExt) => {
+        ctx.clearRect(0,0,340,200);
+        const x1 = Math.sqrt(Math.max(0, s1**2 - h**2));
+        const pts = isExt ? [[0, h], [x1, 0], [Math.abs(x1-b), h]] : [[0, h], [x1, 0], [b, h]];
+        
+        const minX = Math.min(...pts.map(p=>p[0])), maxX = Math.max(...pts.map(p=>p[0]));
+        const pad = 60, scale = Math.min((340 - pad*2) / (maxX - minX), (200 - pad*2) / h);
+        const offX = 170 - ((minX + maxX)/2 * scale), offY = 180 - (h*scale);
+        
+        const tr = p => [p[0]*scale + offX, p[1]*scale + offY];
+        const [pA, pB, pC] = pts.map(tr);
+        const pH = [pB[0], pA[1]];
+
+        ctx.strokeStyle = "#1a73e8"; ctx.fillStyle = "#1a73e8"; ctx.lineWidth = 3; ctx.lineJoin = "round";
+        ctx.beginPath(); ctx.moveTo(...pA); ctx.lineTo(...pB); ctx.lineTo(...pC); ctx.closePath(); ctx.stroke();
+
+        ctx.setLineDash([5,5]); ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(...pB); ctx.lineTo(...pH); ctx.stroke(); ctx.setLineDash([]);
+        
+        ctx.font = "bold 13px Segoe UI"; ctx.textAlign = "center";
+        ctx.fillText(s1.toFixed(1), (pA[0]+pB[0])/2 - 25, (pA[1]+pB[1])/2);
+        ctx.fillText(s2.toFixed(1), (pB[0]+pC[0])/2 + 25, (pB[1]+pC[1])/2);
+        ctx.fillText(h.toFixed(1), pH[0] + 25, (pB[1]+pH[1])/2);
+        ctx.fillText(b.toFixed(1), (pA[0]+pC[0])/2, pA[1] + 20);
+    };
+
+    get('goalSelect').onchange = updateUI;
+    get('haveSelect').onchange = renderInputs;
+    get('setBtn').onclick = (e) => { e.stopPropagation(); get('setMenu').style.display = get('setMenu').style.display === 'none' ? 'block' : 'none'; };
+    get('histBtn').onclick = (e) => { e.stopPropagation(); get('histMenu').style.display = get('histMenu').style.display === 'none' ? 'block' : 'none'; };
+    get('closeHist').onclick = () => get('histMenu').style.display='none';
+    document.addEventListener('click', () => { get('setMenu').style.display = 'none'; });
+
+    get('calc').onclick = () => {
+        const v0 = parseFloat(get('v0')?.value), v1 = parseFloat(get('v1')?.value), v2 = parseFloat(get('v2')?.value);
+        const p = parseInt(get('prec').value), isExt = document.querySelector('input[name="pos"]:checked')?.value === 'ext';
+        const type = get('haveSelect').value;
+        let res, area, perim, formula, s1, h, b, s2;
+
+        if (type === 'b_shs') {
+            s1 = v0; h = v1; s2 = v2;
+            const x = Math.sqrt(s1**2 - h**2), x2 = Math.sqrt(s2**2 - h**2);
+            res = isExt ? Math.abs(x - x2) : (x + x2); b = res;
+            formula = `Part 1 = √(${s1}² - ${h}²) = ${x.toFixed(p)}\nPart 2 = √(${s2}² - ${h}²) = ${x2.toFixed(p)}\nBase = ${x.toFixed(p)} ${isExt ? '-' : '+'} ${x2.toFixed(p)}`;
+        } else if (type === 's_shb') {
+            s1 = v0; h = v1; b = v2;
+            const x = Math.sqrt(s1**2 - h**2), y = isExt ? (b + x) : Math.abs(b - x);
+            res = Math.sqrt(y**2 + h**2); s2 = res;
+            formula = `Known Dist = √(${s1}² - ${h}²) = ${x.toFixed(p)}\nLeg = ${isExt ? `${b} + ${x.toFixed(p)}` : `${b} - ${x.toFixed(p)}`} = ${y.toFixed(p)}\nSide 2 = √(${y.toFixed(p)}² + ${h}²)`;
+        } else if (type === 'h_pyth') {
+            res = Math.sqrt(v0**2 + v1**2);
+            formula = `Hypotenuse = √(${v0}² + ${v1}²)`;
+            s1 = v0; s2 = v1; b = res; h = (v0*v1)/res;
+        } else if (type === 'hg_side') {
+            res = Math.sqrt(v0**2 - v1**2);
+            formula = `Height = √(${v0}² - ${v1}²)`;
+            s1 = v0; h = res; b = v1; s2 = Math.sqrt(h**2 + (b**2)); // Estimation
+        }
+
+        if(!isNaN(res)) {
+            area = 0.5 * b * h;
+            perim = s1 + s2 + b;
+            get('res').style.display = 'block'; 
+            get('final').innerText = res.toFixed(p); 
+            get('formulaText').innerText = formula;
+            get('areaRes').innerText = area.toFixed(p);
+            get('perimRes').innerText = perim.toFixed(p);
+            drawTri(s1, h, b, s2, isExt);
+            
+            history.unshift(`${get('goalSelect').value.toUpperCase()}: ${res.toFixed(p)}`);
+            if(history.length > 3) history.pop();
+            get('histList').innerHTML = history.join('<br>');
+        }
+    };
+
+    get('copy').onclick = function(){ navigator.clipboard.writeText(get('final').innerText); this.innerText = 'Copied!'; setTimeout(()=>this.innerText='Copy', 1500); };
+    get('dlBtn').onclick = () => { const link = document.createElement('a'); link.download = 'geometry.png'; link.href = canvas.toDataURL(); link.click(); };
+    get('clear').onclick = () => { document.querySelectorAll('#inputStack input').forEach(i => i.value = ''); get('res').style.display='none'; ctx.clearRect(0,0,340,200); };
+    get('close').onclick = () => ui.remove();
+    updateUI();
+})();
