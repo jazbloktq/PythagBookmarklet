@@ -295,9 +295,16 @@
             } else if (type === 's_shb') {
                 s1=v0; h=v1; b=v2;
                 if (h >= s1) { showError('Impossible triangle', 'Height (' + h + ') must be shorter than the known side (' + s1 + ').'); return; }
-                var xx=Math.sqrt(s1*s1-h*h), y=isExt?(b+xx):Math.abs(b-xx);
-                res=Math.sqrt(y*y+h*h); s2=res;
-                formula = 'Dist = sqrt('+s1+'^2 - '+h+'^2) = '+xx.toFixed(p)+'\nOther leg = '+(isExt?b+' + ':b+' - ')+xx.toFixed(p)+' = '+y.toFixed(p)+'\nSide = sqrt('+y.toFixed(p)+'^2 + '+h+'^2) = '+res.toFixed(p);
+                var xx=Math.sqrt(s1*s1-h*h);
+                if (isExt) {
+                    if (xx <= b) { showError('Impossible triangle', 'For an external height the known side must be long enough that its horizontal reach (' + xx.toFixed(p) + ') exceeds the base (' + b + ').'); return; }
+                    res=Math.sqrt(b*b+h*h); s2=res;
+                    formula = 'Horiz reach = sqrt('+s1+'^2 - '+h+'^2) = '+xx.toFixed(p)+'\nSide 2 = sqrt(base^2 + h^2) = sqrt('+b+'^2 + '+h+'^2) = '+res.toFixed(p);
+                } else {
+                    var y=Math.abs(b-xx);
+                    res=Math.sqrt(y*y+h*h); s2=res;
+                    formula = 'Horiz reach = sqrt('+s1+'^2 - '+h+'^2) = '+xx.toFixed(p)+'\nOther leg = |'+b+' - '+xx.toFixed(p)+'| = '+y.toFixed(p)+'\nSide 2 = sqrt('+y.toFixed(p)+'^2 + '+h+'^2) = '+res.toFixed(p);
+                }
             } else if (type === 's_hb') {
                 h=v0; b=v1; res=Math.sqrt(h*h+b*b); s1=res; s2=res;
                 formula = 'Side = sqrt(h^2 + base^2)\n= sqrt('+h+'^2 + '+b+'^2) = '+res.toFixed(p);
@@ -311,7 +318,7 @@
             } else if (type === 'h_ah') {
                 var leg=v1; h=(2*v0)/leg; res=Math.sqrt(leg*leg+h*h);
                 formula='Height = (2 x Area) / Leg = '+h.toFixed(p)+'\nHyp = sqrt('+leg+'^2 + h^2) = '+res.toFixed(p);
-                s1=h; s2=leg; b=res; h=h;
+                s1=h; s2=res; b=leg;
             } else if (type === 'hg_side') {
                 if (v1 >= v0) { showError('Impossible triangle', 'The base segment (' + v1 + ') must be shorter than the hypotenuse (' + v0 + ').'); return; }
                 s1=v0; b=v1; res=Math.sqrt(v0*v0-v1*v1); h=res; s2=Math.sqrt(h*h+(b)*(b));
@@ -347,18 +354,12 @@
         // drawTri(leftSlant, height, base, rightSlant, isExt) where leftSlant/rightSlant
         // are the sides from each base corner up to the apex.
         var _ds1, _dh, _db, _ds2;
-        if (type === 's_hb' || type === 'hg_side') {
-            // Right triangle: one leg is vertical (= height), other leg is horizontal (= base)
-            // Place right angle at left: left slant = vertical leg, right slant = hypotenuse
-            _dh = h; _db = b;
-            _ds1 = h;   // vertical leg: sqrt(h^2-h^2)=0 -> right angle at left corner
-            _ds2 = Math.sqrt(h*h + b*b); // hypotenuse
-        } else if (type === 'h_pyth' || type === 'h_ah') {
-            // Right triangle with altitude drawn to hypotenuse
-            // s1=legA, s2=legB (or s1=h_alt,s2=leg), b=hypotenuse, h=altitude to hyp
-            _ds1 = s1; _dh = h; _db = b; _ds2 = s2;
+        if (type === 's_hb' || type === 'hg_side' || type === 'h_ah') {
+            // Right triangle: vertical leg=h (left), horizontal leg=base, hypotenuse=right slant
+            // s1=h ensures x1=sqrt(h^2-h^2)=0 -> right angle detected at left corner
+            _ds1 = h; _dh = h; _db = b; _ds2 = Math.sqrt(h*h + b*b);
         } else {
-            // All other types set s1,h,b,s2 correctly as left slant, height, base, right slant
+            // All other types: s1,h,b,s2 are already correct drawTri parameters
             _ds1 = s1; _dh = h; _db = b; _ds2 = s2;
         }
         drawTri(_ds1, _dh, _db, _ds2, isExt);
