@@ -808,14 +808,16 @@
             res=currentGoal==='height'?h:side;
             formula='Height = (\u221a3 / 2) \u00d7 '+side+(useSurd?' = '+fmtS(h):' \u2248 '+h.toFixed(p));
         }else if(type==='eq_b_ah'){
-            // For equilateral: A = (1/2)*b*h, so b = 2A/h
+            // For equilateral: A = (√3/4)b² and h = (√3/2)b, so A and h are not independent.
+            // Check consistency: A = h²/√3  →  h = √(A√3)
+            var hConsistent=Math.sqrt(v0*Math.sqrt(3));
+            if(Math.abs(hConsistent-v1)>0.001*v1){
+                showError('Impossible combination','For an equilateral triangle, Area and Height are not independent. With Area = '+v0+', the height must be \u2248 '+hConsistent.toFixed(getPrec())+', not '+v1+'. Enter just one value — use "Find: Height" with a side, or "Heron\'s" with a side.');
+                return;
+            }
             var beq=(2*v0)/v1;
             res=beq;b=beq;s1=beq;s2=beq;h=v1;
-            // Verify consistency: expected h for this base = (√3/2)*beq
-            var hExpected=Math.sqrt(3)/2*beq;
-            formula='b = (2 \u00d7 Area) / Height\n= (2 \u00d7 '+v0+') / '+v1+' = '+fmtS(res)+
-                '\nNote: for a true equilateral, h should equal (\u221a3/2)\u00d7b \u2248 '+hExpected.toFixed(p)+
-                (Math.abs(hExpected-v1)>0.01*v1 ? '\n\u26a0 Inputs are inconsistent for an equilateral triangle.' : '\n\u2713 Inputs are consistent.');
+            formula='b = (2 \u00d7 Area) / Height\n= (2 \u00d7 '+v0+') / '+v1+' = '+fmtS(res);
         }else if(type==='eq_a_heron'){
             var seq=v0;s1=seq;s2=seq;b=seq;
             var svEq=3*seq/2;
