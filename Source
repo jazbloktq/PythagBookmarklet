@@ -92,64 +92,62 @@
             '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optDark"     style="accent-color:#1a73e8;width:14px;height:14px;"> Dark mode</label>',
           '</div>',
         '</div>',
-        // ── Mini Calculator (rebuilt) ──
-        '<div id="miniCalc" style="display:none;position:fixed;top:80px;right:420px;width:260px;background:#fff;border:1px solid #ddd;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.15);padding:0;z-index:10006;font-size:12px;user-select:none;">',
-          '<div id="miniCalcHeader" style="padding:9px 12px;background:#1a73e8;border-radius:10px 10px 0 0;cursor:grab;display:flex;justify-content:space-between;align-items:center;">',
-            '<span style="font-weight:700;color:#fff;font-size:12px;letter-spacing:0.3px;">&#x1F5A9; Calculator</span>',
-            '<span id="calcSettingsBtn" title="Calculator settings" style="cursor:pointer;font-size:13px;opacity:0.85;color:#fff;padding:2px 4px;border-radius:4px;">&#9881;</span>',
-          '</div>',
-          // Calc settings panel (hidden by default)
-          '<div id="calcSettingsPanel" style="display:none;padding:10px 12px;background:#f0f6ff;border-bottom:1px solid #dde8fb;font-size:12px;">',
-            '<div style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.6px;margin-bottom:7px;">CALCULATOR SETTINGS</div>',
-            '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;margin-bottom:6px;">',
-              '<input type="checkbox" id="calcInferBrackets" checked style="accent-color:#1a73e8;width:13px;height:13px;">',
-              'Infer brackets (auto-close √)',
-            '</label>',
-            '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;">',
-              '<input type="checkbox" id="calcPinOpen" style="accent-color:#1a73e8;width:13px;height:13px;">',
-              'Pin open (stay open on outside click)',
-            '</label>',
-          '</div>',
-          '<div style="padding:12px;">',
-          // expression tape (what you're building)
+        // miniCalc appended separately to document.body — see below
+    ].join('');
+    document.body.appendChild(ui);
+
+    // ── Mini Calculator — separate DOM element appended directly to body ──
+    // (Keeps it outside ui's overflow:hidden so clicks always register)
+    var miniCalcEl = document.createElement('div');
+    miniCalcEl.id = 'miniCalc';
+    miniCalcEl.style.cssText = 'display:none;position:fixed;top:80px;right:420px;width:260px;background:#fff;border:1px solid #ddd;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.18);padding:0;z-index:99999;font-family:system-ui,sans-serif;font-size:12px;color:#222;';
+    miniCalcEl.innerHTML = [
+        '<div id="miniCalcHeader" style="padding:9px 12px;background:#1a73e8;border-radius:10px 10px 0 0;cursor:grab;display:flex;justify-content:space-between;align-items:center;">',
+          '<span style="font-weight:700;color:#fff;font-size:12px;letter-spacing:0.3px;">&#x1F5A9; Calculator</span>',
+          '<span id="calcSettingsBtn" title="Calculator settings" style="cursor:pointer;font-size:14px;opacity:0.85;color:#fff;padding:2px 5px;border-radius:4px;line-height:1;">&#9881;</span>',
+        '</div>',
+        '<div id="calcSettingsPanel" style="display:none;padding:10px 12px;background:#f0f6ff;border-bottom:1px solid #dde8fb;font-size:12px;">',
+          '<div style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.6px;margin-bottom:7px;">CALCULATOR SETTINGS</div>',
+          '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;margin-bottom:6px;">',
+            '<input type="checkbox" id="calcInferBrackets" checked style="accent-color:#1a73e8;width:13px;height:13px;cursor:pointer;">',
+            'Infer brackets (auto-close √)',
+          '</label>',
+          '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;">',
+            '<input type="checkbox" id="calcPinOpen" style="accent-color:#1a73e8;width:13px;height:13px;cursor:pointer;">',
+            'Pin open (stay open on outside click)',
+          '</label>',
+        '</div>',
+        '<div style="padding:12px;">',
           '<div id="calcExpr" style="text-align:right;font-size:11px;color:#999;min-height:16px;margin-bottom:4px;font-family:monospace;overflow:hidden;white-space:nowrap;padding:0 2px;"></div>',
-          // main display — uses innerHTML so pending ) can be styled
           '<div id="calcDisplay" style="background:#f7f9ff;border:1px solid #dde8fb;border-radius:7px;padding:8px 12px;margin-bottom:8px;text-align:right;font-size:20px;font-weight:700;color:#1a73e8;min-height:36px;overflow:hidden;white-space:nowrap;font-family:monospace;letter-spacing:0.5px;">0</div>',
           '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:5px;">',
-            // Row 1: C  (  )  ⌫  √
             '<button class="ck" data-k="C"   style="padding:9px 4px;border:none;border-radius:7px;background:#fee2e2;color:#c0392b;font-weight:700;cursor:pointer;font-size:12px;">C</button>',
             '<button class="ck" data-k="("   style="padding:9px 4px;border:none;border-radius:7px;background:#e8f0fe;color:#1a73e8;font-weight:700;cursor:pointer;font-size:14px;">(</button>',
             '<button class="ck" data-k=")"   style="padding:9px 4px;border:none;border-radius:7px;background:#e8f0fe;color:#1a73e8;font-weight:700;cursor:pointer;font-size:14px;">)</button>',
-            '<button class="ck" data-k="\u232b" style="padding:9px 4px;border:none;border-radius:7px;background:#f1f3f4;color:#555;font-weight:700;cursor:pointer;font-size:14px;">\u232b</button>',
-            '<button class="ck" data-k="\u221a"  style="padding:9px 4px;border:none;border-radius:7px;background:#e8f0fe;color:#1a73e8;font-weight:700;cursor:pointer;font-size:14px;">\u221a</button>',
-            // Row 2: 7  8  9  ÷  π
+            '<button class="ck" data-k="⌫" style="padding:9px 4px;border:none;border-radius:7px;background:#f1f3f4;color:#555;font-weight:700;cursor:pointer;font-size:14px;">⌫</button>',
+            '<button class="ck" data-k="√"  style="padding:9px 4px;border:none;border-radius:7px;background:#e8f0fe;color:#1a73e8;font-weight:700;cursor:pointer;font-size:14px;">√</button>',
             '<button class="ck" data-k="7"   style="padding:9px 4px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">7</button>',
             '<button class="ck" data-k="8"   style="padding:9px 4px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">8</button>',
             '<button class="ck" data-k="9"   style="padding:9px 4px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">9</button>',
-            '<button class="ck" data-k="\u00f7" style="padding:9px 4px;border:none;border-radius:7px;background:#e8f0fe;color:#1a73e8;font-weight:700;cursor:pointer;font-size:15px;">\u00f7</button>',
-            '<button class="ck" data-k="\u03c0"  style="padding:9px 4px;border:none;border-radius:7px;background:#e8f0fe;color:#1a73e8;font-weight:700;cursor:pointer;font-size:14px;">\u03c0</button>',
-            // Row 3: 4  5  6  ×
+            '<button class="ck" data-k="÷" style="padding:9px 4px;border:none;border-radius:7px;background:#e8f0fe;color:#1a73e8;font-weight:700;cursor:pointer;font-size:15px;">÷</button>',
+            '<button class="ck" data-k="π"  style="padding:9px 4px;border:none;border-radius:7px;background:#e8f0fe;color:#1a73e8;font-weight:700;cursor:pointer;font-size:14px;">π</button>',
             '<button class="ck" data-k="4"   style="padding:9px 4px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">4</button>',
             '<button class="ck" data-k="5"   style="padding:9px 4px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">5</button>',
             '<button class="ck" data-k="6"   style="padding:9px 4px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">6</button>',
-            '<button class="ck" data-k="\u00d7" style="grid-column:span 2;padding:9px 4px;border:none;border-radius:7px;background:#e8f0fe;color:#1a73e8;font-weight:700;cursor:pointer;font-size:15px;">\u00d7</button>',
-            // Row 4: 1  2  3  -
+            '<button class="ck" data-k="×" style="grid-column:span 2;padding:9px 4px;border:none;border-radius:7px;background:#e8f0fe;color:#1a73e8;font-weight:700;cursor:pointer;font-size:15px;">×</button>',
             '<button class="ck" data-k="1"   style="padding:9px 4px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">1</button>',
             '<button class="ck" data-k="2"   style="padding:9px 4px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">2</button>',
             '<button class="ck" data-k="3"   style="padding:9px 4px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">3</button>',
             '<button class="ck" data-k="-"   style="grid-column:span 2;padding:9px 4px;border:none;border-radius:7px;background:#e8f0fe;color:#1a73e8;font-weight:700;cursor:pointer;font-size:16px;">-</button>',
-            // Row 5: 0  .  +
             '<button class="ck" data-k="0"   style="grid-column:span 2;padding:9px 4px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">0</button>',
             '<button class="ck" data-k="."   style="padding:9px 4px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">.</button>',
             '<button class="ck" data-k="+"   style="grid-column:span 2;padding:9px 4px;border:none;border-radius:7px;background:#e8f0fe;color:#1a73e8;font-weight:700;cursor:pointer;font-size:16px;">+</button>',
-            // Row 6: = (full width)
             '<button class="ck" data-k="="   style="grid-column:span 5;padding:10px;border:none;border-radius:7px;background:#1a73e8;color:#fff;font-weight:700;cursor:pointer;font-size:15px;">=</button>',
           '</div>',
           '<div id="calcError" style="display:none;margin-top:8px;padding:6px 10px;background:#fff5f5;border:1px solid #f5c2c2;border-radius:6px;font-size:11px;color:#c0392b;font-weight:600;"></div>',
-          '</div>',
         '</div>'
     ].join('');
-    document.body.appendChild(ui);
+    document.body.appendChild(miniCalcEl);
 
     var errBox = document.createElement('div');
     errBox.id = 'errBox';
@@ -270,7 +268,7 @@
         var cd=get('calcDisplay');
         if(cd){ cd.style.background=dk('resBg'); cd.style.borderColor=dk('codeBdr'); cd.style.color=d?'#4a9eff':'#1a73e8'; }
         var ce=get('calcExpr'); if(ce) ce.style.color=dk('subtext');
-        ui.querySelectorAll('.ck').forEach(function(btn){
+        document.querySelectorAll('.ck').forEach(function(btn){
             var k=btn.getAttribute('data-k');
             if(k==='C'){ btn.style.background=d?'#3a1a1a':'#fee2e2'; btn.style.color=d?'#ff8080':'#c0392b'; }
             else if(k==='='){ btn.style.background=d?'#1a5090':'#1a73e8'; btn.style.color='#fff'; }
@@ -954,7 +952,7 @@
     get('copy').onclick    = function(){navigator.clipboard.writeText(get('final').innerText);this.innerText='Copied!';var self=this;setTimeout(function(){self.innerText='Copy';},1500);};
     get('dlBtn').onclick   = function(){var l=document.createElement('a');l.download='triangle.png';l.href=canvas.toDataURL();l.click();};
     get('clear').onclick   = function(){ui.querySelectorAll('#inputStack input').forEach(function(i){i.value='';});get('res').style.display='none';ctx.clearRect(0,0,canvas.width,canvas.height);};
-    get('close').onclick   = function(){ui.remove();};
+    get('close').onclick   = function(){ui.remove(); if(miniCalcEl.parentNode) miniCalcEl.remove();};
     get('errClose').onclick= function(){clearError();};
     get('setBtn').onclick  = function(e){e.stopPropagation();var m=get('setMenu');m.style.display=m.style.display==='none'?'block':'none';get('histMenu').style.display='none';get('miniCalc').style.display='none';};
     get('histBtn').onclick = function(e){e.stopPropagation();var m=get('histMenu');m.style.display=m.style.display==='none'?'block':'none';get('setMenu').style.display='none';get('miniCalc').style.display='none';};
@@ -988,7 +986,8 @@
         get('histMenu').style.display='none';
         get('setMenu').style.display='none';
     };
-    get('miniCalc').addEventListener('click',function(e){e.stopPropagation();});
+    // miniCalcEl is a separate body element; its click stopProp is handled below
+    miniCalcEl.addEventListener('click', function(e) { e.stopPropagation(); });
 
     // ── miniCalc independent drag ──────────────────────────────────────
     var mcDragState = null;
@@ -1395,7 +1394,7 @@
         ck_renderDisplay();
     }
 
-    ui.querySelectorAll('.ck').forEach(function(btn){
+    document.querySelectorAll('.ck').forEach(function(btn){
         btn.addEventListener('click', function(e) {
             e.stopPropagation();
             ck_handleKey(this.getAttribute('data-k'));
