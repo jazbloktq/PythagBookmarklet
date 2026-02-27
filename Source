@@ -96,9 +96,18 @@
         '<div id="miniCalc" style="display:none;position:fixed;top:80px;right:420px;width:260px;background:#fff;border:1px solid #ddd;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.15);padding:0;z-index:10006;font-size:12px;user-select:none;">',
           '<div id="miniCalcHeader" style="padding:9px 12px;background:#1a73e8;border-radius:10px 10px 0 0;cursor:grab;display:flex;justify-content:space-between;align-items:center;">',
             '<span style="font-weight:700;color:#fff;font-size:12px;letter-spacing:0.3px;">&#x1F5A9; Calculator</span>',
-            '<label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:10px;color:rgba(255,255,255,0.85);white-space:nowrap;" title="Keep open when clicking outside">',
-              '<input type="checkbox" id="calcPin" style="accent-color:#fff;width:11px;height:11px;cursor:pointer;">',
-              'Pin open',
+            '<span id="calcSettingsBtn" title="Calculator settings" style="cursor:pointer;font-size:13px;opacity:0.85;color:#fff;padding:2px 4px;border-radius:4px;">&#9881;</span>',
+          '</div>',
+          // Calc settings panel (hidden by default)
+          '<div id="calcSettingsPanel" style="display:none;padding:10px 12px;background:#f0f6ff;border-bottom:1px solid #dde8fb;font-size:12px;">',
+            '<div style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.6px;margin-bottom:7px;">CALCULATOR SETTINGS</div>',
+            '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;margin-bottom:6px;">',
+              '<input type="checkbox" id="calcInferBrackets" checked style="accent-color:#1a73e8;width:13px;height:13px;">',
+              'Infer brackets (auto-close √)',
+            '</label>',
+            '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;">',
+              '<input type="checkbox" id="calcPinOpen" style="accent-color:#1a73e8;width:13px;height:13px;">',
+              'Pin open (stay open on outside click)',
             '</label>',
           '</div>',
           '<div style="padding:12px;">',
@@ -251,8 +260,12 @@
         });
         // miniCalc header bar — same as main header
         var mch=get('miniCalcHeader'); if(mch) mch.style.background=dk('headerBg');
+        // calc settings panel
+        var csp=get('calcSettingsPanel');
+        if(csp){ csp.style.background=dk('resBg'); csp.style.borderColor=dk('codeBdr');
+                 csp.querySelectorAll('label').forEach(function(l){l.style.color=dk('text');}); }
         // re-render pending brackets so dim colour updates with theme
-        ck_renderDisplay();
+        if(typeof ck_renderDisplay==='function') ck_renderDisplay();
         var hL=get('histList'); if(hL) hL.style.color=dk('subtext');
         var cd=get('calcDisplay');
         if(cd){ cd.style.background=dk('resBg'); cd.style.borderColor=dk('codeBdr'); cd.style.color=d?'#4a9eff':'#1a73e8'; }
@@ -1037,10 +1050,21 @@
     var ck_tokens = [];       // array of token objects
     var ck_autoCloseCounter = 0;
     var ck_justEvaled = false;
+    var ck_pinOpen = false;        // mirrors #calcPinOpen checkbox
+    var ck_inferBrackets = true;   // mirrors #calcInferBrackets checkbox
 
     var ckDisplay = get('calcDisplay');
     var ckExpr    = get('calcExpr');
     var ckError   = get('calcError');
+
+    // Wire settings checkboxes to JS state vars
+    get('calcPinOpen').addEventListener('change', function() {
+        ck_pinOpen = this.checked;
+    });
+    get('calcInferBrackets').addEventListener('change', function() {
+        ck_inferBrackets = this.checked;
+        ck_renderDisplay(); // re-render: ghost brackets may appear/disappear
+    });
 
     // ── helpers ────────────────────────────────────────────────────────
     function ck_newId() { return ++ck_autoCloseCounter; }
@@ -1055,22 +1079,26 @@
         return { e: e, d: d };
     }
 
+    function ck_escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
     function ck_renderDisplay() {
         var s = ck_buildStrings();
-        var pending = ck_pendingAutoCloses();
-        var suffix = '';
-        for(var i = 0; i < pending.length; i++) suffix += ')';
-        // Theme-aware dim colour for inferred brackets
-        var dimCol = getDark() ? 'rgba(74,158,255,0.28)' : 'rgba(26,115,232,0.25)';
         var mainText = s.d || '0';
-        if(suffix) {
-            // Use innerHTML so we can colour the pending bracket differently
-            ckDisplay.innerHTML =
-                '<span>' + mainText.replace(/&/g,'&amp;').replace(/</g,'&lt;') + '</span>' +
-                '<span style="color:' + dimCol + ';font-style:italic;">' + suffix + '</span>';
-        } else {
-            ckDisplay.innerHTML = '<span>' + mainText.replace(/&/g,'&amp;').replace(/</g,'&lt;') + '</span>';
+        // Only show ghost brackets if infer is enabled
+        if(ck_inferBrackets) {
+            var pending = ck_pendingAutoCloses();
+            var suffix = '';
+            for(var i = 0; i < pending.length; i++) suffix += ')';
+            // Theme-aware dim colour: close to background, clearly different from real text
+            var dimCol = getDark() ? 'rgba(200,220,255,0.30)' : 'rgba(26,115,232,0.22)';
+            if(suffix) {
+                ckDisplay.innerHTML =
+                    '<span>' + ck_escHtml(mainText) + '</span>' +
+                    '<span style="color:' + dimCol + ';font-style:italic;font-weight:400;">' + suffix + '</span>';
+                return;
+            }
         }
+        ckDisplay.innerHTML = '<span>' + ck_escHtml(mainText) + '</span>';
     }
 
     // Returns array of {idx, id} for sqrt-opens that have no matching close yet
@@ -1135,8 +1163,8 @@
     }
 
     // Auto-close any pending sqrt brackets (those not marked closingDeleted)
-    // Returns list of inserted close tokens (so we can record them)
     function ck_insertPendingCloses() {
+        if(!ck_inferBrackets) return; // respect setting
         var pending = ck_pendingAutoCloses();
         // Insert closes in reverse order (innermost first)
         for(var i = pending.length - 1; i >= 0; i--) {
@@ -1273,7 +1301,28 @@
         } else if(k === ')') {
             // Only allow ) if there's an unclosed open
             if(ck_openDepth() > 0) {
-                ck_tokens.push({ e:')', d:')', kind:'close' });
+                // Check: is the innermost unclosed paren a sqrt-open with a pending
+                // ghost bracket? If so, "realize" it — convert ghost to real close.
+                // But only if the sqrt-open is the INNERMOST unclosed paren.
+                // (If there are manual opens inside the sqrt-open, the ) closes those first.)
+                var innermostOpen = null;
+                var innermostIdx = -1;
+                var depthCheck = 0;
+                for(var ci = 0; ci < ck_tokens.length; ci++) {
+                    var ck = ck_tokens[ci].kind;
+                    if(ck === 'open' || ck === 'sqrt-open') { depthCheck++; innermostOpen = ck_tokens[ci]; innermostIdx = ci; }
+                    else if(ck === 'close') { depthCheck--; }
+                }
+                // If innermost unclosed is a sqrt-open with an active ghost (not closingDeleted)
+                // AND ck_inferBrackets is on: realize the ghost → mark closingDeleted and push real close
+                if(ck_inferBrackets && innermostOpen && innermostOpen.kind === 'sqrt-open' && !innermostOpen.closingDeleted) {
+                    // Mark this sqrt-open so ghost won't show, push a REAL close for it
+                    innermostOpen.closingDeleted = true; // ghost gone
+                    ck_tokens.push({ e:')', d:')', kind:'close',
+                        realizedFromId: innermostOpen.autoCloseId }); // real bracket
+                } else {
+                    ck_tokens.push({ e:')', d:')', kind:'close' });
+                }
             }
 
         } else if(k === '+') {
@@ -1385,13 +1434,22 @@
         }
     });
 
+    // ── Calc settings btn handler ─────────────────────────────────────
+    get('calcSettingsBtn').addEventListener('click', function(e) {
+        e.stopPropagation();
+        var p = get('calcSettingsPanel');
+        p.style.display = p.style.display === 'none' ? 'block' : 'none';
+    });
+    get('calcSettingsPanel').addEventListener('click', function(e) { e.stopPropagation(); });
+
+    // ── Click outside — reads from JS state variable ck_pinOpen ──────
+    // (DOM checkbox updates ck_pinOpen via change listener below)
     document.addEventListener('click',function(e){
         var sm=get('setMenu'),hm=get('histMenu'),mc=get('miniCalc');
         var sb=get('setBtn'),hb=get('histBtn'),cb=get('calcBtn');
         if(sm.style.display!=='none'&&!sm.contains(e.target)&&e.target!==sb) sm.style.display='none';
         if(hm.style.display!=='none'&&!hm.contains(e.target)&&e.target!==hb) hm.style.display='none';
-        var pinned = get('calcPin') && get('calcPin').checked;
-        if(!pinned && mc.style.display!=='none'&&!mc.contains(e.target)&&e.target!==cb) mc.style.display='none';
+        if(!ck_pinOpen && mc.style.display!=='none'&&!mc.contains(e.target)&&e.target!==cb) mc.style.display='none';
     });
 
     get('prec').addEventListener('change',saveSettings);
