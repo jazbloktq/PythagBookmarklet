@@ -28,13 +28,7 @@
     styleEl.textContent = [
         '#geo-ultimate-vscroll input[type=number]::-webkit-inner-spin-button,',
         '#geo-ultimate-vscroll input[type=number]::-webkit-outer-spin-button {',
-        '  opacity: 1;',
-        '  background: transparent;',
-        '  border-left: 1px solid transparent;',
-        '}',
-        '#geo-ultimate-vscroll.geo-dark input[type=number]::-webkit-inner-spin-button,',
-        '#geo-ultimate-vscroll.geo-dark input[type=number]::-webkit-outer-spin-button {',
-        '  filter: invert(1) hue-rotate(180deg) brightness(0.7);',
+        '  -webkit-appearance: none; margin: 0;',
         '}',
         '#geo-ultimate-vscroll input[type=number] { -moz-appearance: textfield; }',
     ].join('\n');
