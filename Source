@@ -13,8 +13,8 @@
     var initSimplify  = saved.simplify  === true;
     var initDark      = saved.dark      === true;
     var initDegrees   = saved.degrees   !== false;
-    var initPrec      = saved.prec !== undefined ? String(saved.prec) : '2';
     var initDiagram   = saved.diagram   !== false;
+    var initPrec      = saved.prec !== undefined ? String(saved.prec) : '2';
 
     var ui = document.createElement('div');
     ui.id = 'geo-ultimate-vscroll';
@@ -90,8 +90,8 @@
             '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optSimplify" style="accent-color:#1a73e8;width:14px;height:14px;"> Simplify surds (e.g. 10\u221a33)</label>',
             '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optDegrees"  style="accent-color:#1a73e8;width:14px;height:14px;"> Angles in degrees</label>',
             '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optAdvanced" style="accent-color:#1a73e8;width:14px;height:14px;"> Advanced wording</label>',
-            '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optDiagram"  style="accent-color:#1a73e8;width:14px;height:14px;"> Show diagram</label>',
             '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optDark"     style="accent-color:#1a73e8;width:14px;height:14px;"> Dark mode</label>',
+            '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optDiagram"  style="accent-color:#1a73e8;width:14px;height:14px;"> Show diagram</label>',
           '</div>',
         '</div>',
     ].join('');
@@ -167,9 +167,6 @@
     get('optDegrees').checked  = initDegrees;
     get('optDiagram').checked  = initDiagram;
 
-    // Apply initial diagram visibility
-    get('canvasBox').style.display = initDiagram ? 'block' : 'none';
-
     function getAdv()      { return get('optAdvanced').checked; }
     function getSurd()     { return get('optSurd').checked; }
     function getSimplify() { return get('optSimplify').checked; }
@@ -191,6 +188,12 @@
                 diagram: get('optDiagram').checked
             }));
         } catch(e) {}
+    }
+
+    function applyDiagramVisibility() {
+        var show = getDiagram();
+        var cb = get('canvasBox');
+        if(cb) cb.style.display = show ? 'block' : 'none';
     }
 
     var DK = {
@@ -290,6 +293,7 @@
         if(dl){ dl.style.background=d?'rgba(30,30,46,0.9)':'rgba(255,255,255,0.92)'; dl.style.borderColor=dk('inputBdr'); dl.style.color=dk('btnTxt'); }
         var ch=get('closeHist'); if(ch){ ch.style.background=dk('btnBg'); ch.style.color=dk('btnTxt'); }
         buildTriBtns(); buildGoalBtns(); buildMethodBtns();
+        applyDiagramVisibility();
     }
 
     var errTimer = null;
@@ -551,9 +555,6 @@
     function rebuildAll(){buildTriBtns();buildGoalBtns();buildMethodBtns();renderInputs();}
 
     function drawTri(s1, h, b, s2, isExt, anglesData) {
-        // Skip drawing entirely if diagram is disabled
-        if(!getDiagram()) return;
-
         var W=canvas.width, H=canvas.height;
         ctx.clearRect(0,0,W,H);
         var d=getDark();
@@ -799,6 +800,7 @@
             get('anglesBox').style.display='block';
             drawTri(s1,h,b,s2,false,anglesForCanvas);
             applyDark();
+            applyDiagramVisibility();
             var finalLabel=get('final').innerText;
             history.unshift({label:'Py. Triple: '+finalLabel,tri:currentTri,goal:currentGoal,method:currentMethod,inputs:vals.map(String),isExt:false,finalText:finalLabel,approxText:'',approxVis:'none',formula:formula,area:area.toFixed(p),perim:perim.toFixed(p),ds1:s1,dh:h,db:b,ds2:s2,anglesForCanvas:anglesForCanvas});
             if(history.length>10)history.pop();
@@ -990,6 +992,7 @@
         drawTri(drawS1, drawH, drawB, drawS2, isExt, anglesForCanvas);
 
         applyDark();
+        applyDiagramVisibility();
 
         var adv=getAdv();
         var gLbl=((adv?goalLabel.a:goalLabel.s)[currentGoal])||currentGoal;
@@ -1049,7 +1052,7 @@
     };
     miniCalcEl.addEventListener('click', function(e) { e.stopPropagation(); });
 
-    // ── miniCalc independent drag ──────────────────────────────────────────
+    // ── miniCalc independent drag ──────────────────────────────────────
     var mcDragState = null;
     var mcHeader = get('miniCalcHeader');
     mcHeader.addEventListener('mousedown', function(e) {
@@ -1078,10 +1081,6 @@
         mcDragState = null;
         mcHeader.style.cursor = 'grab';
     });
-
-    // ══════════════════════════════════════════════════════════════════
-    // MINI CALCULATOR
-    // ══════════════════════════════════════════════════════════════════
 
     var ck_tokens = [];
     var ck_autoCloseCounter = 0;
@@ -1200,9 +1199,12 @@
     function ck_evaluate() {
         if(!ck_tokens.length) return;
         ck_clearCalcError();
+
         ck_insertPendingCloses();
+
         var s = ck_buildStrings();
         var evalStr = s.e.replace(/π/g, '(' + Math.PI + ')');
+
         try {
             var result = Function('"use strict"; return (' + evalStr + ')')();
             if(!isFinite(result)) { ck_showCalcError('Cannot divide by zero'); return; }
@@ -1238,7 +1240,9 @@
                 return;
             }
             if(!ck_tokens.length) return;
+
             var last = ck_tokens[ck_tokens.length - 1];
+
             if(last.isAutoClose) {
                 var closeId = last.autoCloseId;
                 ck_tokens.pop();
@@ -1251,6 +1255,7 @@
                 ck_renderDisplay();
                 return;
             }
+
             if(last.kind === 'sqrt-open') {
                 var openId = last.autoCloseId;
                 var closeIdx = -1;
@@ -1259,29 +1264,41 @@
                         closeIdx = j; break;
                     }
                 }
-                if(closeIdx >= 0) { ck_tokens.splice(closeIdx, 1); }
+                if(closeIdx >= 0) {
+                    ck_tokens.splice(closeIdx, 1);
+                }
                 ck_tokens.pop();
                 ck_renderDisplay();
                 return;
             }
+
             ck_tokens.pop();
             ck_renderDisplay();
             return;
         }
 
-        if(k === '=') { ck_evaluate(); return; }
+        if(k === '=') {
+            ck_evaluate();
+            return;
+        }
 
         if(ck_justEvaled) {
             var isOp  = (k==='+' || k==='-' || k==='\u00d7' || k==='\u00f7');
-            if(!isOp) { ck_tokens = []; ckExpr.innerText = ''; }
+            if(!isOp) {
+                ck_tokens = [];
+                ckExpr.innerText = '';
+            }
             ck_justEvaled = false;
         }
 
         var isOperator = (k==='+' || k==='\u00d7' || k==='\u00f7');
-        if(isOperator && ck_lastIsNum()) { ck_insertPendingCloses(); }
+        if(isOperator && ck_lastIsNum()) {
+            ck_insertPendingCloses();
+        }
 
         if(k === '(') {
             ck_tokens.push({ e:'(', d:'(', kind:'open' });
+
         } else if(k === ')') {
             if(ck_openDepth() > 0) {
                 var innermostOpen = null;
@@ -1294,27 +1311,55 @@
                 }
                 if(ck_inferBrackets && innermostOpen && innermostOpen.kind === 'sqrt-open' && !innermostOpen.closingDeleted) {
                     innermostOpen.closingDeleted = true;
-                    ck_tokens.push({ e:')', d:')', kind:'close', realizedFromId: innermostOpen.autoCloseId });
+                    ck_tokens.push({ e:')', d:')', kind:'close',
+                        realizedFromId: innermostOpen.autoCloseId });
                 } else {
                     ck_tokens.push({ e:')', d:')', kind:'close' });
                 }
             }
+
         } else if(k === '+') {
-            if(ck_lastIsNum()) { ck_tokens.push({ e:'+', d:'+', kind:'op' }); }
+            if(ck_lastIsNum()) {
+                ck_tokens.push({ e:'+', d:'+', kind:'op' });
+            }
+
         } else if(k === '-') {
             ck_tokens.push({ e:'-', d:'-', kind:'op' });
+
         } else if(k === '\u00d7') {
-            if(ck_lastIsNum()) { ck_tokens.push({ e:'*', d:'\u00d7', kind:'op' }); }
+            if(ck_lastIsNum()) {
+                ck_tokens.push({ e:'*', d:'\u00d7', kind:'op' });
+            }
+
         } else if(k === '\u00f7') {
-            if(ck_lastIsNum()) { ck_tokens.push({ e:'/', d:'\u00f7', kind:'op' }); }
+            if(ck_lastIsNum()) {
+                ck_tokens.push({ e:'/', d:'\u00f7', kind:'op' });
+            }
+
         } else if(k === '\u221a') {
-            if(ck_lastIsNum()) { ck_tokens.push({ e:'*', d:'\u00d7', kind:'op' }); }
+            if(ck_lastIsNum()) {
+                ck_tokens.push({ e:'*', d:'\u00d7', kind:'op' });
+            }
             var id = ck_newId();
-            ck_tokens.push({ e: 'Math.sqrt(', d: '\u221a(', kind: 'sqrt-open', autoCloseId: id, closingDeleted: false });
+            ck_tokens.push({
+                e: 'Math.sqrt(', d: '\u221a(',
+                kind: 'sqrt-open',
+                autoCloseId: id,
+                closingDeleted: false
+            });
+
         } else if(k === '\u03c0') {
-            if(ck_lastIsNum()) { ck_tokens.push({ e:'*', d:'\u00d7', kind:'op' }); }
+            if(ck_lastIsNum()) {
+                ck_tokens.push({ e:'*', d:'\u00d7', kind:'op' });
+            }
             ck_tokens.push({ e:'π', d:'\u03c0', kind:'pi' });
+
         } else if(k === '.') {
+            var lastNumTok = null;
+            for(var ni = ck_tokens.length - 1; ni >= 0; ni--) {
+                if(ck_tokens[ni].kind === 'num') { lastNumTok = ck_tokens[ni]; break; }
+                if(ck_tokens[ni].kind !== 'num') break;
+            }
             var lastTokIsNum = ck_lastKind() === 'num';
             if(lastTokIsNum && ck_tokens[ck_tokens.length-1].e.indexOf('.') < 0) {
                 ck_tokens[ck_tokens.length-1].e += '.';
@@ -1322,6 +1367,7 @@
             } else if(!lastTokIsNum) {
                 ck_tokens.push({ e:'0.', d:'0.', kind:'num' });
             }
+
         } else {
             if(ck_lastKind() === 'num') {
                 var nt = ck_tokens[ck_tokens.length-1];
@@ -1347,19 +1393,30 @@
         var active = document.activeElement;
         if(active && active.closest && active.closest('#inputStack')) return;
         if(active && active.id === 'prec') return;
+
         var k = e.key;
         var keyMap = {
             '0':'0','1':'1','2':'2','3':'3','4':'4',
             '5':'5','6':'6','7':'7','8':'8','9':'9',
             '.':'.', '+':'+', '-':'-',
-            '*':'\u00d7', 'x':'\u00d7', 'X':'\u00d7',
-            '/':'\u00f7', '`':'\u221a',
-            'p':'\u03c0', 'P':'\u03c0',
+            '*':'\u00d7',
+            'x':'\u00d7',
+            'X':'\u00d7',
+            '/':'\u00f7',
+            '`':'\u221a',
+            'p':'\u03c0',
+            'P':'\u03c0',
             '(':'(', ')':')',
-            'Enter':'=', 'Backspace':'\u232b', 'Escape':'C'
+            'Enter':'=',
+            'Backspace':'\u232b',
+            'Escape':'C'
         };
+
         var mapped = keyMap[k];
-        if(mapped !== undefined) { e.preventDefault(); ck_handleKey(mapped); }
+        if(mapped !== undefined) {
+            e.preventDefault();
+            ck_handleKey(mapped);
+        }
     });
 
     get('calcSettingsBtn').addEventListener('click', function(e) {
@@ -1383,18 +1440,7 @@
     get('optDegrees').addEventListener('change',saveSettings);
     get('optAdvanced').addEventListener('change',function(){rebuildAll();saveSettings();});
     get('optDark').addEventListener('change',function(){applyDark();saveSettings();});
-
-    // ── Diagram toggle ────────────────────────────────────────────────
-    get('optDiagram').addEventListener('change', function() {
-        var show = this.checked;
-        var cb = get('canvasBox');
-        cb.style.display = show ? 'block' : 'none';
-        if(!show) {
-            // Clear the canvas when hidden so it doesn't hold stale data
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-        }
-        saveSettings();
-    });
+    get('optDiagram').addEventListener('change',function(){applyDiagramVisibility();saveSettings();});
 
     var historyIndex=-1;
     function restoreEntry(entry){
@@ -1410,6 +1456,7 @@
         get('res').style.display='block';
         drawTri(entry.ds1,entry.dh,entry.db,entry.ds2,entry.isExt,entry.anglesForCanvas);
         applyDark();
+        applyDiagramVisibility();
     }
     document.addEventListener('keydown',function(e){
         if(get('miniCalc').style.display!=='none') return;
@@ -1433,4 +1480,5 @@
     if(currentMethod>=mLen) currentMethod=0;
     buildTriBtns();buildGoalBtns();buildMethodBtns();renderInputs();
     if(initDark) applyDark();
+    applyDiagramVisibility();
 })();
