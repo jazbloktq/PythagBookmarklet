@@ -1512,7 +1512,12 @@
         get('histMenu').style.display='none';
         get('setMenu').style.display='none';
     };
-    miniCalcEl.addEventListener('click', function(e) { e.stopPropagation(); });
+    // Track clicks inside the calculator with a flag so the document handler can see it
+    var _calcClickedInside = false;
+    miniCalcEl.addEventListener('click', function(e) {
+        e.stopPropagation();
+        _calcClickedInside = true;
+    });
 
     var mcDragState = null;
     var mcHeader = get('miniCalcHeader');
@@ -1900,9 +1905,12 @@
         var sb=get('setBtn'),hb=get('histBtn'),cb=get('calcBtn');
         if(sm.style.display!=='none'&&!sm.contains(e.target)&&e.target!==sb) sm.style.display='none';
         if(hm.style.display!=='none'&&!hm.contains(e.target)&&e.target!==hb) hm.style.display='none';
+        // Only close the calculator if: not pinned AND click was outside AND not the toggle button
         var pinEl = get('calcPinOpen');
         var isPinned = pinEl && pinEl.checked;
-        if(!isPinned && mc.style.display!=='none'&&!mc.contains(e.target)&&e.target!==cb) mc.style.display='none';
+        var clickedInside = _calcClickedInside;
+        _calcClickedInside = false; // reset for next click
+        if(!isPinned && !clickedInside && mc.style.display!=='none' && e.target!==cb) mc.style.display='none';
     });
 
     get('prec').addEventListener('change',saveSettings);
