@@ -25,7 +25,6 @@
     var initPrec          = saved.prec !== undefined ? String(saved.prec) : '2';
     var initUnit          = saved.unit          || 'none';
 
-    // ── Scoped styles: fix number-input spinners in dark mode ──────────────
     var styleEl = document.getElementById('geo-ultimate-styles');
     if(styleEl) styleEl.remove();
     styleEl = document.createElement('style');
@@ -177,7 +176,6 @@
     ].join('');
     document.body.appendChild(ui);
 
-    // ── Mini Calculator — separate DOM element appended directly to body ──
     var miniCalcEl = document.createElement('div');
     miniCalcEl.id = 'miniCalc';
     miniCalcEl.style.cssText = 'display:none;position:fixed;top:80px;right:420px;width:260px;background:#fff;border:1px solid #ddd;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.18);padding:0;z-index:99999;font-family:system-ui,sans-serif;font-size:12px;color:#222;';
@@ -193,7 +191,7 @@
           '<div style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.6px;margin-bottom:7px;">CALCULATOR SETTINGS</div>',
           '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;margin-bottom:6px;">',
             '<input type="checkbox" id="calcInferBrackets" checked style="accent-color:#1a73e8;width:13px;height:13px;cursor:pointer;">',
-            'Infer brackets (auto-close √)',
+            'Infer brackets (auto-close \u221a)',
           '</label>',
           '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;">',
             '<input type="checkbox" id="calcPinOpen" style="accent-color:#1a73e8;width:13px;height:13px;cursor:pointer;">',
@@ -207,17 +205,17 @@
             '<button class="ck" data-k="C"   style="padding:9px 4px;border:none;border-radius:7px;background:#fee2e2;color:#c0392b;font-weight:700;cursor:pointer;font-size:12px;">C</button>',
             '<button class="ck" data-k="("   style="padding:9px 4px;border:none;border-radius:7px;background:#e8f0fe;color:#1a73e8;font-weight:700;cursor:pointer;font-size:14px;">(</button>',
             '<button class="ck" data-k=")"   style="padding:9px 4px;border:none;border-radius:7px;background:#e8f0fe;color:#1a73e8;font-weight:700;cursor:pointer;font-size:14px;">)</button>',
-            '<button class="ck" data-k="⌫" style="padding:9px 4px;border:none;border-radius:7px;background:#f1f3f4;color:#555;font-weight:700;cursor:pointer;font-size:14px;">⌫</button>',
-            '<button class="ck" data-k="√"  style="padding:9px 4px;border:none;border-radius:7px;background:#e8f0fe;color:#1a73e8;font-weight:700;cursor:pointer;font-size:14px;">√</button>',
+            '<button class="ck" data-k="\u232b" style="padding:9px 4px;border:none;border-radius:7px;background:#f1f3f4;color:#555;font-weight:700;cursor:pointer;font-size:14px;">\u232b</button>',
+            '<button class="ck" data-k="\u221a"  style="padding:9px 4px;border:none;border-radius:7px;background:#e8f0fe;color:#1a73e8;font-weight:700;cursor:pointer;font-size:14px;">\u221a</button>',
             '<button class="ck" data-k="7"   style="padding:9px 4px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">7</button>',
             '<button class="ck" data-k="8"   style="padding:9px 4px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">8</button>',
             '<button class="ck" data-k="9"   style="padding:9px 4px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">9</button>',
-            '<button class="ck" data-k="÷" style="padding:9px 4px;border:none;border-radius:7px;background:#e8f0fe;color:#1a73e8;font-weight:700;cursor:pointer;font-size:15px;">÷</button>',
-            '<button class="ck" data-k="π"  style="padding:9px 4px;border:none;border-radius:7px;background:#e8f0fe;color:#1a73e8;font-weight:700;cursor:pointer;font-size:14px;">π</button>',
+            '<button class="ck" data-k="\u00f7" style="padding:9px 4px;border:none;border-radius:7px;background:#e8f0fe;color:#1a73e8;font-weight:700;cursor:pointer;font-size:15px;">\u00f7</button>',
+            '<button class="ck" data-k="\u03c0"  style="padding:9px 4px;border:none;border-radius:7px;background:#e8f0fe;color:#1a73e8;font-weight:700;cursor:pointer;font-size:14px;">\u03c0</button>',
             '<button class="ck" data-k="4"   style="padding:9px 4px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">4</button>',
             '<button class="ck" data-k="5"   style="padding:9px 4px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">5</button>',
             '<button class="ck" data-k="6"   style="padding:9px 4px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">6</button>',
-            '<button class="ck" data-k="×" style="grid-column:span 2;padding:9px 4px;border:none;border-radius:7px;background:#e8f0fe;color:#1a73e8;font-weight:700;cursor:pointer;font-size:15px;">×</button>',
+            '<button class="ck" data-k="\u00d7" style="grid-column:span 2;padding:9px 4px;border:none;border-radius:7px;background:#e8f0fe;color:#1a73e8;font-weight:700;cursor:pointer;font-size:15px;">\u00d7</button>',
             '<button class="ck" data-k="1"   style="padding:9px 4px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">1</button>',
             '<button class="ck" data-k="2"   style="padding:9px 4px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">2</button>',
             '<button class="ck" data-k="3"   style="padding:9px 4px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">3</button>',
@@ -243,7 +241,7 @@
     var history = [];
     var autoCalcTimer = null;
     var currentUnit = initUnit;
-    var lastCalcResult = null; // {res, s1, h, b, s2, area, perim, anglesForCanvas, isExt}
+    var lastCalcResult = null;
 
     get('prec').value          = initPrec;
     get('optSurd').checked     = initSurd;
@@ -320,7 +318,6 @@
         if(ap) ap.style.display = (showA || showP) ? 'grid' : 'none';
     }
 
-    // Unit conversion table (relative to 1 metre)
     var unitFactors={mm:1000,cm:100,m:1,km:0.001,in:39.3701,ft:3.28084};
     var unitLabels={mm:'mm',cm:'cm',m:'m',km:'km',in:'in',ft:'ft'};
     function renderUnitConverter(rawValue) {
@@ -342,7 +339,7 @@
             var isActive=(u===currentUnit);
             return '<div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:1px solid '+(d?'rgba(255,255,255,0.06)':'#eef')+'">' +
                 '<span style="font-size:11px;color:'+(d?'#9090b0':'#666')+';">'+unitLabels[u]+'</span>'+
-                '<span style="font-size:12px;font-weight:'+(isActive?'700':'500')+';color:'+(isActive?(d?'#4a9eff':'#1a73e8'):(d?'#e0e0f0':'#222'))+'">'+(isActive?'★ ':'')+disp+' '+u+'</span>'+
+                '<span style="font-size:12px;font-weight:'+(isActive?'700':'500')+';color:'+(isActive?(d?'#4a9eff':'#1a73e8'):(d?'#e0e0f0':'#222'))+'">'+(isActive?'\u2605 ':'')+disp+' '+u+'</span>'+
                 '</div>';
         }).join('');
     }
@@ -445,17 +442,8 @@
             sm.querySelectorAll('label').forEach(function(l){ l.style.color=dk('text'); });
             var smt=get('setMenuTitle'); if(smt) smt.style.color=dk('text');
             var pl=get('precLabel'); if(pl) pl.style.color=dk('subtext');
-            // Update tab buttons
-            var activeTab=null;
-            sm.querySelectorAll('.setTab').forEach(function(b){
-                if(b.style.borderBottomColor!=='transparent'&&b.style.borderBottomColor!=='') activeTab=b.getAttribute('data-tab');
-                b.style.background='none';
-                b.style.color=b.style.borderBottomColor!=='transparent'&&b.style.borderBottomColor!==''?(d?'#4a9eff':'#1a73e8'):(d?'#7070a0':'#888');
-            });
-            // Update dividers
-            sm.querySelectorAll('div[style*="height:1px"]').forEach(function(dv){ dv.style.background=d?'rgba(200,200,255,0.12)':'#eee'; });
-            // Theme the unit buttons
             updateUnitBtns();
+            sm.querySelectorAll('div[style*="height:1px"]').forEach(function(dv){ dv.style.background=d?'rgba(200,200,255,0.12)':'#eee'; });
             var interactNote=get('interactNote'); if(interactNote) interactNote.style.color=d?'#7070a0':'#999';
         }
         var dl=get('dlBtn');
@@ -654,9 +642,7 @@
         return list.map(function(m){return{id:m.id,text:adv?m.a:m.s,inputs:adv?m.ai:m.si,toggle:m.toggle,angles:m.angles||false};});
     }
 
-    // Convert angle input to radians. Inputs labelled °  are always degrees regardless of getDeg()
     function toRad(v) { return v * Math.PI / 180; }
-    // isAngleInput: check if the method input label contains (°)
     function isAngleLbl(lbl) { return lbl.indexOf('\u00b0') >= 0 || lbl.toLowerCase().indexOf('angle') >= 0; }
 
     function bBaseStyle()   {
@@ -745,19 +731,18 @@
     }
     function rebuildAll(){buildTriBtns();buildGoalBtns();buildMethodBtns();renderInputs();}
 
-    // ── Diagram state for interactive mode ─────────────────────────────────
-    var diagVertices = null; // [{x,y}] screen coords of pA, pB, pC after drawing
+    var diagVertices = null;
     var diagDragIdx  = -1;
     var diagScale    = 1;
     var diagOffX     = 0, diagOffY = 0;
-    var diagLastParams = null; // {s1,h,b,s2,isExt,anglesData,goal}
+    var diagLastParams = null;
 
     function drawTri(s1, h, b, s2, isExt, anglesData, highlightGoal) {
         var W=canvas.width, H=canvas.height;
         ctx.clearRect(0,0,W,H);
         var d=getDark();
         var triCol=d?'#4a9eff':'#1a73e8';
-        var hlCol ='#e87c00'; // orange for highlighted side
+        var hlCol ='#e87c00';
         var raw;
         if(currentTri==='equilateral'||currentTri==='isosceles') raw=[[0,h],[b/2,0],[b,h]];
         else if(currentTri==='right') raw=[[0,h],[0,0],[b,h]];
@@ -774,13 +759,9 @@
         var pA=tr(raw[0]),pB=tr(raw[1]),pC=tr(raw[2]);
         var pH=[pB[0],pA[1]];
 
-        // Store vertices for interactive mode
         diagVertices=[{x:pA[0],y:pA[1]},{x:pB[0],y:pB[1]},{x:pC[0],y:pC[1]}];
         diagLastParams={s1:s1,h:h,b:b,s2:s2,isExt:isExt,anglesData:anglesData,goal:highlightGoal};
 
-        // Determine which side to highlight based on goal
-        // sides: pA-pB = s1, pB-pC = s2, pA-pC = base b
-        // for right: pA-pB = leg(s1), pA-pC = base(b), pB-pC = hypo(s2)
         var hl = getColorCode() && highlightGoal;
         var hlAB=false,hlBC=false,hlAC=false;
         if(hl){
@@ -802,7 +783,6 @@
         if(currentTri==='equilateral'){tick(pA[0],pA[1],pB[0],pB[1],2);tick(pB[0],pB[1],pC[0],pC[1],2);tick(pA[0],pA[1],pC[0],pC[1],2);}
         else if(currentTri==='isosceles'){tick(pA[0],pA[1],pB[0],pB[1],1);tick(pB[0],pB[1],pC[0],pC[1],1);}
 
-        // Draw each side with possible highlight
         function drawSide(x1,y1,x2,y2,highlighted){
             ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);
             ctx.strokeStyle=highlighted?hlCol:triCol;
@@ -819,13 +799,13 @@
         var altOnLeft=false,altOnRight=false;
         if(currentTri==='scalene'){var eps=0.002*scale;altOnLeft=Math.abs(pB[0]-pA[0])<eps;altOnRight=Math.abs(pB[0]-pC[0])<eps;}
         var drawAlt=(currentTri==='isosceles'||currentTri==='equilateral'||(currentTri==='scalene'&&!altOnLeft&&!altOnRight));
+        var sq2=6;
         if(drawAlt&&highlightGoal!=='height'){
             ctx.setLineDash([4,4]);ctx.lineWidth=1.5;ctx.strokeStyle=d?'#555':'#aaa';
             ctx.beginPath();ctx.moveTo(pB[0],pB[1]);ctx.lineTo(pH[0],pH[1]);ctx.stroke();ctx.setLineDash([]);
-            var sq2=6;ctx.strokeStyle=d?'#555':'#aaa';ctx.lineWidth=1;
+            ctx.strokeStyle=d?'#555':'#aaa';ctx.lineWidth=1;
             ctx.strokeRect(pH[0], pH[1]-sq2, sq2, sq2);
         } else if(drawAlt&&highlightGoal==='height'){
-            // highlight the altitude
             ctx.setLineDash([4,4]);ctx.lineWidth=2.5;ctx.strokeStyle=hlCol;
             ctx.beginPath();ctx.moveTo(pB[0],pB[1]);ctx.lineTo(pH[0],pH[1]);ctx.stroke();ctx.setLineDash([]);
             ctx.strokeStyle=hlCol;ctx.lineWidth=1.5;
@@ -879,7 +859,6 @@
         ctx.fillStyle=triCol;ctx.font='bold 11px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';
         var OUT=16, adv2=getAdv(), hLbl=adv2?'alt=':'h=';
         var cx2=(pA[0]+pB[0]+pC[0])/3, cy2=(pA[1]+pB[1]+pC[1])/3;
-        // Store side label positions for click-to-edit
         diagSideLabelPos=[];
         function labelSide(ax,ay,bx,by,lbl,sideKey){
             var mx=(ax+bx)/2,my=(ay+by)/2,dx=bx-ax,dy=by-ay,len=Math.sqrt(dx*dx+dy*dy)||1;
@@ -925,7 +904,6 @@
             if(!altOnLeft&&!altOnRight) altLabel(hL);
         }
 
-        // Draw interactive vertex handles
         if(getInteractDiag()&&diagVertices){
             diagVertices.forEach(function(v){
                 ctx.beginPath();ctx.arc(v.x,v.y,6,0,2*Math.PI);
@@ -938,7 +916,6 @@
 
     var diagSideLabelPos = [];
 
-    // ── Core calculation — silent=true suppresses error toasts (used by auto-calc) ──
     function doCalculate(silent) {
         if(!silent) clearError();
         var list=getMethodList();
@@ -951,10 +928,9 @@
             if(isNaN(v)||!el||el.value.trim()==='') missing.push(lbl);
         });
         if(missing.length){if(!silent)showError('Missing values','Please fill in: '+missing.join(', ')+'.');return;}
-        // Only check >0 for non-angle inputs; angles just need >0 and <180
         for(var j=0;j<vals.length;j++){
             if(isAngleLbl(cfg.inputs[j])){
-                if(vals[j]<=0||vals[j]>=180){if(!silent)showError('Invalid angle',cfg.inputs[j]+' must be between 0° and 180°.');return;}
+                if(vals[j]<=0||vals[j]>=180){if(!silent)showError('Invalid angle',cfg.inputs[j]+' must be between 0\u00b0 and 180\u00b0.');return;}
             } else {
                 if(vals[j]<=0){if(!silent)showError('Values must be positive',cfg.inputs[j]+' must be greater than zero.');return;}
             }
@@ -1192,32 +1168,23 @@
             res=(2*v0)/v1;b=res;h=v1;s1=h;s2=Math.sqrt(h*h+b*b);
             formula='Base = (2A) / height\n= (2 \u00d7 '+v0+') / '+v1+' = '+fmtS(res);
 
-        // ── Angle-based (Law of Sines / Cosines) ─────────────────────────────
         }else if(type==='sc_b_asa'){
-            // ASA: Angle A, side c (between them), Angle B → find base c (same side, but here we mean: find the base opposite)
-            // Actually: we have two base angles and the side between them
-            // Law of sines: b/sin(B) = c/sin(C); C = 180 - A - B
             var angA=toRad(v0), sideC=v1, angB=toRad(v2);
             var angC=Math.PI-angA-angB;
-            if(angC<=0){if(!silent)showError('Impossible','Angles must sum to less than 180°.');return;}
-            // side opposite C (the base) via law of sines: base/sin(C) = sideC/sin(C)... 
-            // Wait: ASA means we know angle A, the side between A and B (which is side c=AB), and angle B.
-            // side a = c·sin(A)/sin(C), side b = c·sin(B)/sin(C)
-            s1=sideC*Math.sin(angB)/Math.sin(angC); // side opposite B = side a
-            s2=sideC*Math.sin(angA)/Math.sin(angC); // side opposite A = side b  
-            b=sideC; // the side between the two angles
-            h=s1*Math.sin(angC); // h = s1·sin(C) but let's compute from area
+            if(angC<=0){if(!silent)showError('Impossible','Angles must sum to less than 180\u00b0.');return;}
+            s1=sideC*Math.sin(angB)/Math.sin(angC);
+            s2=sideC*Math.sin(angA)/Math.sin(angC);
+            b=sideC;
             var areaASA=0.5*b*b*Math.sin(angA)*Math.sin(angB)/Math.sin(angC);
             h=(2*areaASA)/b; area=areaASA;
-            res=b; // we "found" the base (side between the angles)
-            formula='C = 180\u00b0 \u2212 '+v0+'\u00b0 \u2212 '+v2+'\u00b0 = '+(v0*0+v2*0 + (180-v0-v2)).toFixed(4)+'\u00b0\n'+
+            res=b;
+            formula='C = 180\u00b0 \u2212 '+v0+'\u00b0 \u2212 '+v2+'\u00b0 = '+(180-v0-v2).toFixed(4)+'\u00b0\n'+
                     'By Law of Sines: a/sin(A) = c/sin(C)\n'+
                     'a = '+v1+'\u00d7sin('+v0+'\u00b0)/sin(C) = '+fmtS(s1)+'\n'+
                     'b = '+v1+'\u00d7sin('+v2+'\u00b0)/sin(C) = '+fmtS(s2)+'\n'+
                     'Area = \u00bd\u00d7c\u00b2\u00d7sin(A)\u00d7sin(B)/sin(C) = '+fmtS(areaASA);
 
         }else if(type==='sc_b_sas'){
-            // SAS: side a, angle C (included), side b → find base c (opposite C) via law of cosines
             s1=v0; var angC2=toRad(v1); s2=v2;
             var bSAS=Math.sqrt(s1*s1+s2*s2-2*s1*s2*Math.cos(angC2));
             b=bSAS; res=bSAS;
@@ -1228,11 +1195,9 @@
                     '= '+fmtS(bSAS)+'\nArea = \u00bd\u00d7a\u00d7b\u00d7sin(C) = '+fmtS(area);
 
         }else if(type==='sc_s_aas'){
-            // AAS: Angle A, Angle B, known side a → find side b (opposite B)
             var aasA=toRad(v0), aasB=toRad(v1), aasC_ang=Math.PI-aasA-aasB;
-            if(aasC_ang<=0){if(!silent)showError('Impossible','Angles must sum to less than 180°.');return;}
-            var aasA_side=v2; // side opposite A
-            // Law of sines: b/sin(B) = a/sin(A)
+            if(aasC_ang<=0){if(!silent)showError('Impossible','Angles must sum to less than 180\u00b0.');return;}
+            var aasA_side=v2;
             res=aasA_side*Math.sin(aasB)/Math.sin(aasA);
             s1=aasA_side; s2=res;
             b=aasA_side*Math.sin(aasC_ang)/Math.sin(aasA);
@@ -1240,7 +1205,6 @@
             formula='C = 180\u00b0 \u2212 A \u2212 B\nLaw of Sines: b/sin(B) = a/sin(A)\nb = '+v2+'\u00d7sin('+v1+'\u00b0)/sin('+v0+'\u00b0) = '+fmtS(res);
 
         }else if(type==='sc_a_sas'){
-            // SAS area: ½·a·b·sin(C)
             s1=v0; var angCSAS=toRad(v1); s2=v2;
             res=0.5*s1*s2*Math.sin(angCSAS);
             area=res;
@@ -1249,8 +1213,6 @@
             formula='Area = \u00bd \u00d7 a \u00d7 b \u00d7 sin(C)\n= \u00bd \u00d7 '+s1+' \u00d7 '+s2+' \u00d7 sin('+v1+'\u00b0)\n= '+fmtS(res);
 
         }else if(type==='is_b_asa'){
-            // Isosceles: apex angle + leg → find base
-            // apex angle = angle at top, leg = equal sides
             var apexRad=toRad(v0), leg=v1;
             res=2*leg*Math.sin(apexRad/2);
             b=res; s1=leg; s2=leg;
@@ -1259,22 +1221,15 @@
             formula='Base = 2 \u00d7 Leg \u00d7 sin(Apex/2)\n= 2 \u00d7 '+leg+' \u00d7 sin('+v0+'\u00b0/2)\n= '+fmtS(res);
 
         }else if(type==='is_s_ba'){
-            // Isosceles: base + base angle → find leg
             var baseLen=v0, baseAng=toRad(v1);
-            // base angle is angle at base vertex; apex angle = 180 - 2*base_angle
-            // leg/sin(90+apex/2... better: leg = (base/2)/cos(base_angle) ... wait
-            // Let half-base = b/2, height h, leg = s
-            // base_angle: tan(base_angle) = h/(b/2)... actually in the right triangle formed:
-            // cos(base_angle) = (b/2)/s → s = (b/2)/cos(base_angle)
-            if(baseAng>=Math.PI/2){if(!silent)showError('Impossible','Base angle must be less than 90°.');return;}
+            if(baseAng>=Math.PI/2){if(!silent)showError('Impossible','Base angle must be less than 90\u00b0.');return;}
             res=(baseLen/2)/Math.cos(baseAng);
             s1=res;s2=res;b=baseLen;
-            h=s1*Math.sin(baseAng); // sin(base_angle) = h/s
+            h=s1*Math.sin(baseAng);
             area=0.5*b*h;
             formula='Leg = (Base/2) / cos(Base Angle)\n= ('+baseLen+'/2) / cos('+v1+'\u00b0)\n= '+fmtS(res);
 
         }else if(type==='is_a_la'){
-            // Isosceles area: leg + apex angle
             var legLA=v0, apexLA=toRad(v1);
             res=0.5*legLA*legLA*Math.sin(apexLA);
             area=res; s1=legLA; s2=legLA;
@@ -1283,20 +1238,16 @@
             formula='Area = \u00bd \u00d7 Leg\u00b2 \u00d7 sin(Apex)\n= \u00bd \u00d7 '+legLA+'\u00b2 \u00d7 sin('+v1+'\u00b0)\n= '+fmtS(res);
 
         }else if(type==='rt_c_la'){
-            // Right triangle hypotenuse from leg + acute angle: hyp = leg/cos(A) or leg/sin(A)
-            // Angle A is the acute angle at vertex A; leg a is opposite A
-            // sin(A) = leg_a / hyp → hyp = leg_a / sin(A)
             var legRT=v0, angRT=toRad(v1);
-            if(angRT>=Math.PI/2){if(!silent)showError('Impossible','Acute angle must be less than 90°.');return;}
+            if(angRT>=Math.PI/2){if(!silent)showError('Impossible','Acute angle must be less than 90\u00b0.');return;}
             res=legRT/Math.sin(angRT);
             s2=res; s1=legRT; h=legRT; b=res*Math.cos(angRT);
             area=0.5*s1*b; perim=s1+b+s2;
             formula='Hypotenuse = Leg / sin(A)\n= '+legRT+' / sin('+v1+'\u00b0)\n= '+fmtS(res);
 
         }else if(type==='rt_l_ca'){
-            // Right triangle leg from hypotenuse + acute angle: leg = hyp·sin(A)
             var hypCA=v0, angCA=toRad(v1);
-            if(angCA>=Math.PI/2){if(!silent)showError('Impossible','Acute angle must be less than 90°.');return;}
+            if(angCA>=Math.PI/2){if(!silent)showError('Impossible','Acute angle must be less than 90\u00b0.');return;}
             res=hypCA*Math.sin(angCA);
             s1=res; h=res; s2=hypCA; b=hypCA*Math.cos(angCA);
             area=0.5*s1*b; perim=s1+b+s2;
@@ -1382,7 +1333,6 @@
 
     get('calc').onclick = function() { doCalculate(false); };
 
-    // ── Interactive diagram: drag vertices ──────────────────────────────────
     function canvasToTriCoord(sx, sy) {
         return { x: (sx - diagOffX) / diagScale, y: (sy - diagOffY) / diagScale };
     }
@@ -1402,7 +1352,6 @@
     });
     canvas.addEventListener('mousemove', function(e) {
         if(!getInteractDiag()) return;
-        // Update cursor
         if(diagVertices&&lastCalcResult){
             var rect2=canvas.getBoundingClientRect();
             var scaleX2=canvas.width/rect2.width, scaleY2=canvas.height/rect2.height;
@@ -1416,23 +1365,17 @@
         var rect=canvas.getBoundingClientRect();
         var scaleX=canvas.width/rect.width, scaleY=canvas.height/rect.height;
         var mx=(e.clientX-rect.left)*scaleX, my=(e.clientY-rect.top)*scaleY;
-        // Update the dragged vertex position in screen space, recalc triangle from new geometry
         diagVertices[diagDragIdx].x=mx; diagVertices[diagDragIdx].y=my;
         var pA=diagVertices[0], pB=diagVertices[1], pC=diagVertices[2];
-        // Derive s1, s2, base, height from vertex positions
         function dist2(a,b){return Math.sqrt(distSq(a.x,a.y,b.x,b.y));}
         var newS1=dist2(pA,pB)/diagScale, newS2=dist2(pB,pC)/diagScale, newBase=dist2(pA,pC)/diagScale;
-        // height from B to AC
         var acLen=dist2(pA,pC)||1;
         var cross=Math.abs((pC.x-pA.x)*(pA.y-pB.y)-(pA.x-pB.x)*(pC.y-pA.y));
         var newH=cross/acLen/diagScale;
-        // Validate triangle inequality
         if(newS1+newS2<=newBase||newS1+newBase<=newS2||newS2+newBase<=newS1) return;
-        // Update input fields if they map to a side
         var cfg2=(getMethodList())[Math.min(currentMethod,(getMethodList()).length-1)];
         if(cfg2){
             var inputs=cfg2.inputs;
-            // Try to map: if input labels contain Side1/Leg, update v0; Side2, update v2 if 3 inputs; Base/Hypo update appropriate
             inputs.forEach(function(lbl,i){
                 var ll=lbl.toLowerCase();
                 var el=get('v'+i); if(!el) return;
@@ -1442,14 +1385,30 @@
                 else if(ll.indexOf('height')>=0||ll.indexOf('alt')>=0) el.value=newH.toFixed(4);
             });
         }
-        // Redraw with new geometry directly (silent update)
-        var angArr2=computeAngles(newS1,newBase,newS2);
-        var af2=[angArr2[2],angArr2[1],angArr2[0]];
-        // Update diagVertices with properly computed ones then redraw
-        // First redraw based on raw new data
         var p=getPrec();
         get('areaRes').innerText=(0.5*newBase*newH).toFixed(p);
         get('perimRes').innerText=(newS1+newS2+newBase).toFixed(p);
+
+        // ── FIX 3: Update main result display based on current goal ──────────
+        (function(){
+            var _r;
+            if(currentGoal==='base')        _r = newBase;
+            else if(currentGoal==='side')   _r = newS1;
+            else if(currentGoal==='hypo')   _r = newS2;
+            else if(currentGoal==='height') _r = newH;
+            else if(currentGoal==='area')   _r = 0.5 * newBase * newH;
+            else                            _r = newBase;
+            if(!isNaN(_r) && _r > 0) {
+                var _f = get('final');
+                if(_f) _f.innerText = _r.toFixed(p);
+                var _a = get('finalApprox');
+                if(_a) _a.style.display = 'none';
+            }
+        })();
+        // ────────────────────────────────────────────────────────────────────
+
+        var angArr2=computeAngles(newS1,newBase,newS2);
+        var af2=[angArr2[2],angArr2[1],angArr2[0]];
         get('anglesContent').innerHTML='';
         var d3=getDark();
         ['A','B','C'].forEach(function(n,i){
@@ -1458,7 +1417,6 @@
             sp.innerText=n+' = '+fmtAngle(angArr2[i]);
             get('anglesContent').appendChild(sp);
         });
-        // Draw using raw pixel positions directly (bypass normal drawTri scale calc)
         var W=canvas.width, H=canvas.height;
         ctx.clearRect(0,0,W,H);
         var dc=getDark(), tc=dc?'#4a9eff':'#1a73e8';
@@ -1466,13 +1424,11 @@
         ctx.fillStyle=dc?'rgba(74,158,255,0.08)':'rgba(26,115,232,0.07)';ctx.fill();
         ctx.strokeStyle=tc;ctx.lineWidth=2.5;ctx.lineJoin='round';
         ctx.beginPath();ctx.moveTo(pA.x,pA.y);ctx.lineTo(pB.x,pB.y);ctx.lineTo(pC.x,pC.y);ctx.closePath();ctx.stroke();
-        // Draw vertex handles
         diagVertices.forEach(function(v){
             ctx.beginPath();ctx.arc(v.x,v.y,6,0,2*Math.PI);
             ctx.fillStyle=dc?'rgba(74,158,255,0.5)':'rgba(26,115,232,0.35)';ctx.fill();
             ctx.strokeStyle=tc;ctx.lineWidth=1.5;ctx.stroke();
         });
-        // Labels
         ctx.fillStyle=tc;ctx.font='bold 11px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';
         var cxD=(pA.x+pB.x+pC.x)/3, cyD=(pA.y+pB.y+pC.y)/3, OUTD=16;
         function lbD(ax,ay,bx,by,lbl){
@@ -1488,11 +1444,9 @@
     canvas.addEventListener('mouseup', function() { diagDragIdx=-1; canvas.style.cursor='default'; });
     canvas.addEventListener('mouseleave', function() { diagDragIdx=-1; });
 
-    // ── Click-to-edit: click side labels on diagram ──────────────────────────
     var diagEditInput = null;
     canvas.addEventListener('click', function(e) {
         if(!getClickEdit()||!diagSideLabelPos.length) return;
-        // If we were dragging, don't trigger edit
         var rect=canvas.getBoundingClientRect();
         var scaleX=canvas.width/rect.width, scaleY=canvas.height/rect.height;
         var mx=(e.clientX-rect.left)*scaleX, my=(e.clientY-rect.top)*scaleY;
@@ -1502,7 +1456,6 @@
             if(Math.abs(mx-lp.x)<18&&Math.abs(my-lp.y)<12){hit=lp;break;}
         }
         if(!hit) return;
-        // Map sideKey to input field index
         var cfg3=getMethodList()[Math.min(currentMethod,getMethodList().length-1)];
         if(!cfg3) return;
         var targetIdx=-1;
@@ -1516,7 +1469,6 @@
         if(targetIdx<0) return;
         var targetInput=get('v'+targetIdx);
         if(!targetInput) return;
-        // Scroll to input and focus
         targetInput.style.outline='2px solid #e87c00';
         targetInput.focus();
         targetInput.select();
@@ -1528,7 +1480,7 @@
     get('clear').onclick   = function(){ui.querySelectorAll('#inputStack input').forEach(function(i){i.value='';});get('res').style.display='none';ctx.clearRect(0,0,canvas.width,canvas.height);};
     get('close').onclick   = function(){ui.remove(); if(miniCalcEl.parentNode) miniCalcEl.remove();};
     get('errClose').onclick= function(){clearError();};
-    get('setBtn').onclick  = function(e){e.stopPropagation();var m=get('setMenu');m.style.display=m.style.display==='none'?'block':'none';get('histMenu').style.display='none';get('miniCalc').style.display='none';};
+    get('setBtn').onclick  = function(e){e.stopPropagation();var m=get('setMenu');m.style.display=m.style.display==='none'?'flex':'none';get('histMenu').style.display='none';get('miniCalc').style.display='none';};
     get('histBtn').onclick = function(e){e.stopPropagation();var m=get('histMenu');m.style.display=m.style.display==='none'?'block':'none';get('setMenu').style.display='none';get('miniCalc').style.display='none';};
     get('setMenu').addEventListener('click',function(e){e.stopPropagation();});
     get('histMenu').addEventListener('click',function(e){e.stopPropagation();});
@@ -1562,7 +1514,6 @@
     };
     miniCalcEl.addEventListener('click', function(e) { e.stopPropagation(); });
 
-    // ── miniCalc independent drag ──────────────────────────────────────
     var mcDragState = null;
     var mcHeader = get('miniCalcHeader');
     mcHeader.addEventListener('mousedown', function(e) {
@@ -1603,6 +1554,8 @@
     var ckExpr    = get('calcExpr');
     var ckError   = get('calcError');
 
+    // ── FIX 1: Read checkbox state live instead of caching in variable ──────
+    // (ck_pinOpen kept for compatibility but document handler reads checkbox directly)
     get('calcPinOpen').addEventListener('change', function() {
         ck_pinOpen = this.checked;
     });
@@ -1714,7 +1667,7 @@
         ck_insertPendingCloses();
 
         var s = ck_buildStrings();
-        var evalStr = s.e.replace(/π/g, '(' + Math.PI + ')');
+        var evalStr = s.e.replace(/\u03c0/g, '(' + Math.PI + ')');
 
         try {
             var result = Function('"use strict"; return (' + evalStr + ')')();
@@ -1863,7 +1816,7 @@
             if(ck_lastIsNum()) {
                 ck_tokens.push({ e:'*', d:'\u00d7', kind:'op' });
             }
-            ck_tokens.push({ e:'π', d:'\u03c0', kind:'pi' });
+            ck_tokens.push({ e:'\u03c0', d:'\u03c0', kind:'pi' });
 
         } else if(k === '.') {
             var lastNumTok = null;
@@ -1941,12 +1894,15 @@
     });
     get('calcSettingsPanel').addEventListener('click', function(e) { e.stopPropagation(); });
 
+    // ── FIX 1: Pin open — read checkbox directly so state is always current ──
     document.addEventListener('click',function(e){
         var sm=get('setMenu'),hm=get('histMenu'),mc=get('miniCalc');
         var sb=get('setBtn'),hb=get('histBtn'),cb=get('calcBtn');
         if(sm.style.display!=='none'&&!sm.contains(e.target)&&e.target!==sb) sm.style.display='none';
         if(hm.style.display!=='none'&&!hm.contains(e.target)&&e.target!==hb) hm.style.display='none';
-        if(!ck_pinOpen && mc.style.display!=='none'&&!mc.contains(e.target)&&e.target!==cb) mc.style.display='none';
+        var pinEl = get('calcPinOpen');
+        var isPinned = pinEl && pinEl.checked;
+        if(!isPinned && mc.style.display!=='none'&&!mc.contains(e.target)&&e.target!==cb) mc.style.display='none';
     });
 
     get('prec').addEventListener('change',saveSettings);
@@ -1966,7 +1922,6 @@
         saveSettings();
     });
     get('optInteractDiag').addEventListener('change',function(){
-        // Redraw to show/hide vertex handles
         if(lastCalcResult){
             var r=lastCalcResult;
             drawTri(r.s1,r.h,r.b,r.s2,r.isExt,r.anglesForCanvas,r.goal);
@@ -1982,7 +1937,6 @@
         saveSettings();
     });
 
-    // Settings tabs
     ui.querySelectorAll('.setTab').forEach(function(btn){
         btn.addEventListener('click',function(e){
             e.stopPropagation();
@@ -1999,7 +1953,6 @@
         });
     });
 
-    // Unit selector buttons
     function updateUnitBtns(){
         var d=getDark();
         ui.querySelectorAll('.unitBtn').forEach(function(btn){
@@ -2062,4 +2015,11 @@
     if(initDark) { ui.classList.add('geo-dark'); applyDark(); }
     applyDiagramVisibility();
     applyResultVisibility();
+
+    // ── FIX 2: Guarantee all panels/menus start closed on every load ─────────
+    get('setMenu').style.display = 'none';
+    get('histMenu').style.display = 'none';
+    get('miniCalc').style.display = 'none';
+    get('calcSettingsPanel').style.display = 'none';
+    // ─────────────────────────────────────────────────────────────────────────
 })();
