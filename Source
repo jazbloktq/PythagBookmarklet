@@ -24,6 +24,7 @@
     var initColorCode     = saved.colorCode     !== false;
     var initPrec          = saved.prec !== undefined ? String(saved.prec) : '2';
     var initUnit          = saved.unit          || 'none';
+    var initOutputUnit     = saved.outputUnit     || 'same';
 
     var styleEl = document.getElementById('geo-ultimate-styles');
     if(styleEl) styleEl.remove();
@@ -142,6 +143,18 @@
                 '<button class="unitBtn" data-u="in"    style="padding:3px 8px;border-radius:5px;border:1px solid #ddd;font-size:11px;cursor:pointer;background:#fff;color:#555;">in</button>',
                 '<button class="unitBtn" data-u="ft"    style="padding:3px 8px;border-radius:5px;border:1px solid #ddd;font-size:11px;cursor:pointer;background:#fff;color:#555;">ft</button>',
               '</div>',
+              '<div style="height:1px;background:#eee;margin:10px 0;"></div>',
+              '<div style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;margin-bottom:4px;">OUTPUT UNIT</div>',
+              '<div style="font-size:10px;color:#999;margin-bottom:7px;line-height:1.4;">Result is shown in this unit. Leave as "Same as input" to match the input unit.</div>',
+              '<div id="outUnitSelRow" style="display:flex;flex-wrap:wrap;gap:5px;">',
+                '<button class="outUnitBtn" data-u="same" style="padding:3px 8px;border-radius:5px;border:1px solid #ddd;font-size:11px;cursor:pointer;background:#e8f0fe;color:#1a73e8;font-weight:700;">Same as input</button>',
+                '<button class="outUnitBtn" data-u="mm"   style="padding:3px 8px;border-radius:5px;border:1px solid #ddd;font-size:11px;cursor:pointer;background:#fff;color:#555;">mm</button>',
+                '<button class="outUnitBtn" data-u="cm"   style="padding:3px 8px;border-radius:5px;border:1px solid #ddd;font-size:11px;cursor:pointer;background:#fff;color:#555;">cm</button>',
+                '<button class="outUnitBtn" data-u="m"    style="padding:3px 8px;border-radius:5px;border:1px solid #ddd;font-size:11px;cursor:pointer;background:#fff;color:#555;">m</button>',
+                '<button class="outUnitBtn" data-u="km"   style="padding:3px 8px;border-radius:5px;border:1px solid #ddd;font-size:11px;cursor:pointer;background:#fff;color:#555;">km</button>',
+                '<button class="outUnitBtn" data-u="in"   style="padding:3px 8px;border-radius:5px;border:1px solid #ddd;font-size:11px;cursor:pointer;background:#fff;color:#555;">in</button>',
+                '<button class="outUnitBtn" data-u="ft"   style="padding:3px 8px;border-radius:5px;border:1px solid #ddd;font-size:11px;cursor:pointer;background:#fff;color:#555;">ft</button>',
+              '</div>',
             '</div>',
 
             '<div id="setPanel-display" class="setPanel" style="display:none;">',
@@ -243,6 +256,7 @@
     var history = [];
     var autoCalcTimer = null;
     var currentUnit = initUnit;
+    var currentOutputUnit = initOutputUnit;
     var lastCalcResult = null;
 
     get('prec').value          = initPrec;
@@ -277,6 +291,7 @@
     function getClickEdit()    { return get('optClickEdit').checked; }
     function getColorCode()    { return get('optColorCode').checked; }
     function getSelectedUnit() { return currentUnit; }
+    function getOutputUnit()    { return currentOutputUnit; }
 
     function saveSettings() {
         try {
@@ -297,7 +312,8 @@
                 interactDiag: get('optInteractDiag').checked,
                 clickEdit:  get('optClickEdit').checked,
                 colorCode:  get('optColorCode').checked,
-                unit:       currentUnit
+                unit:       currentUnit,
+                outputUnit: currentOutputUnit
             }));
         } catch(e) {}
     }
@@ -322,74 +338,135 @@
 
     var unitFactors={mm:1000,cm:100,m:1,km:0.001,in:39.3701,ft:3.28084};
     var unitLabels={mm:'mm',cm:'cm',m:'m',km:'km',in:'in',ft:'ft'};
-    var unitSuffixes=['mm','cm','km','in','ft','m']; // ordered longest-first for matching
+    // Ordered longest-first for reliable suffix matching
+    var unitSuffixes=['mm','cm','km','in','ft','m'];
 
-    // Parse "4cm", "12.5 in", "6", etc.
-    // Returns value converted to the currentUnit's scale (or raw if currentUnit=none).
-    // angleField=true → just parse the number, ignore unit suffixes entirely.
-    function parseInputVal(raw, angleField) {
+    // Detect explicit unit suffix from a raw string. Returns unit string or null.
+    function detectUnitSuffix(raw) {
+        var lraw = String(raw).trim().toLowerCase().replace(/\s+/g, '');
+        for(var ui=0; ui<unitSuffixes.length; ui++) {
+            if(lraw.endsWith(unitSuffixes[ui])) return unitSuffixes[ui];
+        }
+        return null;
+    }
+
+    // ── FIXED: inferWorkingUnit ────────────────────────────────────────────────
+    // Rule: if currentUnit is set (not 'none'), always use it.
+    // Otherwise: scan ALL non-angle inputs in order; the FIRST one with an explicit
+    // unit suffix wins — that unit is adopted for ALL bare-number inputs.
+    // Mixed units (e.g. '4cm' and '6in') → first explicit unit wins, second field
+    // is converted from its detected unit into the working unit.
+    // If no explicit units anywhere → working unit = 'none' (raw numbers).
+    function inferWorkingUnit(rawStrs, angleFlags) {
+        if(currentUnit !== 'none') return currentUnit;
+        for(var i = 0; i < rawStrs.length; i++) {
+            if(angleFlags[i]) continue;
+            var u = detectUnitSuffix(rawStrs[i]);
+            if(u) return u;
+        }
+        return 'none';
+    }
+
+    // Parse a single input value into working-unit scale.
+    // If the field has an explicit unit, convert it → workingUnit.
+    // If bare number, it's already in workingUnit scale.
+    function parseInputValWithUnit(raw, angleField, workingUnit) {
         raw = String(raw).trim();
         if(raw === '') return NaN;
         if(angleField) return parseFloat(raw);
-        // Try to detect a unit suffix
-        var detectedUnit = null, numStr = raw;
+        var detectedUnit = detectUnitSuffix(raw);
         var lraw = raw.toLowerCase().replace(/\s+/g, '');
-        for(var ui=0; ui<unitSuffixes.length; ui++) {
-            var sfx = unitSuffixes[ui];
-            if(lraw.endsWith(sfx)) {
-                detectedUnit = sfx;
-                numStr = lraw.slice(0, lraw.length - sfx.length);
-                break;
-            }
-        }
+        var numStr = detectedUnit ? lraw.slice(0, lraw.length - detectedUnit.length) : lraw;
         var num = parseFloat(numStr);
         if(isNaN(num)) return NaN;
-        if(detectedUnit === null) return num; // plain number: treat as currentUnit, no conversion needed
-        if(currentUnit === 'none') return num; // no base unit set: just use raw number
-        // Convert from detectedUnit to currentUnit
+        if(detectedUnit === null) return num; // bare number: already in workingUnit scale
+        if(workingUnit === 'none') return num; // no scale context: use raw number
+        // Convert: detectedUnit → workingUnit via metres
         var fromFactor = unitFactors[detectedUnit] || 1;
-        var toFactor   = unitFactors[currentUnit]  || 1;
+        var toFactor   = unitFactors[workingUnit]  || 1;
         return num * (toFactor / fromFactor);
     }
 
-    // Show a small unit badge on an input if it has an explicit unit override
-    function updateInputUnitBadge(el, raw) {
+    function parseInputVal(raw, angleField) {
+        return parseInputValWithUnit(raw, angleField, currentUnit);
+    }
+
+    // Show a badge on an input indicating which unit is active for that field.
+    // Orange badge = explicit unit typed by user.
+    // Blue badge   = assumed from working unit (bare number).
+    function updateInputUnitBadge(el, raw, workingUnit) {
         var existing = el.parentNode.querySelector('.unitBadge');
         if(existing) existing.remove();
-        if(!el || !raw) return;
-        var lraw = String(raw).trim().toLowerCase().replace(/\s+/g,'');
+        if(!el) return;
         var d = getDark();
-        for(var ui=0; ui<unitSuffixes.length; ui++) {
-            if(lraw.endsWith(unitSuffixes[ui])) {
-                var badge = document.createElement('span');
-                badge.className = 'unitBadge';
-                badge.style.cssText = 'position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:10px;font-weight:700;color:'+(d?'#4a9eff':'#1a73e8')+';pointer-events:none;background:'+(d?'#1e2e4e':'#e8f0fe')+';padding:2px 5px;border-radius:3px;';
-                badge.innerText = unitSuffixes[ui];
-                el.parentNode.style.position = 'relative';
-                el.parentNode.appendChild(badge);
-                break;
+        var rawStr = String(raw || '').trim();
+        var detectedUnit = detectUnitSuffix(rawStr);
+        el.parentNode.style.position = 'relative';
+        if(detectedUnit) {
+            var badge = document.createElement('span');
+            badge.className = 'unitBadge';
+            badge.title = 'Explicit unit: overrides input unit setting';
+            badge.style.cssText = 'position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:10px;font-weight:700;color:'+(d?'#ffa040':'#c05800')+';pointer-events:none;background:'+(d?'#3a2a10':'#fff5e6')+';padding:2px 5px;border-radius:3px;border:1px solid '+(d?'#7a4a10':'#f0c080')+';';
+            badge.innerText = detectedUnit;
+            el.parentNode.appendChild(badge);
+        } else if(rawStr !== '') {
+            var wu = (workingUnit !== undefined && workingUnit !== null) ? workingUnit : currentUnit;
+            if(wu && wu !== 'none') {
+                var badge2 = document.createElement('span');
+                badge2.className = 'unitBadge';
+                badge2.title = 'Assumed unit (from input unit setting)';
+                badge2.style.cssText = 'position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:10px;font-weight:700;color:'+(d?'#4a9eff':'#1a73e8')+';pointer-events:none;background:'+(d?'#1e2e4e':'#e8f0fe')+';padding:2px 5px;border-radius:3px;border:1px solid '+(d?'#3a5080':'#c5d8f8')+';';
+                badge2.innerText = wu;
+                el.parentNode.appendChild(badge2);
             }
         }
     }
 
+    // ── FIXED: renderUnitConverter ─────────────────────────────────────────────
+    // Shows the unit conversion table for the current result value.
+    // Uses lastCalcResult.resOut (value already in effOutUnit) and effOutUnit.
+    // Falls back to lastCalcResult.res + workingUnit if effOutUnit is not set.
     function renderUnitConverter(rawValue) {
         var ub=get('unitBox'), ur=get('unitRows');
         if(!ub||!ur) return;
-        var show=getShowUnits()&&currentUnit!=='none'&&!isNaN(rawValue)&&rawValue>0;
-        ub.style.display=show?'block':'none';
+
+        // Determine which unit the displayed result is in
+        var displayUnit = null;
+        var displayVal  = rawValue;
+
+        if(lastCalcResult) {
+            // Prefer the already-converted output value and its unit
+            if(lastCalcResult.effOutUnit && lastCalcResult.effOutUnit !== 'none') {
+                displayUnit = lastCalcResult.effOutUnit;
+                displayVal  = (lastCalcResult.resOut !== undefined) ? lastCalcResult.resOut : rawValue;
+            } else if(lastCalcResult.workingUnit && lastCalcResult.workingUnit !== 'none') {
+                // Fall back: result is in workingUnit
+                displayUnit = lastCalcResult.workingUnit;
+                displayVal  = (lastCalcResult.resOut !== undefined) ? lastCalcResult.resOut : rawValue;
+            }
+        }
+
+        // Also honour the global input unit setting as a last resort
+        if(!displayUnit && currentUnit !== 'none') {
+            displayUnit = currentUnit;
+        }
+
+        var show = getShowUnits() && displayUnit && !isNaN(displayVal) && displayVal > 0;
+        ub.style.display = show ? 'block' : 'none';
         if(!show) return;
-        var baseFactor=unitFactors[currentUnit]||1;
-        var valueInMetres=rawValue/baseFactor;
-        var d=getDark();
-        var allUnits=['mm','cm','m','km','in','ft'];
-        ur.innerHTML=allUnits.map(function(u){
-            var converted=valueInMetres*unitFactors[u];
+
+        var baseFactor = unitFactors[displayUnit] || 1;
+        var valueInMetres = displayVal / baseFactor;
+        var d = getDark();
+        var allUnits = ['mm','cm','m','km','in','ft'];
+        ur.innerHTML = allUnits.map(function(u){
+            var converted = valueInMetres * unitFactors[u];
             var disp;
-            if(converted>=1000000||converted<0.0001) disp=converted.toExponential(3);
-            else if(converted>=1000) disp=converted.toFixed(1);
-            else disp=converted.toFixed(4).replace(/\.?0+$/,'');
-            var isActive=(u===currentUnit);
-            return '<div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:1px solid '+(d?'rgba(255,255,255,0.06)':'#eef')+'">' +
+            if(converted >= 1000000 || converted < 0.0001) disp = converted.toExponential(3);
+            else if(converted >= 1000) disp = converted.toFixed(1);
+            else disp = converted.toFixed(4).replace(/\.?0+$/, '');
+            var isActive = (u === displayUnit);
+            return '<div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:1px solid '+(d?'rgba(255,255,255,0.06)':'#eef')+'">'+
                 '<span style="font-size:11px;color:'+(d?'#9090b0':'#666')+';">'+unitLabels[u]+'</span>'+
                 '<span style="font-size:12px;font-weight:'+(isActive?'700':'500')+';color:'+(isActive?(d?'#4a9eff':'#1a73e8'):(d?'#e0e0f0':'#222'))+'">'+(isActive?'\u2605 ':'')+disp+' '+u+'</span>'+
                 '</div>';
@@ -520,6 +597,7 @@
         applyDiagramVisibility();
         applyResultVisibility();
         updateUnitContextBar();
+        updateOutUnitBtns();
     }
 
     var errTimer = null;
@@ -992,14 +1070,27 @@
         var list=getMethodList();
         if(!list.length){if(!silent)showError('Not available','No formula for this combination.');return;}
         var cfg=list[Math.min(currentMethod,list.length-1)];
-        var vals=[],missing=[];
+
+        // ── Step 1: collect raw strings and angle flags ────────────────────────
+        var rawStrs=[], angleFls=[];
         cfg.inputs.forEach(function(lbl,i){
             var el=get('v'+i);
-            var rawStr=el?el.value.trim():'';
-            var isAng=isAngleLbl(lbl);
-            var v=parseInputVal(rawStr,isAng);
+            rawStrs.push(el?el.value.trim():'');
+            angleFls.push(isAngleLbl(lbl));
+        });
+
+        // ── Step 2: infer the working unit (first-input-wins when no global unit)
+        var workingUnit = inferWorkingUnit(rawStrs, angleFls);
+
+        // ── Step 3: parse and validate ─────────────────────────────────────────
+        var vals=[], missing=[];
+        cfg.inputs.forEach(function(lbl,i){
+            var el=get('v'+i);
+            var rawStr=rawStrs[i];
+            var isAng=angleFls[i];
+            var v=parseInputValWithUnit(rawStr, isAng, workingUnit);
             vals.push(v);
-            if(el) updateInputUnitBadge(el, rawStr);
+            if(el) updateInputUnitBadge(el, rawStr, workingUnit);
             if(isNaN(v)||rawStr==='') missing.push(lbl);
         });
         if(missing.length){if(!silent)showError('Missing values','Please fill in: '+missing.join(', ')+'.');return;}
@@ -1098,7 +1189,8 @@
                 anglesContent.appendChild(sp);
             });
             get('anglesBox').style.display='block';
-            lastCalcResult = {res:res,s1:s1,h:h,b:b,s2:s2,area:area,perim:perim,anglesForCanvas:anglesForCanvas,isExt:false,goal:'triple'};
+            // Triple goals don't have a convertible length result, no unit conversion
+            lastCalcResult = {res:res,s1:s1,h:h,b:b,s2:s2,area:area,perim:perim,anglesForCanvas:anglesForCanvas,isExt:false,goal:'triple',workingUnit:'none',resOut:res,effOutUnit:'none'};
             drawTri(s1,h,b,s2,false,anglesForCanvas,'triple');
             applyDark();
             applyDiagramVisibility();
@@ -1338,21 +1430,57 @@
         perim=s1+s2+b;
         get('res').style.display='block';
 
-        var approxEl=get('finalApprox');
-        var unitSuffix = (currentUnit !== 'none' && !isAngleLbl((cfg.inputs[0]||''))) ? ' '+currentUnit : '';
-        if(currentGoal==='area' && currentUnit !== 'none') unitSuffix = ' '+currentUnit+'²';
+        // ── FIXED: output unit resolution ──────────────────────────────────────
+        // effOutUnit = the unit the result is displayed in.
+        // Priority: (1) explicit output unit setting (if not 'same')
+        //           (2) inferred workingUnit from inputs
+        //           (3) global currentUnit setting
+        // For angle goals or when goal produces area, no unit conversion applies.
+        var isAngleGoal = (currentGoal === 'area'); // area result ≠ length, handled separately
+        var effOutUnit;
+        if(currentOutputUnit !== 'same') {
+            effOutUnit = currentOutputUnit;
+        } else if(workingUnit !== 'none') {
+            effOutUnit = workingUnit;
+        } else if(currentUnit !== 'none') {
+            effOutUnit = currentUnit;
+        } else {
+            effOutUnit = 'none';
+        }
+
+        // Convert result (in workingUnit scale) → effOutUnit
+        function toOutUnit(val, isArea) {
+            if(effOutUnit === 'none' || workingUnit === 'none') return val;
+            if(effOutUnit === workingUnit) return val;
+            var fromF = unitFactors[workingUnit] || 1;
+            var toF   = unitFactors[effOutUnit]  || 1;
+            if(isArea) {
+                var mSq = val / (fromF * fromF);
+                return mSq * toF * toF;
+            }
+            return val * (toF / fromF);
+        }
+
+        var resOut   = toOutUnit(res,   false);
+        var areaOut  = toOutUnit(area,  true);
+        var perimOut = toOutUnit(perim, false);
+
+        // Unit suffix for display
+        var unitSuffix  = effOutUnit !== 'none' ? ' ' + effOutUnit : '';
+        var unitSuffix2 = effOutUnit !== 'none' ? ' ' + effOutUnit + '\u00b2' : '';
+
+        // Surd / decimal display of main result
+        var approxEl = get('finalApprox');
         if(useSurd){
-            var ss=toSurdStr(res);
-            if(ss){get('final').innerText=ss+unitSuffix;approxEl.innerText='\u2248 '+res.toFixed(p)+unitSuffix;approxEl.style.display='block';}
-            else{get('final').innerText=fmt(res)+unitSuffix;approxEl.style.display='none';}
+            var ss=toSurdStr(resOut);
+            if(ss){get('final').innerText=ss+unitSuffix;approxEl.innerText='\u2248 '+resOut.toFixed(p)+unitSuffix;approxEl.style.display='block';}
+            else{get('final').innerText=fmt(resOut)+unitSuffix;approxEl.style.display='none';}
         }else{
-            get('final').innerText=res.toFixed(p)+unitSuffix;approxEl.style.display='none';
+            get('final').innerText=resOut.toFixed(p)+unitSuffix;approxEl.style.display='none';
         }
         get('formulaText').innerText=formula||'';
-        var _uS = currentUnit !== 'none' ? ' '+currentUnit : '';
-        var _uS2 = currentUnit !== 'none' ? ' '+currentUnit+'²' : '';
-        get('areaRes').innerText=area.toFixed(p)+_uS2;
-        get('perimRes').innerText=perim.toFixed(p)+_uS;
+        get('areaRes').innerText=areaOut.toFixed(p)+unitSuffix2;
+        get('perimRes').innerText=perimOut.toFixed(p)+unitSuffix;
 
         var classTag=get('classTag');
         var classification=classifyTriangle(s1,s2,b);
@@ -1382,13 +1510,26 @@
 
         var drawS1=s1, drawH=h, drawB=b, drawS2=s2;
         if(currentTri==='right') drawH=s1;
-        lastCalcResult = {res:res,s1:drawS1,h:drawH,b:drawB,s2:drawS2,area:area,perim:perim,anglesForCanvas:anglesForCanvas,isExt:isExt,goal:currentGoal};
-        drawTri(drawS1, drawH, drawB, drawS2, isExt, anglesForCanvas, currentGoal);
 
+        // ── Store full result including unit info for the converter ────────────
+        lastCalcResult = {
+            res:res, s1:drawS1, h:drawH, b:drawB, s2:drawS2,
+            area:area, perim:perim,
+            anglesForCanvas:anglesForCanvas,
+            isExt:isExt, goal:currentGoal,
+            workingUnit:workingUnit,
+            resOut:resOut,
+            effOutUnit:effOutUnit
+        };
+
+        drawTri(drawS1, drawH, drawB, drawS2, isExt, anglesForCanvas, currentGoal);
         applyDark();
         applyDiagramVisibility();
         applyResultVisibility();
-        renderUnitConverter(res);
+
+        // ── Render unit converter using the resolved effOutUnit ────────────────
+        renderUnitConverter(resOut);
+
         if(!silent){
             var adv=getAdv();
             var gLbl=((adv?goalLabel.a:goalLabel.s)[currentGoal])||currentGoal;
@@ -1468,7 +1609,6 @@
         get('areaRes').innerText=(0.5*newBase*newH).toFixed(p);
         get('perimRes').innerText=(newS1+newS2+newBase).toFixed(p);
 
-        // ── FIX 3: Update main result display based on current goal ──────────
         (function(){
             var _r;
             if(currentGoal==='base')        _r = newBase;
@@ -1479,14 +1619,13 @@
             else                            _r = newBase;
             if(!isNaN(_r) && _r > 0) {
                 var _f = get('final');
-                var _dUnitS = currentUnit !== 'none' ? ' '+currentUnit : '';
-                if(currentGoal==='area' && currentUnit !== 'none') _dUnitS = ' '+currentUnit+'²';
+                var _dUnitS = (lastCalcResult && lastCalcResult.effOutUnit && lastCalcResult.effOutUnit !== 'none') ? ' '+lastCalcResult.effOutUnit : (currentUnit !== 'none' ? ' '+currentUnit : '');
+                if(currentGoal==='area' && _dUnitS) _dUnitS += '\u00b2';
                 if(_f) _f.innerText = _r.toFixed(p) + _dUnitS;
                 var _a = get('finalApprox');
                 if(_a) _a.style.display = 'none';
             }
         })();
-        // ────────────────────────────────────────────────────────────────────
 
         var angArr2=computeAngles(newS1,newBase,newS2);
         var af2=[angArr2[2],angArr2[1],angArr2[0]];
@@ -1539,7 +1678,6 @@
         if(!hit) return;
         var cfg3=getMethodList()[Math.min(currentMethod,getMethodList().length-1)];
         if(!cfg3) return;
-        // Direct method-id → {sideKey: inputIndex} map (no fragile label string matching)
         var keyToIdx = {
             'sc_b_shs': {s1:0, height:1, s2:2},
             'sc_b_ah':  {height:1},
@@ -1627,7 +1765,6 @@
         get('histMenu').style.display='none';
         get('setMenu').style.display='none';
     };
-    // Track clicks inside the calculator with a flag so the document handler can see it
     var _calcClickedInside = false;
     miniCalcEl.addEventListener('click', function(e) {
         e.stopPropagation();
@@ -1674,8 +1811,6 @@
     var ckExpr    = get('calcExpr');
     var ckError   = get('calcError');
 
-    // ── FIX 1: Read checkbox state live instead of caching in variable ──────
-    // (ck_pinOpen kept for compatibility but document handler reads checkbox directly)
     get('calcPinOpen').addEventListener('change', function() {
         ck_pinOpen = this.checked;
     });
@@ -2014,17 +2149,15 @@
     });
     get('calcSettingsPanel').addEventListener('click', function(e) { e.stopPropagation(); });
 
-    // ── FIX 1: Pin open — read checkbox directly so state is always current ──
     document.addEventListener('click',function(e){
         var sm=get('setMenu'),hm=get('histMenu'),mc=get('miniCalc');
         var sb=get('setBtn'),hb=get('histBtn'),cb=get('calcBtn');
         if(sm.style.display!=='none'&&!sm.contains(e.target)&&e.target!==sb) sm.style.display='none';
         if(hm.style.display!=='none'&&!hm.contains(e.target)&&e.target!==hb) hm.style.display='none';
-        // Only close the calculator if: not pinned AND click was outside AND not the toggle button
         var pinEl = get('calcPinOpen');
         var isPinned = pinEl && pinEl.checked;
         var clickedInside = _calcClickedInside;
-        _calcClickedInside = false; // reset for next click
+        _calcClickedInside = false;
         if(!isPinned && !clickedInside && mc.style.display!=='none' && e.target!==cb) mc.style.display='none';
     });
 
@@ -2040,7 +2173,7 @@
     get('optShowArea').addEventListener('change',function(){applyResultVisibility();saveSettings();});
     get('optShowPerim').addEventListener('change',function(){applyResultVisibility();saveSettings();});
     get('optShowUnits').addEventListener('change',function(){
-        if(lastCalcResult) renderUnitConverter(lastCalcResult.res);
+        if(lastCalcResult && lastCalcResult.resOut !== undefined) renderUnitConverter(lastCalcResult.resOut);
         else { var ub=get('unitBox'); if(ub) ub.style.display='none'; }
         saveSettings();
     });
@@ -2092,11 +2225,33 @@
             currentUnit=this.getAttribute('data-u');
             updateUnitBtns();
             updateUnitContextBar();
-            if(lastCalcResult) renderUnitConverter(lastCalcResult.res);
+            if(lastCalcResult && lastCalcResult.resOut !== undefined) renderUnitConverter(lastCalcResult.resOut);
+            else { var ub=get('unitBox'); if(ub) ub.style.display='none'; }
             saveSettings();
         });
     });
     updateUnitBtns();
+
+    function updateOutUnitBtns() {
+        var d=getDark();
+        ui.querySelectorAll('.outUnitBtn').forEach(function(btn){
+            var active=btn.getAttribute('data-u')===currentOutputUnit;
+            btn.style.background=active?(d?'#1e2e4e':'#e8f0fe'):(d?'#2a2a3e':'#fff');
+            btn.style.color=active?(d?'#4a9eff':'#1a73e8'):(d?'#c0c0e0':'#555');
+            btn.style.fontWeight=active?'700':'400';
+            btn.style.borderColor=active?(d?'#4a9eff':'#1a73e8'):(d?'#444466':'#ddd');
+        });
+    }
+    ui.querySelectorAll('.outUnitBtn').forEach(function(btn){
+        btn.addEventListener('click',function(e){
+            e.stopPropagation();
+            currentOutputUnit=this.getAttribute('data-u');
+            updateOutUnitBtns();
+            if(lastCalcResult) doCalculate(true);
+            saveSettings();
+        });
+    });
+    updateOutUnitBtns();
 
     var historyIndex=-1;
     function restoreEntry(entry){
@@ -2141,10 +2296,8 @@
     applyResultVisibility();
     updateUnitContextBar();
 
-    // ── FIX 2: Guarantee all panels/menus start closed on every load ─────────
     get('setMenu').style.display = 'none';
     get('histMenu').style.display = 'none';
     get('miniCalc').style.display = 'none';
     get('calcSettingsPanel').style.display = 'none';
-    // ─────────────────────────────────────────────────────────────────────────
 })();
