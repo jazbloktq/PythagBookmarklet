@@ -198,6 +198,7 @@
         '<div id="miniCalcHeader" style="padding:9px 12px;background:#1a73e8;border-radius:10px 10px 0 0;cursor:grab;display:flex;justify-content:space-between;align-items:center;">',
           '<span style="font-weight:700;color:#fff;font-size:12px;letter-spacing:0.3px;">&#x1F5A9; Calculator</span>',
           '<div style="display:flex;align-items:center;gap:6px;">',
+            '<span id="calcFocusBtn" title="Hide main panel (calc only mode)" style="cursor:pointer;font-size:13px;opacity:0.85;color:#fff;padding:2px 5px;border-radius:4px;line-height:1;">&#x26F6;</span>',
             '<span id="calcSettingsBtn" title="Calculator settings" style="cursor:pointer;font-size:14px;opacity:0.85;color:#fff;padding:2px 5px;border-radius:4px;line-height:1;">&#9881;</span>',
             '<span id="calcCloseBtn" title="Close calculator" style="cursor:pointer;font-size:18px;color:#fff;opacity:0.8;line-height:1;padding:0 2px;">&times;</span>',
           '</div>',
@@ -2138,6 +2139,25 @@
         }
     });
 
+    // ── Calc focus mode: hides the main panel so only the calc is visible ──────
+    var calcFocusMode = false;
+
+    function setCalcFocusMode(on) {
+        calcFocusMode = on;
+        ui.style.display = on ? 'none' : 'flex';
+        var fb = get('calcFocusBtn');
+        if(fb) {
+            fb.title   = on ? 'Show main panel' : 'Hide main panel (calc only mode)';
+            fb.style.opacity = on ? '1' : '0.85';
+            // filled square when active, outline square when inactive
+            fb.innerHTML = on ? '&#x2610;' : '&#x26F6;';
+        }
+    }
+
+    get('calcFocusBtn').addEventListener('click', function(e) {
+        e.stopPropagation();
+        setCalcFocusMode(!calcFocusMode);
+    });
     get('calcSettingsBtn').addEventListener('click', function(e) {
         e.stopPropagation();
         var p = get('calcSettingsPanel');
@@ -2145,6 +2165,8 @@
     });
     get('calcCloseBtn').addEventListener('click', function(e) {
         e.stopPropagation();
+        // If main panel was hidden, restore it when calc closes
+        if(calcFocusMode) setCalcFocusMode(false);
         get('miniCalc').style.display = 'none';
     });
     get('calcSettingsPanel').addEventListener('click', function(e) { e.stopPropagation(); });
@@ -2158,7 +2180,10 @@
         var isPinned = pinEl && pinEl.checked;
         var clickedInside = _calcClickedInside;
         _calcClickedInside = false;
-        if(!isPinned && !clickedInside && mc.style.display!=='none' && e.target!==cb) mc.style.display='none';
+        if(!isPinned && !clickedInside && mc.style.display!=='none' && e.target!==cb) {
+            if(calcFocusMode) setCalcFocusMode(false);
+            mc.style.display='none';
+        }
     });
 
     get('prec').addEventListener('change',saveSettings);
