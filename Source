@@ -336,13 +336,20 @@
         var pb = get('perimBox');
         if(sb) sb.style.display = getShowSteps() ? 'block' : 'none';
         var showA = getShowArea();
-        // Perimeter box: always show (unless user toggled it off) — EXCEPT when the goal
-        // IS perimeter, in which case it's already displayed as the main result.
-        var isPerimGoal = (currentGoal === 'perim');
+        var isPerimGoal   = (currentGoal === 'perim');
+        var isAngleGoal   = (currentGoal === 'angle');
+        var isCirclesGoal = (currentGoal === 'circles');
         var showP = getShowPerim() && !isPerimGoal;
         if(ab) ab.style.display = showA ? '' : 'none';
         if(pb) pb.style.display = showP ? '' : 'none';
         if(ap) ap.style.display = (showA || showP) ? 'grid' : 'none';
+        // Custom result panels: clean up stale ones when switching goals
+        var ard = get('angleResultDisp');
+        var crd = get('circleResultDisp');
+        var fin = get('final');
+        if(ard && !isAngleGoal)   { ard.remove(); if(fin) fin.style.display=''; }
+        if(crd && !isCirclesGoal) { crd.remove(); if(fin) fin.style.display=''; }
+        if(isAngleGoal||isCirclesGoal) { if(fin) fin.style.display='none'; }
     }
 
     var unitFactors={mm:1000,cm:100,m:1,km:0.001,in:39.3701,ft:3.28084};
@@ -728,7 +735,9 @@
             side:[
                 {id:'sc_s_shb',s:'Known side + height + base',a:'Known lateral side + altitude + base',si:['Known Side','Height','Base'],ai:['Known Lateral Side','Altitude','Base'],toggle:true},
                 {id:'sc_s_hb', s:'Height + base segment',     a:'Altitude + base projection',          si:['Height','Base Segment'],    ai:['Altitude','Base Projection'],toggle:false},
-                {id:'sc_s_aas',s:'Angle-Angle-Side',          a:'Angle-Angle-Side (AAS)',               si:['Angle A (\u00b0)','Angle B (\u00b0)','Known Side a'], ai:['Angle A (\u00b0)','Angle B (\u00b0)','Known Side a'],toggle:false,angles:true}
+                {id:'sc_s_aas',s:'Angle-Angle-Side (AAS)',    a:'Angle-Angle-Side (AAS)',               si:['Angle A (\u00b0)','Angle B (\u00b0)','Known Side a'], ai:['Angle A (\u00b0)','Angle B (\u00b0)','Known Side a'],toggle:false,angles:true},
+                {id:'sc_s_saa',s:'Side-Angle-Angle (SAA)',    a:'Side-Angle-Angle (law of sines)',      si:['Known Side a','Angle A (\u00b0)','Angle B (\u00b0)'],ai:['Known Side a','Angle A (\u00b0)','Angle B (\u00b0)'],toggle:false,angles:true},
+                {id:'sc_s_sas2',s:'SAS → missing side',   a:'Side-Angle-Side → third side',   si:['Side b','Angle C (\u00b0)','Side c'],ai:['Side b','Angle C (\u00b0)','Side c'],toggle:false,angles:true}
             ],
             height:[
                 {id:'sc_h_ab', s:'Area + base',      a:'Area + base',      si:['Area','Base'],            ai:['Area','Base'],toggle:false},
@@ -743,6 +752,16 @@
                 {id:'sc_p_sas',s:'Side-Angle-Side',a:'Side-Angle-Side (SAS)',si:['Side a','Angle C (\u00b0)','Side b'],ai:['Side a','Angle C (\u00b0)','Side b'],toggle:false,angles:true},
                 {id:'sc_p_asa',s:'Angle-Side-Angle',a:'Angle-Side-Angle (ASA)',si:['Angle A (\u00b0)','Side c (between)','Angle B (\u00b0)'],ai:['Angle A (\u00b0)','Side c (between)','Angle B (\u00b0)'],toggle:false,angles:true}
             ]
+,
+            angle:[
+                {id:'sc_ang_aa', s:'Two angles',a:'Two angles → third',si:['Angle A (°)','Angle B (°)'],ai:['Angle A (°)','Angle B (°)'],toggle:false,angles:true},
+                {id:'sc_ang_sss',s:'Three sides',a:'Three sides (law of cosines)',si:['Side a','Side b','Side c'],ai:['Side a','Side b','Side c'],toggle:false},
+                {id:'sc_ang_sas',s:'Two sides + angle',a:'SAS → all angles',si:['Side a','Angle C (°)','Side b'],ai:['Side a','Angle C (°)','Side b'],toggle:false,angles:true},
+                {id:'sc_ang_ssa',s:'SSA (ambiguous)',a:'SSA – may have two solutions',si:['Side a','Side b','Angle A (°)'],ai:['Side a','Side b','Angle A (°)'],toggle:false,angles:true}
+            ],
+            circles:[
+                {id:'sc_circ_sss',s:'Three sides',a:'Three sides',si:['Side a','Side b','Side c'],ai:['Side a','Side b','Side c'],toggle:false}
+            ]
         },
         isosceles:{
             base:[
@@ -754,7 +773,9 @@
             side:[
                 {id:'is_s_bh',s:'Base + height', a:'Base + altitude', si:['Base','Height'],  ai:['Base','Altitude'],toggle:false},
                 {id:'is_s_ab',s:'Area + base',   a:'Area + base',     si:['Area','Base'],    ai:['Area','Base'],toggle:false},
-                {id:'is_s_ba',s:'Base + base angle', a:'Base + base angle',si:['Base','Base Angle (\u00b0)'],ai:['Base','Base Angle (\u00b0)'],toggle:false,angles:true}
+                {id:'is_s_ba',s:'Base + base angle',  a:'Base + base angle', si:['Base','Base Angle (\u00b0)'],ai:['Base','Base Angle (\u00b0)'],toggle:false,angles:true},
+                {id:'is_s_apl',s:'Apex angle + base', a:'Apex angle + base', si:['Apex Angle (\u00b0)','Base'],ai:['Apex Angle (\u00b0)','Base'],toggle:false,angles:true},
+                {id:'is_s_ah', s:'Area + height',     a:'Area + altitude',   si:['Area','Height'],ai:['Area','Altitude'],toggle:false}
             ],
             height:[
                 {id:'is_h_bl',s:'Base + leg',    a:'Base + leg',      si:['Base','Leg'],     ai:['Base','Leg'],toggle:false},
@@ -768,6 +789,16 @@
                 {id:'is_p_lls',s:'Leg + base',a:'Leg + base',si:['Leg','Base'],ai:['Leg','Base'],toggle:false},
                 {id:'is_p_la',s:'Leg + apex angle',a:'Leg + apex angle',si:['Leg','Apex Angle (\u00b0)'],ai:['Leg','Apex Angle (\u00b0)'],toggle:false,angles:true}
             ]
+,
+            angle:[
+                {id:'is_ang_aa', s:'Two angles',a:'Apex + base angle',si:['Apex Angle (°)','Base Angle (°)'],ai:['Apex Angle (°)','Base Angle (°)'],toggle:false,angles:true},
+                {id:'is_ang_lb', s:'Leg + base',a:'Leg + base (law of cosines)',si:['Leg','Base'],ai:['Leg','Base'],toggle:false},
+                {id:'is_ang_la', s:'Leg + apex angle',a:'Leg + apex angle',si:['Leg','Apex Angle (°)'],ai:['Leg','Apex Angle (°)'],toggle:false,angles:true}
+            ],
+            circles:[
+                {id:'is_circ_lb',s:'Leg + base',a:'Leg + base',si:['Leg','Base'],ai:['Leg','Base'],toggle:false},
+                {id:'is_circ_la',s:'Leg + apex angle',a:'Leg + apex angle',si:['Leg','Apex Angle (°)'],ai:['Leg','Apex Angle (°)'],toggle:false,angles:true}
+            ]
         },
         equilateral:{
             height:[{id:'eq_h_s',s:'From side',a:'From side',si:['Side'],ai:['Side'],toggle:false}],
@@ -775,6 +806,13 @@
             area:[  {id:'eq_a_heron',s:"Heron's formula",a:"Heron's formula",si:['Side'],ai:['Side'],toggle:false}],
             perim:[
                 {id:'eq_p_s',s:'From side',a:'From side',si:['Side'],ai:['Side'],toggle:false}
+            ]
+,
+            angle:[
+                {id:'eq_ang_s',s:'From side (always 60°)',a:'All angles = 60°',si:['Side'],ai:['Side'],toggle:false}
+            ],
+            circles:[
+                {id:'eq_circ_s',s:'From side',a:'From side',si:['Side'],ai:['Side'],toggle:false}
             ]
         },
         right:{
@@ -786,7 +824,8 @@
             side:[
                 {id:'rt_l_cl',s:'Hypotenuse + other leg',a:'Hypotenuse + other leg',si:['Hypotenuse','Other Leg'],ai:['Hypotenuse','Other Leg'],toggle:false},
                 {id:'rt_l_ac',s:'Area + hypotenuse',     a:'Area + hypotenuse',     si:['Area','Hypotenuse'],    ai:['Area','Hypotenuse'],toggle:false},
-                {id:'rt_l_ca',s:'Hypotenuse + angle',    a:'Hypotenuse + acute angle',si:['Hypotenuse','Angle A (\u00b0)'],ai:['Hypotenuse','Angle A (\u00b0)'],toggle:false,angles:true}
+                {id:'rt_l_ca',s:'Hypotenuse + angle',     a:'Hypotenuse + acute angle',si:['Hypotenuse','Angle A (\u00b0)'],ai:['Hypotenuse','Angle A (\u00b0)'],toggle:false,angles:true},
+                {id:'rt_l_la',s:'Other leg + angle (tan)',a:'Known leg + acute angle (tan)',si:['Known Leg','Angle A (\u00b0, opposite)'],ai:['Known Leg','Angle A (\u00b0, opposite)'],toggle:false,angles:true}
             ],
             height:[
                 {id:'rt_h_ll',s:'Both legs',        a:'Both legs',         si:['Leg a','Leg b'],    ai:['Leg a','Leg b'],toggle:false},
@@ -803,6 +842,16 @@
                 {id:'rt_p_ll',s:'Both legs',a:'Both legs',si:['Leg a','Leg b'],ai:['Leg a','Leg b'],toggle:false},
                 {id:'rt_p_cl',s:'Hypotenuse + leg',a:'Hypotenuse + leg',si:['Hypotenuse','Leg'],ai:['Hypotenuse','Leg'],toggle:false},
                 {id:'rt_p_la',s:'Leg + acute angle',a:'Leg + acute angle',si:['Leg a','Angle A (\u00b0)'],ai:['Leg a','Angle A (\u00b0)'],toggle:false,angles:true}
+            ]
+,
+            angle:[
+                {id:'rt_ang_ll',s:'Two legs',a:'Two legs (arctan)',si:['Leg a','Leg b'],ai:['Leg a','Leg b'],toggle:false},
+                {id:'rt_ang_cl',s:'Hypotenuse + leg',a:'Hypotenuse + leg (arcsin)',si:['Hypotenuse','Leg a'],ai:['Hypotenuse','Leg a'],toggle:false},
+                {id:'rt_ang_aa',s:'One acute angle',a:'One acute angle → find all',si:['Acute Angle A (°)'],ai:['Acute Angle A (°)'],toggle:false,angles:true}
+            ],
+            circles:[
+                {id:'rt_circ_ll',s:'Both legs',a:'Both legs',si:['Leg a','Leg b'],ai:['Leg a','Leg b'],toggle:false},
+                {id:'rt_circ_cl',s:'Hypotenuse + leg',a:'Hypotenuse + leg',si:['Hypotenuse','Leg a'],ai:['Hypotenuse','Leg a'],toggle:false}
             ]
         }
     };
@@ -1091,7 +1140,176 @@
 
     var diagSideLabelPos = [];
 
-    function doCalculate(silent) {
+    // ── doShowAngles: display all three angles as the main result ───────────────
+    function doShowAngles(angles, formula, s1, h, b, s2, area, perim) {
+        var d2=getDark();
+        var unitSfx = '';  // angles never have length units
+        get('res').style.display='block';
+        get('final').style.display='none';
+        get('finalApprox').style.display='none';
+
+        // Build the three-angle display inside the result area
+        var existingAngleDisp = get('angleResultDisp');
+        if(existingAngleDisp) existingAngleDisp.remove();
+        var disp = document.createElement('div');
+        disp.id = 'angleResultDisp';
+        disp.style.cssText='display:flex;gap:6px;justify-content:center;margin:4px 0 6px;';
+        var names=['A','B','C'];
+        var cols=['#e64c2e','#1a73e8','#2e7d32'];
+        angles.forEach(function(ang,i){
+            var box=document.createElement('div');
+            box.style.cssText='flex:1;background:'+(d2?'#1e2a3e':'#f0f6ff')+';border:1.5px solid '+(d2?'#3a4a6e':'#c5d8f8')+';border-radius:8px;padding:8px 4px;text-align:center;';
+            box.innerHTML='<div style="font-size:10px;font-weight:700;color:'+cols[i]+';letter-spacing:0.5px;margin-bottom:3px;">'+names[i]+'</div>'
+                +'<div style="font-size:16px;font-weight:700;color:'+(d2?'#e0e8ff':'#222')+';">'+fmtAngle(ang)+'</div>';
+            disp.appendChild(box);
+        });
+        var finalEl = get('final');
+        finalEl.parentNode.insertBefore(disp, finalEl.nextSibling);
+
+        var classTag=get('classTag');
+        classTag.innerText=classifyTriangle(s1,s2,b); classTag.style.display='inline-block';
+        get('tripleBox').style.display='none';
+        get('formulaText').innerText=formula||'';
+
+        var effOU = currentOutputUnit!=='same'?currentOutputUnit:(workingUnit!=='none'?workingUnit:(currentUnit!=='none'?currentUnit:'none'));
+        function toOU(v,isAr){
+            if(effOU==='none'||workingUnit==='none') return v;
+            if(effOU===workingUnit) return v;
+            var fF=unitFactors[workingUnit]||1,tF=unitFactors[effOU]||1;
+            return isAr?v*(tF*tF)/(fF*fF):v*tF/fF;
+        }
+        var uSfx=effOU!=='none'?' '+effOU:'';
+        get('areaRes').innerText=toOU(area,true).toFixed(getPrec())+(effOU!=='none'?' '+effOU+'\u00b2':'');
+        get('perimRes').innerText=toOU(perim,false).toFixed(getPrec())+uSfx;
+
+        var angFC=[angles[2],angles[1],angles[0]];
+        var drawS1=s1,drawH=h,drawB=b,drawS2=s2;
+        if(currentTri==='right') drawH=s1;
+        get('anglesBox').style.display='none'; // angles shown in custom disp instead
+
+        lastCalcResult={res:angles[0],s1:drawS1,h:drawH,b:drawB,s2:drawS2,area:area,perim:perim,anglesForCanvas:angFC,isExt:false,goal:'angle',workingUnit:workingUnit,resOut:angles[0],effOutUnit:'none'};
+        drawTri(drawS1,drawH,drawB,drawS2,false,angFC,'angle');
+        applyDark(); applyDiagramVisibility(); applyResultVisibility();
+    }
+
+    // ── doShowCircles: display inradius + circumradius prominently ────────────
+    function doShowCircles(inR, circumR, formula, s1, h, b, s2, area, perim) {
+        var d2=getDark();
+        get('res').style.display='block';
+        get('final').style.display='none';
+        get('finalApprox').style.display='none';
+
+        var effOU = currentOutputUnit!=='same'?currentOutputUnit:(workingUnit!=='none'?workingUnit:(currentUnit!=='none'?currentUnit:'none'));
+        function toOU(v,isAr){
+            if(effOU==='none'||workingUnit==='none') return v;
+            if(effOU===workingUnit) return v;
+            var fF=unitFactors[workingUnit]||1,tF=unitFactors[effOU]||1;
+            return isAr?v*(tF*tF)/(fF*fF):v*tF/fF;
+        }
+        var uSfx=effOU!=='none'?' '+effOU:'';
+        var inROut=toOU(inR,false), circumROut=toOU(circumR,false);
+
+        var existingCircDisp = get('circleResultDisp');
+        if(existingCircDisp) existingCircDisp.remove();
+        var disp = document.createElement('div');
+        disp.id = 'circleResultDisp';
+        disp.style.cssText='display:flex;gap:8px;justify-content:center;margin:4px 0 6px;';
+
+        var boxes=[
+            {label:'Inradius r',val:inROut,col:'#2e7d32',bg:d2?'#1a2e1a':'#f0fff0',bdr:d2?'#3a6e3a':'#a8d8a8'},
+            {label:'Circumradius R',val:circumROut,col:'#7b1fa2',bg:d2?'#1e1a2e':'#faf0ff',bdr:d2?'#4a3a6e':'#d8b8f0'}
+        ];
+        boxes.forEach(function(bx){
+            var box=document.createElement('div');
+            box.style.cssText='flex:1;background:'+bx.bg+';border:1.5px solid '+bx.bdr+';border-radius:8px;padding:10px 6px;text-align:center;';
+            box.innerHTML='<div style="font-size:10px;font-weight:700;color:'+bx.col+';letter-spacing:0.5px;margin-bottom:4px;">'+bx.label+'</div>'
+                +'<div style="font-size:18px;font-weight:700;color:'+(d2?'#e0e8ff':'#222')+';">'+bx.val.toFixed(getPrec())+uSfx+'</div>';
+            disp.appendChild(box);
+        });
+        var finalEl = get('final');
+        finalEl.parentNode.insertBefore(disp, finalEl.nextSibling);
+
+        var classTag=get('classTag');
+        classTag.innerText=classifyTriangle(s1,s2,b); classTag.style.display='inline-block';
+        get('tripleBox').style.display='none';
+        get('formulaText').innerText=formula||'';
+        get('areaRes').innerText=toOU(area,true).toFixed(getPrec())+(effOU!=='none'?' '+effOU+'\u00b2':'');
+        get('perimRes').innerText=toOU(perim,false).toFixed(getPrec())+uSfx;
+
+        var angFC=computeAngles(s1,b,s2); angFC=[angFC[2],angFC[1],angFC[0]];
+        var drawS1=s1,drawH=h,drawB=b,drawS2=s2;
+        if(currentTri==='right') drawH=s1;
+        get('anglesBox').style.display='none';
+
+        lastCalcResult={res:inR,s1:drawS1,h:drawH,b:drawB,s2:drawS2,area:area,perim:perim,anglesForCanvas:angFC,isExt:false,goal:'circles',workingUnit:workingUnit,resOut:inROut,effOutUnit:effOU,circleData:{inR:inROut,circumR:circumROut}};
+        drawTri(drawS1,drawH,drawB,drawS2,false,angFC,'circles');
+        drawCirclesOnDiag(s1,h,b,s2,inR,circumR);
+        applyDark(); applyDiagramVisibility(); applyResultVisibility();
+    }
+
+    // ── drawCirclesOnDiag: draw incircle + circumcircle on canvas ────────────
+    function drawCirclesOnDiag(s1,h,b,s2,inR,circumR){
+        if(!canvas||!ctx) return;
+        var d=getDark();
+        var raw;
+        if(currentTri==='equilateral'||currentTri==='isosceles') raw=[[0,h],[b/2,0],[b,h]];
+        else if(currentTri==='right') raw=[[0,h],[0,0],[b,h]];
+        else { var ax2=Math.sqrt(Math.max(0,s1*s1-h*h)); raw=[[0,h],[ax2,0],[b,h]]; }
+        var W=canvas.width,H=canvas.height;
+        var padT=38,padB=52,padL=52,padR=52;
+        var minX=raw[0][0],maxX=raw[0][0];
+        for(var i=1;i<3;i++){if(raw[i][0]<minX)minX=raw[i][0];if(raw[i][0]>maxX)maxX=raw[i][0];}
+        var rangeX=maxX-minX||1,rangeY=h||1;
+        var scale2=Math.min((W-padL-padR)/rangeX,(H-padT-padB)/rangeY);
+        var offX2=(W-rangeX*scale2)/2-minX*scale2,offY2=padT+(H-padT-padB-rangeY*scale2)/2;
+        function tr2(pt){return[pt[0]*scale2+offX2,pt[1]*scale2+offY2];}
+        var pA2=tr2(raw[0]),pB2=tr2(raw[1]),pC2=tr2(raw[2]);
+
+        // Incircle center: weighted average of vertices by opposite side lengths
+        var aa2=Math.sqrt((pB2[0]-pC2[0])*(pB2[0]-pC2[0])+(pB2[1]-pC2[1])*(pB2[1]-pC2[1]));
+        var bb2=Math.sqrt((pA2[0]-pC2[0])*(pA2[0]-pC2[0])+(pA2[1]-pC2[1])*(pA2[1]-pC2[1]));
+        var cc2=Math.sqrt((pA2[0]-pB2[0])*(pA2[0]-pB2[0])+(pA2[1]-pB2[1])*(pA2[1]-pB2[1]));
+        var perim2=aa2+bb2+cc2;
+        var ix=(aa2*pA2[0]+bb2*pB2[0]+cc2*pC2[0])/perim2;
+        var iy=(aa2*pA2[1]+bb2*pB2[1]+cc2*pC2[1])/perim2;
+        var inRpx=inR*scale2;
+
+        // Circumcircle center: circumscribed circle passes through all three vertices
+        var ax3=pA2[0],ay3=pA2[1],bx3=pB2[0],by3=pB2[1],cx3=pC2[0],cy3=pC2[1];
+        var D=2*(ax3*(by3-cy3)+bx3*(cy3-ay3)+cx3*(ay3-by3));
+        var ux=((ax3*ax3+ay3*ay3)*(by3-cy3)+(bx3*bx3+by3*by3)*(cy3-ay3)+(cx3*cx3+cy3*cy3)*(ay3-by3))/D;
+        var uy=((ax3*ax3+ay3*ay3)*(cx3-bx3)+(bx3*bx3+by3*by3)*(ax3-cx3)+(cx3*cx3+cy3*cy3)*(bx3-ax3))/D;
+        var circumRpx=circumR*scale2;
+
+        // Draw circumcircle (purple, dashed)
+        ctx.save();
+        ctx.setLineDash([6,4]);
+        ctx.beginPath();
+        ctx.arc(ux,uy,circumRpx,0,2*Math.PI);
+        ctx.strokeStyle=d?'#c084fc':'#9333ea';
+        ctx.lineWidth=1.5;
+        ctx.stroke();
+        // Label R
+        ctx.font='bold 9px system-ui';
+        ctx.fillStyle=d?'#c084fc':'#9333ea';
+        ctx.textAlign='left';
+        ctx.fillText('R='+circumR.toFixed(2),ux+circumRpx*0.7,uy-circumRpx*0.7);
+
+        // Draw incircle (green, dashed)
+        ctx.beginPath();
+        ctx.arc(ix,iy,inRpx,0,2*Math.PI);
+        ctx.strokeStyle=d?'#4ade80':'#16a34a';
+        ctx.lineWidth=1.5;
+        ctx.stroke();
+        // Label r
+        ctx.fillStyle=d?'#4ade80':'#16a34a';
+        ctx.textAlign='center';
+        ctx.fillText('r='+inR.toFixed(2),ix,iy);
+        ctx.setLineDash([]);
+        ctx.restore();
+    }
+
+        function doCalculate(silent) {
         if(!silent) clearError();
         var list=getMethodList();
         if(!list.length){if(!silent)showError('Not available','No formula for this combination.');return;}
@@ -1134,6 +1352,181 @@
         var isExt=posEl?posEl.value==='ext':false;
         var type=cfg.id;
         var res,area,perim,formula,s1,h,b,s2;
+
+        // ── ANGLE GOALS ──────────────────────────────────────────────────────────
+        if(type==='sc_ang_aa'||type==='is_ang_aa'||type==='eq_ang_s'||type==='rt_ang_aa'){
+            var angA,angB,angC;
+            if(type==='eq_ang_s'){
+                s1=v0; b=v0; s2=v0; h=Math.sqrt(3)/2*v0; area=Math.sqrt(3)/4*v0*v0; perim=3*v0;
+                angA=Math.PI/3; angB=Math.PI/3; angC=Math.PI/3;
+                formula='Equilateral triangle: all angles = 60\u00b0';
+            } else if(type==='rt_ang_aa'){
+                angA=toRad(v0); angB=Math.PI/2-angA; angC=Math.PI/2;
+                formula='B = 90\u00b0 \u2212 A = '+fmtAngle(angB)+'\nAll angles: A='+fmtAngle(angA)+', B='+fmtAngle(angB)+', C=90\u00b0';
+                s1=1; b=1; s2=Math.sqrt(2); h=s1; area=0.5; perim=s1+b+s2;
+            } else {
+                angA=toRad(v0); angB=toRad(v1); angC=Math.PI-angA-angB;
+                if(angC<=0){if(!silent)showError('Impossible','Angles must sum to less than 180\u00b0.');return;}
+                formula='C = 180\u00b0 \u2212 A \u2212 B\n= 180\u00b0 \u2212 '+v0+'\u00b0 \u2212 '+v1+'\u00b0 = '+fmtAngle(angC);
+                s1=1; b=1; s2=1; h=0.5; area=0.25; perim=3;
+            }
+            doShowAngles([angA,angB,angC], formula, s1, h, b, s2, area, perim);
+            return;
+        }
+        if(type==='sc_ang_sss'||type==='is_ang_lb'){
+            var aa,bb,cc;
+            if(type==='is_ang_lb'){ aa=v0; cc=v0; bb=v1; }
+            else { aa=v0; bb=v1; cc=v2; }
+            if(aa+bb<=cc||aa+cc<=bb||bb+cc<=aa){if(!silent)showError('Impossible','These sides don\'t form a valid triangle.');return;}
+            var cosA=(bb*bb+cc*cc-aa*aa)/(2*bb*cc);
+            var cosB=(aa*aa+cc*cc-bb*bb)/(2*aa*cc);
+            var cosC=(aa*aa+bb*bb-cc*cc)/(2*aa*bb);
+            var angAs=Math.acos(Math.max(-1,Math.min(1,cosA)));
+            var angBs=Math.acos(Math.max(-1,Math.min(1,cosB)));
+            var angCs=Math.acos(Math.max(-1,Math.min(1,cosC)));
+            var sv=(aa+bb+cc)/2; var ar=Math.sqrt(sv*(sv-aa)*(sv-bb)*(sv-cc));
+            formula='cos A = (b\u00b2+c\u00b2\u2212a\u00b2)/(2bc)\nA='+fmtAngle(angAs)+', B='+fmtAngle(angBs)+', C='+fmtAngle(angCs);
+            var hh=type==='is_ang_lb'?Math.sqrt(aa*aa-(bb/2)*(bb/2)):ar/(0.5*(aa+bb+cc)/sv);
+            doShowAngles([angAs,angBs,angCs], formula, aa, hh, bb, cc, ar, aa+bb+cc);
+            return;
+        }
+        if(type==='sc_ang_sas'){
+            var sa=v0, angCi=toRad(v1), sb=v2;
+            var sc=Math.sqrt(sa*sa+sb*sb-2*sa*sb*Math.cos(angCi));
+            var cosAi=(sb*sb+sc*sc-sa*sa)/(2*sb*sc);
+            var cosBi=(sa*sa+sc*sc-sb*sb)/(2*sa*sc);
+            var angAi=Math.acos(Math.max(-1,Math.min(1,cosAi)));
+            var angBi=Math.acos(Math.max(-1,Math.min(1,cosBi)));
+            var ari=0.5*sa*sb*Math.sin(angCi);
+            var hi=2*ari/sc;
+            formula='c = \u221a(a\u00b2+b\u00b2\u22122ab\u00b7cos C) = '+sc.toFixed(getPrec())+'\nA='+fmtAngle(angAi)+', B='+fmtAngle(angBi)+', C='+fmtAngle(angCi);
+            doShowAngles([angAi,angBi,angCi], formula, sa, hi, sc, sb, ari, sa+sb+sc);
+            return;
+        }
+        if(type==='sc_ang_ssa'){
+            var sa2=v0, sb2=v1, angA2=toRad(v2);
+            var sinB2=sb2*Math.sin(angA2)/sa2;
+            if(sinB2>1){if(!silent)showError('Impossible','No triangle exists with these values.');return;}
+            var angB2a=Math.asin(sinB2), angB2b=Math.PI-angB2a;
+            var results=[];
+            [angB2a,angB2b].forEach(function(angBx){
+                var angCx=Math.PI-angA2-angBx;
+                if(angCx>0){
+                    var sc2=sa2*Math.sin(angCx)/Math.sin(angA2);
+                    var arx=0.5*sa2*sb2*Math.sin(angCx);
+                    results.push({angA:angA2,angB:angBx,angC:angCx,sc:sc2,area:arx});
+                }
+            });
+            if(!results.length){if(!silent)showError('Impossible','No valid triangle.');return;}
+            var r1=results[0];
+            var hi2=2*r1.area/r1.sc;
+            var fmla='SSA: A='+fmtAngle(r1.angA)+', B='+fmtAngle(r1.angB)+', C='+fmtAngle(r1.angC);
+            if(results.length===2){
+                var r2=results[1];
+                fmla+=' (solution 1)\nAlternate: B='+fmtAngle(r2.angB)+', C='+fmtAngle(r2.angC)+' (solution 2)';
+            }
+            doShowAngles([r1.angA,r1.angB,r1.angC], fmla, sa2, hi2, r1.sc, sb2, r1.area, sa2+sb2+r1.sc);
+            if(results.length===2){
+                var wa=get('tripleBox');
+                wa.innerText='\u26a0\ufe0f Ambiguous case: two solutions exist. Showing solution 1.';
+                wa.style.background='#fff8e1'; wa.style.borderColor='#f9a825'; wa.style.color='#7a5c00';
+                wa.style.display='block';
+            }
+            return;
+        }
+        if(type==='is_ang_la'){
+            var legA2=v0, apexA=toRad(v1);
+            var baseA=2*legA2*Math.sin(apexA/2);
+            var hA=legA2*Math.cos(apexA/2);
+            var angBaseA=( Math.PI-apexA)/2;
+            var arA=0.5*baseA*hA;
+            formula='Base = 2\u00d7leg\u00d7sin(apex/2) = '+baseA.toFixed(getPrec())+'\nApex='+fmtAngle(apexA)+', Base angles='+fmtAngle(angBaseA);
+            doShowAngles([apexA,angBaseA,angBaseA], formula, legA2, hA, baseA, legA2, arA, 2*legA2+baseA);
+            return;
+        }
+        if(type==='rt_ang_ll'){
+            var la=v0, lb2=v1;
+            var angAr=Math.atan(la/lb2), angBr=Math.atan(lb2/la);
+            var hyp2=Math.sqrt(la*la+lb2*lb2);
+            var ar2=0.5*la*lb2;
+            formula='A = arctan(a/b) = '+fmtAngle(angAr)+'\nB = arctan(b/a) = '+fmtAngle(angBr);
+            doShowAngles([angAr,angBr,Math.PI/2], formula, la, la, lb2, hyp2, ar2, la+lb2+hyp2);
+            return;
+        }
+        if(type==='rt_ang_cl'){
+            var hyp3=v0, la3=v1;
+            if(la3>=hyp3){if(!silent)showError('Impossible','Leg must be shorter than hypotenuse.');return;}
+            var angA3=Math.asin(la3/hyp3), angB3=Math.acos(la3/hyp3);
+            var lb3=Math.sqrt(hyp3*hyp3-la3*la3);
+            var ar3=0.5*la3*lb3;
+            formula='A = arcsin(a/c) = '+fmtAngle(angA3)+'\nB = arccos(a/c) = '+fmtAngle(angB3);
+            doShowAngles([angA3,angB3,Math.PI/2], formula, la3, la3, lb3, hyp3, ar3, la3+lb3+hyp3);
+            return;
+        }
+
+        // ── CIRCLES GOALS ─────────────────────────────────────────────────────────
+        function circlesFromSides(aa,bb,cc){
+            var sv=(aa+bb+cc)/2;
+            var ar=Math.sqrt(sv*(sv-aa)*(sv-bb)*(sv-cc));
+            var inR=ar/sv;
+            var circumR=(aa*bb*cc)/(4*ar);
+            return {inR:inR, circumR:circumR, area:ar, perim:aa+bb+cc};
+        }
+        if(type==='sc_circ_sss'){
+            var aa=v0,bb=v1,cc=v2;
+            if(aa+bb<=cc||aa+cc<=bb||bb+cc<=aa){if(!silent)showError('Impossible','Invalid triangle.');return;}
+            var cd=circlesFromSides(aa,bb,cc);
+            var hh=cd.area/(0.5*(aa+bb+cc)/((aa+bb+cc)/2));
+            var sv2=(aa+bb+cc)/2; hh=cd.area/sv2;
+            formula='s = (a+b+c)/2 = '+sv2.toFixed(getPrec())+'\nr = Area/s = '+cd.inR.toFixed(getPrec())+'\nR = abc/(4\u00d7Area) = '+cd.circumR.toFixed(getPrec());
+            doShowCircles(cd.inR, cd.circumR, formula, aa, hh, bb, cc, cd.area, cd.perim);
+            return;
+        }
+        if(type==='is_circ_lb'){
+            var leg=v0, base=v1;
+            if(2*leg<=base){if(!silent)showError('Impossible','Base too wide for that leg.');return;}
+            var cd=circlesFromSides(leg,leg,base);
+            var hh=Math.sqrt(leg*leg-(base/2)*(base/2));
+            formula='r = Area/s = '+cd.inR.toFixed(getPrec())+'\nR = abc/(4\u00d7Area) = '+cd.circumR.toFixed(getPrec());
+            doShowCircles(cd.inR, cd.circumR, formula, leg, hh, base, leg, cd.area, cd.perim);
+            return;
+        }
+        if(type==='is_circ_la'){
+            var leg2=v0, apex=toRad(v1);
+            var base2=2*leg2*Math.sin(apex/2);
+            var hh=leg2*Math.cos(apex/2);
+            var cd=circlesFromSides(leg2,leg2,base2);
+            formula='Base = '+base2.toFixed(getPrec())+'\nr = '+cd.inR.toFixed(getPrec())+'\nR = '+cd.circumR.toFixed(getPrec());
+            doShowCircles(cd.inR, cd.circumR, formula, leg2, hh, base2, leg2, cd.area, cd.perim);
+            return;
+        }
+        if(type==='eq_circ_s'){
+            var side=v0;
+            var hh=Math.sqrt(3)/2*side; var ar=Math.sqrt(3)/4*side*side;
+            var inR=side/(2*Math.sqrt(3)); var circumR=side/Math.sqrt(3);
+            formula='r = s/(2\u221a3) = '+inR.toFixed(getPrec())+'\nR = s/\u221a3 = '+circumR.toFixed(getPrec());
+            doShowCircles(inR, circumR, formula, side, hh, side, side, ar, 3*side);
+            return;
+        }
+        if(type==='rt_circ_ll'){
+            var la=v0, lb=v1;
+            var hyp=Math.sqrt(la*la+lb*lb);
+            var ar=0.5*la*lb;
+            var inR=(la+lb-hyp)/2; var circumR=hyp/2;
+            formula='R = c/2 = '+circumR.toFixed(getPrec())+' (hypotenuse/2)\nr = (a+b\u2212c)/2 = '+inR.toFixed(getPrec());
+            doShowCircles(inR, circumR, formula, la, la, lb, hyp, ar, la+lb+hyp);
+            return;
+        }
+        if(type==='rt_circ_cl'){
+            var hyp=v0, la=v1;
+            if(la>=hyp){if(!silent)showError('Impossible','Leg must be shorter than hypotenuse.');return;}
+            var lb=Math.sqrt(hyp*hyp-la*la);
+            var ar=0.5*la*lb;
+            var inR=(la+lb-hyp)/2; var circumR=hyp/2;
+            formula='R = c/2 = '+circumR.toFixed(getPrec())+'\nr = (a+b\u2212c)/2 = '+inR.toFixed(getPrec());
+            doShowCircles(inR, circumR, formula, la, la, lb, hyp, ar, la+lb+hyp);
+            return;
+        }
 
         // ── PERIMETER GOALS ──────────────────────────────────────────────────────
         if(type==='sc_p_sss'){
@@ -1558,6 +1951,50 @@
             s1=res; h=res; s2=hypCA; b=hypCA*Math.cos(angCA);
             area=0.5*s1*b; perim=s1+b+s2;
             formula='Leg = Hypotenuse \u00d7 sin(A)\n= '+hypCA+' \u00d7 sin('+v1+'\u00b0)\n= '+fmtS(res);
+
+        }else if(type==='sc_s_saa'){
+            var saaA=v0, angSA=toRad(v1), angSB=toRad(v2);
+            var angSC=Math.PI-angSA-angSB;
+            if(angSC<=0){if(!silent)showError('Impossible','Angles must sum to less than 180\u00b0.');return;}
+            res=saaA*Math.sin(angSB)/Math.sin(angSA);
+            s1=saaA; s2=res;
+            b=saaA*Math.sin(angSC)/Math.sin(angSA);
+            h=s2*Math.sin(angSC);
+            area=0.5*b*h; perim=s1+s2+b;
+            formula='Law of Sines: b/sin(B) = a/sin(A)\nb = '+saaA+'\u00d7sin('+v2+'\u00b0)/sin('+v1+'\u00b0) = '+fmtS(res);
+
+        }else if(type==='sc_s_sas2'){
+            var sasSb=v0, angSC2=toRad(v1), sasSc=v2;
+            res=Math.sqrt(sasSb*sasSb+sasSc*sasSc-2*sasSb*sasSc*Math.cos(angSC2));
+            s1=sasSb; s2=sasSc; b=res;
+            area=0.5*sasSb*sasSc*Math.sin(angSC2);
+            h=(2*area)/b; perim=s1+s2+b;
+            formula='Law of Cosines: a = \u221a(b\u00b2+c\u00b2-2bc\u00b7cos C)\n= '+fmtS(res);
+
+        }else if(type==='is_s_apl'){
+            var aplApex=toRad(v0), aplBase=v1;
+            res=aplBase/(2*Math.sin(aplApex/2));
+            s1=res; s2=res; b=aplBase;
+            h=res*Math.cos(aplApex/2);
+            area=0.5*b*h; perim=2*res+b;
+            formula='Leg = Base/(2\u00d7sin(Apex/2))\n= '+aplBase+'/(2\u00d7sin('+v0+'\u00b0/2))\n= '+fmtS(res);
+
+        }else if(type==='is_s_ah'){
+            var isAH_area=v0, isAH_h=v1;
+            var isAH_base=2*isAH_area/isAH_h;
+            res=Math.sqrt(isAH_h*isAH_h+(isAH_base/2)*(isAH_base/2));
+            s1=res; s2=res; b=isAH_base; h=isAH_h; area=isAH_area;
+            perim=2*res+b;
+            formula='Base = 2\u00d7Area/h = '+isAH_base.toFixed(getPrec())+'\nLeg = \u221a(h\u00b2+(Base/2)\u00b2) = '+fmtS(res);
+
+        }else if(type==='rt_l_la'){
+            var rlla_leg=v0, rlla_ang=toRad(v1);
+            if(rlla_ang<=0||rlla_ang>=Math.PI/2){if(!silent)showError('Impossible','Angle must be between 0\u00b0 and 90\u00b0.');return;}
+            res=rlla_leg/Math.tan(rlla_ang);
+            s1=rlla_leg; h=rlla_leg; b=res;
+            s2=Math.sqrt(s1*s1+b*b);
+            area=0.5*s1*b; perim=s1+b+s2;
+            formula='Other leg = Known Leg / tan(A)\n= '+rlla_leg+' / tan('+v1+'\u00b0)\n= '+fmtS(res);
         }
         }catch(e){if(!silent)showError('Calculation error','Double-check your values form a valid triangle.');return;}
 
