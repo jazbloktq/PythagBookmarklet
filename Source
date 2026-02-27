@@ -1453,20 +1453,54 @@
         var hit=null;
         for(var i=0;i<diagSideLabelPos.length;i++){
             var lp=diagSideLabelPos[i];
-            if(Math.abs(mx-lp.x)<18&&Math.abs(my-lp.y)<12){hit=lp;break;}
+            if(Math.abs(mx-lp.x)<22&&Math.abs(my-lp.y)<14){hit=lp;break;}
         }
         if(!hit) return;
         var cfg3=getMethodList()[Math.min(currentMethod,getMethodList().length-1)];
         if(!cfg3) return;
-        var targetIdx=-1;
-        cfg3.inputs.forEach(function(lbl,i){
-            var ll=lbl.toLowerCase();
-            if(hit.key==='s1'&&(ll.indexOf('side 1')>=0||ll.indexOf('leg a')>=0||(ll.indexOf('leg')>=0&&i===0))) targetIdx=i;
-            else if(hit.key==='s2'&&(ll.indexOf('side 2')>=0||ll.indexOf('leg b')>=0)) targetIdx=i;
-            else if(hit.key==='base'&&(ll.indexOf('base')>=0||ll.indexOf('hyp')>=0)) targetIdx=i;
-            else if(hit.key==='height'&&(ll.indexOf('height')>=0||ll.indexOf('alt')>=0)) targetIdx=i;
-        });
-        if(targetIdx<0) return;
+        // Direct method-id → {sideKey: inputIndex} map (no fragile label string matching)
+        var keyToIdx = {
+            'sc_b_shs': {s1:0, height:1, s2:2},
+            'sc_b_ah':  {height:1},
+            'sc_b_asa': {},
+            'sc_b_sas': {s1:0, s2:2},
+            'sc_s_shb': {s1:0, height:1, base:2},
+            'sc_s_hb':  {height:0, base:1},
+            'sc_s_aas': {},
+            'sc_h_ab':  {base:1},
+            'sc_h_ssb': {s1:0, s2:1, base:2},
+            'sc_a_heron': {s1:0, s2:1, base:2},
+            'sc_a_sas':   {s1:0, s2:2},
+            'is_b_sh':  {s1:0, height:1},
+            'is_b_ah':  {height:1},
+            'is_b_al':  {},
+            'is_b_asa': {},
+            'is_s_bh':  {base:0, height:1},
+            'is_s_ab':  {base:1},
+            'is_s_ba':  {base:0},
+            'is_h_bl':  {base:0, s1:1},
+            'is_h_ab':  {base:1},
+            'is_a_heron': {s1:0, s2:1, base:2},
+            'is_a_la':    {s1:0},
+            'eq_h_s':   {s1:0, s2:0, base:0},
+            'eq_b_ah':  {height:1},
+            'eq_a_heron': {s1:0, s2:0, base:0},
+            'rt_c_ll':  {s1:0, base:1},
+            'rt_c_al':  {},
+            'rt_c_la':  {s1:0},
+            'rt_l_cl':  {s2:0, base:1},
+            'rt_l_ac':  {s2:1},
+            'rt_l_ca':  {s2:0},
+            'rt_h_ll':  {s1:0, base:1},
+            'rt_h_ac':  {s2:1},
+            'rt_b_cl':  {s2:0, s1:1},
+            'rt_b_ah':  {height:1},
+            'rt_triple_check': {s1:0, base:1, s2:2}
+        };
+        var map = keyToIdx[cfg3.id];
+        if(!map) return;
+        var targetIdx = map[hit.key];
+        if(targetIdx === undefined) return;
         var targetInput=get('v'+targetIdx);
         if(!targetInput) return;
         targetInput.style.outline='2px solid #e87c00';
