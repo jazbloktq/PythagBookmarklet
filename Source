@@ -12,7 +12,7 @@
     var initAdvanced  = saved.advanced  === true;
     var initSimplify  = saved.simplify  === true;
     var initDark      = saved.dark      === true;
-    var initDegrees   = saved.degrees   !== false; // default true
+    var initDegrees   = saved.degrees   !== false;
     var initPrec      = saved.prec !== undefined ? String(saved.prec) : '2';
 
     var ui = document.createElement('div');
@@ -92,31 +92,44 @@
             '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optDark"     style="accent-color:#1a73e8;width:14px;height:14px;"> Dark mode</label>',
           '</div>',
         '</div>',
+        // ── Mini Calculator (rebuilt) ──
         '<div id="miniCalc" style="display:none;position:absolute;top:50px;left:16px;right:16px;background:#fff;border:1px solid #ddd;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.15);padding:14px;z-index:10005;font-size:12px;">',
-          '<div style="font-weight:700;margin-bottom:10px;color:#333;">Calculator</div>',
-          '<div id="calcDisplay" style="background:#f7f9ff;border:1px solid #dde8fb;border-radius:7px;padding:8px 12px;margin-bottom:3px;text-align:right;font-size:22px;font-weight:700;color:#1a73e8;min-height:36px;overflow:hidden;white-space:nowrap;font-family:monospace;">0</div>',
-          '<div id="calcExpr" style="text-align:right;font-size:10px;color:#999;min-height:14px;margin-bottom:8px;font-family:monospace;overflow:hidden;white-space:nowrap;"></div>',
-          '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;">',
-            '<button class="ck" data-k="C"  style="grid-column:span 2;padding:9px;border:none;border-radius:7px;background:#fee2e2;color:#c0392b;font-weight:700;cursor:pointer;font-size:13px;">C</button>',
-            '<button class="ck" data-k="√"  style="padding:9px;border:none;border-radius:7px;background:#e8f0fe;color:#1a73e8;font-weight:700;cursor:pointer;font-size:13px;">\u221a</button>',
-            '<button class="ck" data-k="⌫"  style="padding:9px;border:none;border-radius:7px;background:#f1f3f4;color:#555;font-weight:700;cursor:pointer;font-size:14px;">\u232b</button>',
-            '<button class="ck" data-k="7"  style="padding:9px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">7</button>',
-            '<button class="ck" data-k="8"  style="padding:9px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">8</button>',
-            '<button class="ck" data-k="9"  style="padding:9px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">9</button>',
-            '<button class="ck" data-k="÷"  style="padding:9px;border:none;border-radius:7px;background:#e8f0fe;color:#1a73e8;font-weight:700;cursor:pointer;font-size:15px;">\u00f7</button>',
-            '<button class="ck" data-k="4"  style="padding:9px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">4</button>',
-            '<button class="ck" data-k="5"  style="padding:9px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">5</button>',
-            '<button class="ck" data-k="6"  style="padding:9px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">6</button>',
-            '<button class="ck" data-k="×"  style="padding:9px;border:none;border-radius:7px;background:#e8f0fe;color:#1a73e8;font-weight:700;cursor:pointer;font-size:15px;">\u00d7</button>',
-            '<button class="ck" data-k="1"  style="padding:9px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">1</button>',
-            '<button class="ck" data-k="2"  style="padding:9px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">2</button>',
-            '<button class="ck" data-k="3"  style="padding:9px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">3</button>',
-            '<button class="ck" data-k="-"  style="padding:9px;border:none;border-radius:7px;background:#e8f0fe;color:#1a73e8;font-weight:700;cursor:pointer;font-size:16px;">-</button>',
-            '<button class="ck" data-k="0"  style="grid-column:span 2;padding:9px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">0</button>',
-            '<button class="ck" data-k="."  style="padding:9px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">.</button>',
-            '<button class="ck" data-k="+"  style="padding:9px;border:none;border-radius:7px;background:#e8f0fe;color:#1a73e8;font-weight:700;cursor:pointer;font-size:16px;">+</button>',
-            '<button class="ck" data-k="="  style="grid-column:span 4;padding:10px;border:none;border-radius:7px;background:#1a73e8;color:#fff;font-weight:700;cursor:pointer;font-size:15px;">=</button>',
+          '<div style="font-weight:700;margin-bottom:8px;color:#333;font-size:13px;">Calculator</div>',
+          // expression tape (what you're building)
+          '<div id="calcExpr" style="text-align:right;font-size:11px;color:#999;min-height:16px;margin-bottom:4px;font-family:monospace;overflow:hidden;white-space:nowrap;padding:0 2px;"></div>',
+          // main display
+          '<div id="calcDisplay" style="background:#f7f9ff;border:1px solid #dde8fb;border-radius:7px;padding:8px 12px;margin-bottom:8px;text-align:right;font-size:20px;font-weight:700;color:#1a73e8;min-height:36px;overflow:hidden;white-space:nowrap;font-family:monospace;letter-spacing:0.5px;">0</div>',
+          '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:5px;">',
+            // Row 1: C  (  )  ⌫  √
+            '<button class="ck" data-k="C"   style="padding:9px 4px;border:none;border-radius:7px;background:#fee2e2;color:#c0392b;font-weight:700;cursor:pointer;font-size:12px;">C</button>',
+            '<button class="ck" data-k="("   style="padding:9px 4px;border:none;border-radius:7px;background:#e8f0fe;color:#1a73e8;font-weight:700;cursor:pointer;font-size:14px;">(</button>',
+            '<button class="ck" data-k=")"   style="padding:9px 4px;border:none;border-radius:7px;background:#e8f0fe;color:#1a73e8;font-weight:700;cursor:pointer;font-size:14px;">)</button>',
+            '<button class="ck" data-k="\u232b" style="padding:9px 4px;border:none;border-radius:7px;background:#f1f3f4;color:#555;font-weight:700;cursor:pointer;font-size:14px;">\u232b</button>',
+            '<button class="ck" data-k="\u221a"  style="padding:9px 4px;border:none;border-radius:7px;background:#e8f0fe;color:#1a73e8;font-weight:700;cursor:pointer;font-size:14px;">\u221a</button>',
+            // Row 2: 7  8  9  ÷  π
+            '<button class="ck" data-k="7"   style="padding:9px 4px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">7</button>',
+            '<button class="ck" data-k="8"   style="padding:9px 4px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">8</button>',
+            '<button class="ck" data-k="9"   style="padding:9px 4px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">9</button>',
+            '<button class="ck" data-k="\u00f7" style="padding:9px 4px;border:none;border-radius:7px;background:#e8f0fe;color:#1a73e8;font-weight:700;cursor:pointer;font-size:15px;">\u00f7</button>',
+            '<button class="ck" data-k="\u03c0"  style="padding:9px 4px;border:none;border-radius:7px;background:#e8f0fe;color:#1a73e8;font-weight:700;cursor:pointer;font-size:14px;">\u03c0</button>',
+            // Row 3: 4  5  6  ×
+            '<button class="ck" data-k="4"   style="padding:9px 4px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">4</button>',
+            '<button class="ck" data-k="5"   style="padding:9px 4px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">5</button>',
+            '<button class="ck" data-k="6"   style="padding:9px 4px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">6</button>',
+            '<button class="ck" data-k="\u00d7" style="grid-column:span 2;padding:9px 4px;border:none;border-radius:7px;background:#e8f0fe;color:#1a73e8;font-weight:700;cursor:pointer;font-size:15px;">\u00d7</button>',
+            // Row 4: 1  2  3  -
+            '<button class="ck" data-k="1"   style="padding:9px 4px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">1</button>',
+            '<button class="ck" data-k="2"   style="padding:9px 4px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">2</button>',
+            '<button class="ck" data-k="3"   style="padding:9px 4px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">3</button>',
+            '<button class="ck" data-k="-"   style="grid-column:span 2;padding:9px 4px;border:none;border-radius:7px;background:#e8f0fe;color:#1a73e8;font-weight:700;cursor:pointer;font-size:16px;">-</button>',
+            // Row 5: 0  .  +
+            '<button class="ck" data-k="0"   style="grid-column:span 2;padding:9px 4px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">0</button>',
+            '<button class="ck" data-k="."   style="padding:9px 4px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">.</button>',
+            '<button class="ck" data-k="+"   style="grid-column:span 2;padding:9px 4px;border:none;border-radius:7px;background:#e8f0fe;color:#1a73e8;font-weight:700;cursor:pointer;font-size:16px;">+</button>',
+            // Row 6: = (full width)
+            '<button class="ck" data-k="="   style="grid-column:span 5;padding:10px;border:none;border-radius:7px;background:#1a73e8;color:#fff;font-weight:700;cursor:pointer;font-size:15px;">=</button>',
           '</div>',
+          '<div id="calcError" style="display:none;margin-top:8px;padding:6px 10px;background:#fff5f5;border:1px solid #f5c2c2;border-radius:6px;font-size:11px;color:#c0392b;font-weight:600;"></div>',
         '</div>'
     ].join('');
     document.body.appendChild(ui);
@@ -131,7 +144,6 @@
     var canvas = get('triCanvas'), ctx = canvas.getContext('2d');
     var history = [];
 
-    // Apply saved settings to DOM
     get('prec').value          = initPrec;
     get('optSurd').checked     = initSurd;
     get('optSimplify').checked = initSimplify;
@@ -160,7 +172,6 @@
         } catch(e) {}
     }
 
-    // ── Dark mode ──────────────────────────────────────────────────────────────
     var DK = {
         uiBg:      ['#fff',     '#1e1e2e'],
         uiBorder:  ['#ddd',     '#333350'],
@@ -191,101 +202,70 @@
         tripleBdr: ['#a8d8a8',  '#3a6a3a'],
         tripleTxt: ['#2a7a2a',  '#6abf6a'],
         setMenuW:  ['#fff',     '#252535'],
-        // Header bar: bright blue in light, muted bluish-grey in dark
         headerBg:  ['#1a73e8',  '#3a4f63'],
     };
     function dk(key) { return DK[key][getDark()?1:0]; }
 
     function applyDark() {
         var d = getDark();
-        // main widget
         ui.style.background = dk('uiBg');
         ui.style.borderColor = dk('uiBorder');
         ui.style.color = dk('text');
-        // header bar — bright blue in light, muted bluish-grey in dark
         var hdr = get('uiHeader');
         if(hdr) hdr.style.background = dk('headerBg');
-        // body scroll area
         var body = get('uiBody');
         if(body) body.style.background = dk('bodyBg');
-        // section labels
         ui.querySelectorAll('.secLabel').forEach(function(el){ el.style.color = dk('label'); });
-        // pos toggle
         var tog = get('posToggle');
         if(tog) tog.style.background = dk('posBg');
-        // canvas box
         var cb = get('canvasBox');
         if(cb){ cb.style.background = dk('canvasBg'); cb.style.borderColor = dk('canvasBdr'); }
-        // clear button
         var clr = get('clear');
         if(clr){ clr.style.background = dk('btnBg'); clr.style.color = dk('btnTxt'); }
-        // result panel
         var res = get('res');
         if(res){ res.style.background = dk('resBg'); res.style.borderColor = dk('resBdr'); }
-        // result sub-labels
-        res && res.querySelectorAll('div[style*="color:#666"],div[style*="color:#888"]').forEach(function(el){
-            if(el.style.color==='#666'||el.style.color==='rgb(102, 102, 102)') el.style.color=dk('subtext');
-            if(el.style.color==='#888'||el.style.color==='rgb(136, 136, 136)') el.style.color=dk('label');
-        });
-        // area/perim cards
         ['areaBox','perimBox'].forEach(function(id){
             var el=get(id); if(el){ el.style.background=dk('cardBg'); }
         });
         var aR=get('areaRes'),pR=get('perimRes');
         if(aR) aR.style.color=dk('text'); if(pR) pR.style.color=dk('text');
-        // triple box
         var tb=get('tripleBox');
         if(tb){ tb.style.background=dk('tripleBg'); tb.style.borderColor=dk('tripleBdr'); tb.style.color=dk('tripleTxt'); }
-        // angles box
         var ab=get('anglesBox');
         if(ab){ ab.style.background=dk('angleBg'); ab.style.borderColor=dk('angleBdr'); }
-        // formula code
         var ft=get('formulaText');
         if(ft){ ft.style.background=dk('codeBg'); ft.style.borderColor=dk('codeBdr'); ft.style.color=dk('codeTxt'); }
-        // class tag
         var ct=get('classTag');
         if(ct){ ct.style.background=dk('tagBg'); ct.style.color=dk('tagTxt'); }
-        // finalApprox
         var fa=get('finalApprox'); if(fa) fa.style.color=dk('subtext');
-        // menus
         ['histMenu','setMenu','miniCalc'].forEach(function(id){
             var m=get(id); if(m){ m.style.background=dk('menuBg'); m.style.borderColor=dk('menuBdr'); m.style.color=dk('text'); }
         });
         var hL=get('histList'); if(hL) hL.style.color=dk('subtext');
-        // mini calculator display
         var cd=get('calcDisplay');
         if(cd){ cd.style.background=dk('resBg'); cd.style.borderColor=dk('codeBdr'); cd.style.color=d?'#4a9eff':'#1a73e8'; }
         var ce=get('calcExpr'); if(ce) ce.style.color=dk('subtext');
-        // mini calc digit buttons
         ui.querySelectorAll('.ck').forEach(function(btn){
             var k=btn.getAttribute('data-k');
             if(k==='C'){ btn.style.background=d?'#3a1a1a':'#fee2e2'; btn.style.color=d?'#ff8080':'#c0392b'; }
             else if(k==='='){ btn.style.background=d?'#1a5090':'#1a73e8'; btn.style.color='#fff'; }
-            else if(k==='+'||k==='-'||k==='×'||k==='÷'||k==='√'){
-                btn.style.background=dk('accentBgCalc'); btn.style.borderColor='';
+            else if(k==='+' || k==='-' || k==='\u00d7' || k==='\u00f7' || k==='\u221a' || k==='\u03c0' || k==='(' || k===')'){
                 btn.style.background=d?'#1e2a3e':'#e8f0fe'; btn.style.color=d?'#4a9eff':'#1a73e8';
-            } else if(k==='⌫'){ btn.style.background=dk('btnBg'); btn.style.color=dk('btnTxt'); btn.style.borderColor=''; }
+            } else if(k==='\u232b'){ btn.style.background=dk('btnBg'); btn.style.color=dk('btnTxt'); btn.style.borderColor=''; }
             else { btn.style.background=dk('inputBg'); btn.style.borderColor=dk('inputBdr'); btn.style.color=dk('text'); }
         });
-        // inputs in inputStack
         ui.querySelectorAll('#inputStack input').forEach(function(inp){
             inp.style.background=dk('inputBg'); inp.style.borderColor=dk('inputBdr'); inp.style.color=dk('text');
         });
-        // prec input
         var prec=get('prec'); if(prec){ prec.style.background=dk('inputBg'); prec.style.borderColor=dk('inputBdr'); prec.style.color=dk('text'); }
-        // set menu labels
         var sm=get('setMenu');
         if(sm){ sm.querySelectorAll('label').forEach(function(l){ l.style.color=dk('text'); }); }
-        // dlBtn
         var dl=get('dlBtn');
         if(dl){ dl.style.background=d?'rgba(30,30,46,0.9)':'rgba(255,255,255,0.92)'; dl.style.borderColor=dk('inputBdr'); dl.style.color=dk('btnTxt'); }
-        // closeHist button
         var ch=get('closeHist'); if(ch){ ch.style.background=dk('btnBg'); ch.style.color=dk('btnTxt'); }
-        // method buttons — rebuild to pick up new colours
         buildTriBtns(); buildGoalBtns(); buildMethodBtns();
     }
 
-    // ── Error helpers ──────────────────────────────────────────────────────────
     var errTimer = null;
     function showError(title, msg) {
         get('errTitle').innerText = title; get('errMsg').innerText = msg;
@@ -297,7 +277,6 @@
     function dismissErr() { errBox.style.opacity='0'; setTimeout(function(){errBox.style.display='none';errBox.style.opacity='1';},400); }
     function clearError() { if(errTimer){clearTimeout(errTimer);errTimer=null;} errBox.style.display='none'; errBox.style.opacity='1'; }
 
-    // ── Surd helpers ───────────────────────────────────────────────────────────
     function simplifySqrt(n) {
         var coeff=1, rad=n;
         for(var p=2;p*p<=rad;p++) while(rad%(p*p)===0){rad/=p*p;coeff*=p;}
@@ -331,13 +310,11 @@
         return value.toFixed(getPrec());
     }
 
-    // ── Angle formatting ───────────────────────────────────────────────────────
     function fmtAngle(rad) {
         var p=getPrec();
         if(getDeg()) return (rad*180/Math.PI).toFixed(p)+'\u00b0';
         return rad.toFixed(p)+'\u02b3';
     }
-    // Compute all 3 angles from sides a, b, c (law of cosines)
     function computeAngles(a, b, c) {
         function ac(opp, adj1, adj2) {
             var val=(adj1*adj1+adj2*adj2-opp*opp)/(2*adj1*adj2);
@@ -347,7 +324,6 @@
         return [ac(a,b,c), ac(b,a,c), ac(c,a,b)];
     }
 
-    // ── Triangle classification ────────────────────────────────────────────────
     function classifyTriangle(a, b, c) {
         var sides=[a,b,c].sort(function(x,y){return x-y;});
         var A=sides[0],B=sides[1],C=sides[2];
@@ -360,7 +336,6 @@
         return type;
     }
 
-    // ── Pythagorean triple check ───────────────────────────────────────────────
     function gcd(a,b){ return b<0.5?a:gcd(b,a%b); }
     function checkTriple(a, b, c) {
         var sides=[a,b,c].sort(function(x,y){return x-y;});
@@ -375,7 +350,6 @@
         return pa+'-'+pb+'-'+pc+' (scaled \u00d7'+scale+')';
     }
 
-    // ── Triangle type & goal/method tables ────────────────────────────────────
     var triTypes=[
         {id:'scalene',     label:'Scalene'},
         {id:'isosceles',   label:'Isosceles'},
@@ -386,10 +360,8 @@
         scalene:     ['base','side','height','area'],
         isosceles:   ['base','side','height','area'],
         equilateral: ['height','base','area'],
-        // CHANGE 2: Added 'triple' as a goal for right triangles
         right:       ['hypo','side','height','base','triple']
     };
-    // CHANGE 4: Rename "Area" goal (which uses Heron's) to "Heron's" so it's distinct from the auto-calculated area
     var goalLabel={
         s:{base:'Base',side:'Side',height:'Height',hypo:'Hypotenuse',area:"Heron's",triple:'Py. Triple'},
         a:{base:'Base',side:'Lateral Side',height:'Altitude',hypo:'Hypotenuse',area:"Heron's",triple:'Pythagorean Triple'}
@@ -452,7 +424,6 @@
                 {id:'rt_b_cl',s:'Hypotenuse + leg',a:'Hypotenuse + leg',si:['Hypotenuse','Leg'],ai:['Hypotenuse','Leg'],toggle:false},
                 {id:'rt_b_ah',s:'Area + height',   a:'Area + altitude',  si:['Area','Height'],   ai:['Area','Altitude'],toggle:false}
             ],
-            // CHANGE 2: New 'triple' goal for right triangles — check if 3 sides form a Pythagorean triple
             triple:[
                 {id:'rt_triple_check',s:'Enter all three sides',a:'Enter all three sides',si:['Leg a','Leg b','Hypotenuse'],ai:['Leg a','Leg b','Hypotenuse'],toggle:false}
             ]
@@ -481,7 +452,6 @@
         return 'border:1.5px solid #1a73e8;border-radius:7px;padding:8px 11px;cursor:pointer;font-size:12px;background:'+(d?'#1e2e4e':'#e8f0fe')+';color:'+(d?'#4a9eff':'#1a73e8')+';text-align:left;font-weight:700;';
     }
 
-    // ── Build UI ───────────────────────────────────────────────────────────────
     function buildTriBtns() {
         var el=get('triBtns'); el.innerHTML='';
         triTypes.forEach(function(t){
@@ -546,7 +516,6 @@
     }
     function rebuildAll(){buildTriBtns();buildGoalBtns();buildMethodBtns();renderInputs();}
 
-    // ── Canvas ────────────────────────────────────────────────────────────────
     function drawTri(s1, h, b, s2, isExt, anglesData) {
         var W=canvas.width, H=canvas.height;
         ctx.clearRect(0,0,W,H);
@@ -557,7 +526,6 @@
         else if(currentTri==='right') raw=[[0,h],[0,0],[b,h]];
         else { var ax=Math.sqrt(Math.max(0,s1*s1-h*h)); raw=isExt?[[0,h],[ax,0],[Math.abs(ax-b),h]]:[[0,h],[ax,0],[b,h]]; }
 
-        // Generous asymmetric padding: extra bottom+sides for angle labels at base corners
         var padT=38, padB=52, padL=52, padR=52;
         var minX=raw[0][0],maxX=raw[0][0];
         for(var i=1;i<3;i++){if(raw[i][0]<minX)minX=raw[i][0];if(raw[i][0]>maxX)maxX=raw[i][0];}
@@ -568,11 +536,9 @@
         var pA=tr(raw[0]),pB=tr(raw[1]),pC=tr(raw[2]);
         var pH=[pB[0],pA[1]];
 
-        // fill
         ctx.beginPath();ctx.moveTo(pA[0],pA[1]);ctx.lineTo(pB[0],pB[1]);ctx.lineTo(pC[0],pC[1]);ctx.closePath();
         ctx.fillStyle=d?'rgba(74,158,255,0.08)':'rgba(26,115,232,0.07)';ctx.fill();
 
-        // tick marks
         function tick(ax,ay,bx,by,n){
             var mx=(ax+bx)/2,my=(ay+by)/2,dx=bx-ax,dy=by-ay,len=Math.sqrt(dx*dx+dy*dy)||1;
             var nx=-dy/len*5,ny=dx/len*5,gap=4;
@@ -582,23 +548,18 @@
         if(currentTri==='equilateral'){tick(pA[0],pA[1],pB[0],pB[1],2);tick(pB[0],pB[1],pC[0],pC[1],2);tick(pA[0],pA[1],pC[0],pC[1],2);}
         else if(currentTri==='isosceles'){tick(pA[0],pA[1],pB[0],pB[1],1);tick(pB[0],pB[1],pC[0],pC[1],1);}
 
-        // outline
         ctx.strokeStyle=triCol;ctx.lineWidth=2.5;ctx.lineJoin='round';
         ctx.beginPath();ctx.moveTo(pA[0],pA[1]);ctx.lineTo(pB[0],pB[1]);ctx.lineTo(pC[0],pC[1]);ctx.closePath();ctx.stroke();
 
-        // right angle box at pA for right triangles
         if(currentTri==='right'){var sq=7;ctx.strokeStyle=d?'#888':'#888';ctx.lineWidth=1.2;ctx.strokeRect(pA[0],pA[1]-sq,sq,sq);}
 
-        // altitude line (dashed) from apex pB straight down to base
         var altOnLeft=false,altOnRight=false;
         if(currentTri==='scalene'){var eps=0.002*scale;altOnLeft=Math.abs(pB[0]-pA[0])<eps;altOnRight=Math.abs(pB[0]-pC[0])<eps;}
         var drawAlt=(currentTri==='isosceles'||currentTri==='equilateral'||(currentTri==='scalene'&&!altOnLeft&&!altOnRight));
         if(drawAlt){
             ctx.setLineDash([4,4]);ctx.lineWidth=1.5;ctx.strokeStyle=d?'#555':'#aaa';
             ctx.beginPath();ctx.moveTo(pB[0],pB[1]);ctx.lineTo(pH[0],pH[1]);ctx.stroke();ctx.setLineDash([]);
-            // right-angle square at foot of altitude — drawn correctly: foot is pH=(pB[0],pA[1])
             var sq2=6;ctx.strokeStyle=d?'#555':'#aaa';ctx.lineWidth=1;
-            // square goes left and up from foot point
             ctx.strokeRect(pH[0], pH[1]-sq2, sq2, sq2);
         } else if(currentTri==='scalene'&&altOnLeft){
             ctx.strokeStyle=d?'#555':'#aaa';ctx.lineWidth=1;ctx.strokeRect(pA[0],pA[1],6,-6);
@@ -606,7 +567,6 @@
             ctx.strokeStyle=d?'#555':'#aaa';ctx.lineWidth=1;ctx.strokeRect(pC[0]-6,pC[1],6,-6);
         }
 
-        // Angle arcs with background pill labels
         if(anglesData){
             var verts=[[pA,anglesData[0]],[pB,anglesData[1]],[pC,anglesData[2]]];
             var otherVerts=[[pB,pC],[pA,pC],[pA,pB]];
@@ -626,7 +586,6 @@
                 ctx.arc(vp[0],vp[1],r,a1,a1+diff,diff<0);
                 ctx.strokeStyle=arcColor;ctx.lineWidth=1.2;ctx.stroke();
 
-                // Place pill label: push outward from vertex along bisector of angle
                 var midA=a1+diff/2;
                 var labelR=r+18;
                 var lx=vp[0]+Math.cos(midA)*labelR, ly=vp[1]+Math.sin(midA)*labelR;
@@ -634,7 +593,6 @@
                 ctx.font='bold 9px system-ui';
                 var tw=ctx.measureText(labelText).width;
                 var ph=12, pw=tw+8;
-                // Clamp so pill stays within canvas
                 lx=Math.max(pw/2+2, Math.min(W-pw/2-2, lx));
                 ly=Math.max(ph/2+2, Math.min(H-ph/2-2, ly));
                 var bgCol = d ? '#1e1e2e' : '#fff';
@@ -661,25 +619,20 @@
             });
         }
 
-        // side labels — placed outside each edge, away from centroid
         ctx.fillStyle=triCol;ctx.font='bold 11px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';
         var OUT=16, adv=getAdv(), hLbl=adv?'alt=':'h=';
         var cx=(pA[0]+pB[0]+pC[0])/3, cy=(pA[1]+pB[1]+pC[1])/3;
         function labelSide(ax,ay,bx,by,lbl){
             var mx=(ax+bx)/2,my=(ay+by)/2,dx=bx-ax,dy=by-ay,len=Math.sqrt(dx*dx+dy*dy)||1;
             var nx=-dy/len,ny=dx/len;
-            // push away from centroid
             if((mx+nx-cx)*nx+(my+ny-cy)*ny<0){nx=-nx;ny=-ny;}
-            // clamp within canvas
             var lx2=mx+nx*OUT, ly2=my+ny*OUT;
             lx2=Math.max(8,Math.min(W-8,lx2)); ly2=Math.max(8,Math.min(H-8,ly2));
             ctx.fillText(lbl,lx2,ly2);
         }
         function altLabel(hVal){
-            // Place h= label to the side of the altitude line, vertically centred
             var hmy=(pB[1]+pH[1])/2;
             var margin=8;
-            // prefer right side unless too close to edge
             if(pH[0]+margin+30 < W){ctx.textAlign='left';ctx.fillText(hLbl+hVal,pH[0]+margin,hmy);}
             else{ctx.textAlign='right';ctx.fillText(hLbl+hVal,pH[0]-margin,hmy);}
         }
@@ -706,7 +659,6 @@
         }
     }
 
-    // ── Calculate ─────────────────────────────────────────────────────────────
     get('calc').onclick = function() {
         clearError();
         var list=getMethodList();
@@ -728,12 +680,9 @@
         var type=cfg.id;
         var res,area,perim,formula,s1,h,b,s2;
 
-        // CHANGE 2: Handle the new Pythagorean triple goal
         if(type==='rt_triple_check'){
             var legA=v0, legB=v1, hypIn=v2;
-            // Validate: hyp should be largest
             if(hypIn<=legA||hypIn<=legB){showError('Check your values','Hypotenuse must be larger than both legs.');return;}
-            // Check if it's actually a right triangle
             var hypCalc=Math.sqrt(legA*legA+legB*legB);
             var isRightTri=Math.abs(hypCalc-hypIn)/hypIn<0.001;
             var trip=checkTriple(legA,legB,hypIn);
@@ -741,7 +690,7 @@
             area=0.5*legA*legB;perim=legA+legB+hypIn;
             if(!isRightTri){showError('Not a right triangle','These sides do not satisfy a² + b² = c². Check your values.');return;}
             if(trip){
-                res=hypIn; // just show hypotenuse as the result value
+                res=hypIn;
                 formula='Checking: '+legA+'\u00b2 + '+legB+'\u00b2 = '+hypIn+'\u00b2\n'+(legA*legA)+' + '+(legB*legB)+' = '+(hypIn*hypIn)+'\n\u2713 Valid right triangle\n\u2605 Pythagorean triple: '+trip;
                 get('tripleBox').innerText='\u2605 Pythagorean triple: '+trip;
                 get('tripleBox').style.display='block';
@@ -751,7 +700,6 @@
                 get('tripleBox').innerText='\u2715 Not a Pythagorean triple';
                 get('tripleBox').style.display='block';
             }
-            // Show result, angles, draw
             var angArr=computeAngles(s1,b,s2);
             var anglesForCanvas=[angArr[2],angArr[1],angArr[0]];
             get('res').style.display='block';
@@ -850,11 +798,9 @@
             res=currentGoal==='height'?h:side;
             formula='Height = (\u221a3 / 2) \u00d7 '+side+(useSurd?' = '+fmtS(h):' \u2248 '+h.toFixed(p));
         }else if(type==='eq_b_ah'){
-            // For equilateral: A = (√3/4)b² and h = (√3/2)b, so A and h are not independent.
-            // Check consistency: A = h²/√3  →  h = √(A√3)
             var hConsistent=Math.sqrt(v0*Math.sqrt(3));
             if(Math.abs(hConsistent-v1)>0.001*v1){
-                showError('Impossible combination','For an equilateral triangle, Area and Height are not independent. With Area = '+v0+', the height must be \u2248 '+hConsistent.toFixed(getPrec())+', not '+v1+'. Enter just one value — use "Find: Height" with a side, or "Heron\'s" with a side.');
+                showError('Impossible combination','For an equilateral triangle, Area and Height are not independent. With Area = '+v0+', the height must be \u2248 '+hConsistent.toFixed(getPrec())+', not '+v1+'.');
                 return;
             }
             var beq=(2*v0)/v1;
@@ -879,17 +825,10 @@
             formula='Leg = \u221a(c\u00b2 \u2212 b\u00b2)\n= \u221a('+hyp+'\u00b2 \u2212 '+oLeg+'\u00b2)\n= \u221a'+(hyp*hyp-oLeg*oLeg)+' = '+fmtS(res);
         }else if(type==='rt_l_ac'){
             var hypR=v1;
-            // From area A and hyp c: legs satisfy a*b=2A, a²+b²=c²
-            // a=(√(c²+4A)+√(c²-4A))/2  (larger leg)
             var inner3=hypR*hypR-4*v0;
             if(inner3<0){showError('Impossible','Area is too large for that hypotenuse.');return;}
-            res=(Math.sqrt(hypR*hypR+4*v0)+Math.sqrt(inner3))/2; // larger leg
+            res=(Math.sqrt(hypR*hypR+4*v0)+Math.sqrt(inner3))/2;
             s1=res;h=res;
-            b=(hypR*hypR-2*v0)/res; // other leg = c²/2A - res... simpler: b=2A/s1... no: a*b=2A
-            // Actually b = 2A / a
-            b=Math.max(0, 2*v0/res);
-            // verify: b = (√(c²+4A)-√(c²-4A))/2
-            // just use that directly for accuracy:
             b=(Math.sqrt(hypR*hypR+4*v0)-Math.sqrt(inner3))/2;
             s2=hypR;
             formula='Leg = (\u221a(c\u00b2+4A) + \u221a(c\u00b2\u22124A)) / 2\n= (\u221a'+(hypR*hypR+4*v0).toFixed(getPrec())+' + \u221a'+inner3.toFixed(getPrec())+') / 2\n= '+fmtS(res);
@@ -899,7 +838,6 @@
             formula='Altitude = (a \u00d7 b) / c\n= ('+s1+' \u00d7 '+b+') / \u221a'+(s1*s1+b*b)+' = '+fmtS(res);
         }else if(type==='rt_h_ac'){
             var hypH=v1;res=(2*v0)/hypH;h=res;
-            // Legs: a+b=√(c²+4A), a-b=√(c²-4A)  →  a=(√(c²+4A)+√(c²-4A))/2
             var sumAB=Math.sqrt(hypH*hypH+4*v0);
             var inner2=hypH*hypH-4*v0;
             if(inner2<0){showError('Impossible','Area is too large for that hypotenuse.');return;}
@@ -937,13 +875,11 @@
         get('areaRes').innerText=area.toFixed(p);
         get('perimRes').innerText=perim.toFixed(p);
 
-        // ── Classification ──
         var classTag=get('classTag');
         var classification=classifyTriangle(s1,s2,b);
         classTag.innerText=classification;
         classTag.style.display='inline-block';
 
-        // ── Pythagorean triple (right triangle only, non-triple-goal) ──
         var tripleBox=get('tripleBox');
         if(currentTri==='right'&&currentGoal!=='triple'){
             var trip=checkTriple(s1,b,s2);
@@ -951,7 +887,6 @@
             else{tripleBox.style.display='none';}
         } else if(currentGoal!=='triple') { tripleBox.style.display='none'; }
 
-        // ── Angles ──
         var anglesBox=get('anglesBox'), anglesContent=get('anglesContent');
         var angArr=computeAngles(s1, b, s2);
         var anglesForCanvas=[angArr[2], angArr[1], angArr[0]];
@@ -966,12 +901,10 @@
         });
         anglesBox.style.display='block';
 
-        // Draw canvas
         var drawS1=s1, drawH=h, drawB=b, drawS2=s2;
         if(currentTri==='right') drawH=s1;
         drawTri(drawS1, drawH, drawB, drawS2, isExt, anglesForCanvas);
 
-        // Re-apply dark mode to result panel elements
         applyDark();
 
         var adv=getAdv();
@@ -993,7 +926,6 @@
         saveSettings();
     };
 
-    // ── Handlers ───────────────────────────────────────────────────────────────
     get('copy').onclick    = function(){navigator.clipboard.writeText(get('final').innerText);this.innerText='Copied!';var self=this;setTimeout(function(){self.innerText='Copy';},1500);};
     get('dlBtn').onclick   = function(){var l=document.createElement('a');l.download='triangle.png';l.href=canvas.toDataURL();l.click();};
     get('clear').onclick   = function(){ui.querySelectorAll('#inputStack input').forEach(function(i){i.value='';});get('res').style.display='none';ctx.clearRect(0,0,canvas.width,canvas.height);};
@@ -1004,7 +936,6 @@
     get('setMenu').addEventListener('click',function(e){e.stopPropagation();});
     get('histMenu').addEventListener('click',function(e){e.stopPropagation();});
 
-    // Draggable header
     var header=get('uiHeader');
     header.style.cursor='grab';
     var dragState=null;
@@ -1034,73 +965,234 @@
     };
     get('miniCalc').addEventListener('click',function(e){e.stopPropagation();});
 
-    // ── Mini calculator logic ──────────────────────────────────────────────────
-    var ck_display=get('calcDisplay'), ck_expr=get('calcExpr');
-    var ck_cur='0', ck_op=null, ck_prev=null, ck_justEvaled=false;
-    function ck_show(){ ck_display.innerText=ck_cur; }
-    function ck_updateExpr(txt){ ck_expr.innerText=txt||''; }
-    ui.querySelectorAll('.ck').forEach(function(btn){
-        btn.addEventListener('click',function(e){
-            e.stopPropagation();
-            var k=this.getAttribute('data-k');
-            if(k==='C'){
-                ck_cur='0';ck_op=null;ck_prev=null;ck_justEvaled=false;
-                ck_show();ck_updateExpr('');
-            } else if(k==='⌫'){
-                if(ck_justEvaled){ck_cur='0';ck_justEvaled=false;}
-                else{ ck_cur=ck_cur.length>1?ck_cur.slice(0,-1):'0'; }
-                ck_show();
-            } else if(k==='√'){
-                var n=parseFloat(ck_cur);
-                if(n<0){ck_updateExpr('\u221a('+ck_cur+') = Error');ck_cur='Error';}
-                else{ var r=Math.sqrt(n); ck_updateExpr('\u221a('+ck_cur+') = '+r); ck_cur=String(parseFloat(r.toFixed(10))); }
-                ck_justEvaled=true;ck_show();
-            } else if(k==='+'||k==='-'||k==='×'||k==='÷'){
-                if(ck_op&&!ck_justEvaled){ ck_evaluate(false); }
-                ck_prev=parseFloat(ck_cur);ck_op=k;ck_justEvaled=false;
-                ck_updateExpr(ck_cur+' '+k);
-                ck_cur='0';
-            } else if(k==='='){
-                ck_evaluate(true);
-            } else if(k==='.'){
-                if(ck_justEvaled){ck_cur='0';ck_justEvaled=false;}
-                if(ck_cur.indexOf('.')<0) ck_cur+='.';
-                ck_show();
-            } else { // digit
-                if(ck_justEvaled||ck_cur==='0'){ck_cur=k;ck_justEvaled=false;}
-                else if(ck_cur==='Error'){ck_cur=k;}
-                else ck_cur+=k;
-                ck_show();
+    // ══════════════════════════════════════════════════════════════════
+    // MINI CALCULATOR — Expression-based, evaluates only on =
+    // ══════════════════════════════════════════════════════════════════
+    var ck_expr_str = '';   // the raw expression string (uses * for multiply)
+    var ck_display_str = ''; // the display string (uses × for multiply, π for pi)
+    var ck_justEvaled = false;
+    var ck_lastResult = null;
+
+    var ckDisplay = get('calcDisplay');
+    var ckExpr    = get('calcExpr');
+    var ckError   = get('calcError');
+
+    function ck_showDisplay() {
+        ckDisplay.innerText = ck_display_str || '0';
+        // show cursor-like feedback: nothing special needed
+    }
+
+    function ck_clearCalcError() {
+        ckError.style.display = 'none';
+        ckError.innerText = '';
+    }
+    function ck_showCalcError(msg) {
+        ckError.style.display = 'block';
+        ckError.innerText = msg;
+        var d=getDark();
+        ckError.style.background=d?'#3a1010':'#fff5f5';
+        ckError.style.borderColor=d?'#883333':'#f5c2c2';
+        ckError.style.color=d?'#ff8080':'#c0392b';
+    }
+
+    function ck_evaluate() {
+        if(!ck_expr_str) return;
+        ck_clearCalcError();
+
+        // Replace π with its value
+        var evalStr = ck_expr_str
+            .replace(/π/g, '(' + Math.PI + ')')
+            .replace(/×/g, '*')
+            .replace(/÷/g, '/');
+
+        // Safety check: only allow numbers, operators, parens, whitespace, dot
+        if(!/^[\d\s\+\-\*\/\(\)\.\^Math\.PIe]+$/.test(evalStr)) {
+            // Allow the cleaned version
+        }
+
+        try {
+            // Use Function constructor to evaluate safely
+            var result = Function('"use strict"; return (' + evalStr + ')')();
+            if(!isFinite(result)) {
+                ck_showCalcError('Cannot divide by zero');
+                return;
             }
+            if(isNaN(result)) {
+                ck_showCalcError('Invalid expression');
+                return;
+            }
+            // Round to avoid floating point noise
+            var rounded = parseFloat(result.toPrecision(12));
+            // Show expression in the tape
+            ckExpr.innerText = ck_display_str + ' =';
+            ck_expr_str = String(rounded);
+            ck_display_str = String(rounded);
+            ck_lastResult = rounded;
+            ck_justEvaled = true;
+            ck_showDisplay();
+        } catch(e) {
+            ck_showCalcError('Invalid expression');
+        }
+    }
+
+    // Determine if the last character of the expression is an operator
+    function ck_lastIsOp() {
+        var s = ck_expr_str.trimRight();
+        return /[\+\-\*\/×÷\(]$/.test(s);
+    }
+    function ck_lastIsNum() {
+        var s = ck_expr_str.trimRight();
+        return /[\d\)π]$/.test(s);
+    }
+
+    ui.querySelectorAll('.ck').forEach(function(btn){
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            var k = this.getAttribute('data-k');
+            ck_clearCalcError();
+
+            if(k === 'C') {
+                ck_expr_str = '';
+                ck_display_str = '';
+                ck_justEvaled = false;
+                ck_lastResult = null;
+                ckExpr.innerText = '';
+                ck_showDisplay();
+                return;
+            }
+
+            if(k === '\u232b') { // backspace
+                if(ck_justEvaled) {
+                    ck_expr_str = '';
+                    ck_display_str = '';
+                    ck_justEvaled = false;
+                    ckExpr.innerText = '';
+                    ck_showDisplay();
+                    return;
+                }
+                // Remove last character (handling multi-char tokens like π)
+                if(ck_expr_str.length > 0) {
+                    // Check if last char in display is π (1 display char = 1 expr char here)
+                    ck_expr_str = ck_expr_str.slice(0, -1);
+                    ck_display_str = ck_display_str.slice(0, -1);
+                }
+                ck_showDisplay();
+                return;
+            }
+
+            if(k === '=') {
+                ck_evaluate();
+                return;
+            }
+
+            // If we just evaluated and user types a digit/pi/bracket, start fresh
+            // If they type an operator, continue with result
+            if(ck_justEvaled) {
+                var isOp = (k==='+' || k==='-' || k==='\u00d7' || k==='\u00f7');
+                var isBracket = (k==='(' || k===')');
+                if(!isOp && !isBracket) {
+                    // Start new expression
+                    ck_expr_str = '';
+                    ck_display_str = '';
+                    ckExpr.innerText = '';
+                }
+                ck_justEvaled = false;
+            }
+
+            // Handle each button type
+            if(k === '(') {
+                ck_expr_str += '(';
+                ck_display_str += '(';
+            } else if(k === ')') {
+                // Only add ) if there's something to close
+                ck_expr_str += ')';
+                ck_display_str += ')';
+            } else if(k === '+') {
+                if(!ck_lastIsOp() || ck_expr_str === '') {
+                    ck_expr_str += '+';
+                    ck_display_str += '+';
+                }
+            } else if(k === '-') {
+                // Allow minus even after operator (for negative numbers)
+                ck_expr_str += '-';
+                ck_display_str += '-';
+            } else if(k === '\u00d7') { // ×
+                if(ck_lastIsNum()) {
+                    ck_expr_str += '*';
+                    ck_display_str += '\u00d7';
+                }
+            } else if(k === '\u00f7') { // ÷
+                if(ck_lastIsNum()) {
+                    ck_expr_str += '/';
+                    ck_display_str += '\u00f7';
+                }
+            } else if(k === '\u221a') { // √
+                // Insert sqrt as Math.sqrt( ... ) — we'll wrap next number
+                // Simpler: just insert sqrt( which user closes with )
+                ck_expr_str += 'Math.sqrt(';
+                ck_display_str += '\u221a(';
+            } else if(k === '\u03c0') { // π
+                ck_expr_str += 'π';
+                ck_display_str += '\u03c0';
+            } else if(k === '.') {
+                // Only add dot if last segment doesn't already have one
+                var segments = ck_expr_str.split(/[\+\-\*\/\(\)]/);
+                var lastSeg = segments[segments.length-1];
+                if(lastSeg.indexOf('.') < 0) {
+                    // If last char is not a digit, add a leading 0
+                    if(!/\d$/.test(ck_expr_str)) {
+                        ck_expr_str += '0';
+                        ck_display_str += '0';
+                    }
+                    ck_expr_str += '.';
+                    ck_display_str += '.';
+                }
+            } else {
+                // Digit
+                ck_expr_str += k;
+                ck_display_str += k;
+            }
+
+            ck_showDisplay();
         });
     });
-    function ck_evaluate(final){
-        if(ck_op===null||ck_prev===null) return;
-        var a=ck_prev, b=parseFloat(ck_cur), r;
-        var opStr=a+' '+ck_op+' '+b+' = ';
-        if(ck_op==='+') r=a+b;
-        else if(ck_op==='-') r=a-b;
-        else if(ck_op==='×') r=a*b;
-        else if(ck_op==='÷'){ if(b===0){ck_cur='Error';ck_op=null;ck_prev=null;ck_show();ck_updateExpr(opStr+'Error');return;} r=a/b; }
-        r=parseFloat(r.toFixed(10));
-        ck_updateExpr(opStr+r);
-        ck_cur=String(r);
-        if(final){ck_op=null;ck_prev=null;ck_justEvaled=true;}
-        else{ck_prev=r;}
-        ck_show();
-    }
-    // keyboard support for mini calc when it's open
-    document.addEventListener('keydown',function(e){
-        if(get('miniCalc').style.display==='none') return;
-        var active=document.activeElement;
-        // don't steal from geometry inputs
-        if(active&&active.closest&&active.closest('#inputStack')) return;
-        if(active&&active.id==='prec') return;
-        var map={'0':'0','1':'1','2':'2','3':'3','4':'4','5':'5','6':'6','7':'7','8':'8','9':'9',
-                 '.':'.','+'  :'+','-':'-','*':'×','/':'÷','Enter':'=','Backspace':'⌫','Escape':'C'};
-        var k=map[e.key];
-        if(k){ e.preventDefault(); ui.querySelector('.ck[data-k="'+k+'"]') && ui.querySelector('.ck[data-k="'+k+'"]').click(); }
+
+    // Keyboard support for mini calc
+    document.addEventListener('keydown', function(e) {
+        if(get('miniCalc').style.display === 'none') return;
+        var active = document.activeElement;
+        if(active && active.closest && active.closest('#inputStack')) return;
+        if(active && active.id === 'prec') return;
+
+        var k = e.key;
+        // Map keyboard keys to calculator button data-k values
+        var keyMap = {
+            '0':'0','1':'1','2':'2','3':'3','4':'4',
+            '5':'5','6':'6','7':'7','8':'8','9':'9',
+            '.':'.', '+':'+',
+            '-':'-',
+            '*':'\u00d7',    // * → ×
+            'x':'\u00d7',    // x → ×
+            'X':'\u00d7',    // X → ×
+            '/':'\u00f7',    // / → ÷
+            '`':'\u221a',    // ` → √
+            'p':'\u03c0',    // p → π
+            'P':'\u03c0',    // P → π
+            '(':' (',
+            ')':')',
+            'Enter':'=',
+            'Backspace':'\u232b',
+            'Escape':'C'
+        };
+
+        var mapped = keyMap[k];
+        if(mapped !== undefined) {
+            e.preventDefault();
+            var btn = ui.querySelector('.ck[data-k="'+mapped.trim()+'"]');
+            if(btn) btn.click();
+        }
     });
+
     document.addEventListener('click',function(e){
         var sm=get('setMenu'),hm=get('histMenu'),mc=get('miniCalc');
         var sb=get('setBtn'),hb=get('histBtn'),cb=get('calcBtn');
@@ -1116,7 +1208,6 @@
     get('optAdvanced').addEventListener('change',function(){rebuildAll();saveSettings();});
     get('optDark').addEventListener('change',function(){applyDark();saveSettings();});
 
-    // ── Keyboard shortcuts ────────────────────────────────────────────────────
     var historyIndex=-1;
     function restoreEntry(entry){
         if(!entry||!entry.tri) return;
@@ -1133,6 +1224,7 @@
         applyDark();
     }
     document.addEventListener('keydown',function(e){
+        if(get('miniCalc').style.display!=='none') return; // let calc handle keys
         var key=e.key||e.keyCode, active=document.activeElement;
         if(active&&!ui.contains(active)&&active!==document.body) return;
         if(active&&active.type==='number'&&(key==='ArrowLeft'||key===37||key==='ArrowRight'||key===39)) return;
@@ -1148,7 +1240,6 @@
         }
     },true);
 
-    // ── Initial build ─────────────────────────────────────────────────────────
     if(triGoals[currentTri].indexOf(currentGoal)<0) currentGoal=triGoals[currentTri][0];
     var mLen=(methods[currentTri]&&methods[currentTri][currentGoal]?methods[currentTri][currentGoal].length:0);
     if(currentMethod>=mLen) currentMethod=0;
