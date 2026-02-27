@@ -20,6 +20,26 @@
     var initShowPerim = saved.showPerim !== false;
     var initPrec      = saved.prec !== undefined ? String(saved.prec) : '2';
 
+    // ── Scoped styles: fix number-input spinners in dark mode ──────────────
+    var styleEl = document.getElementById('geo-ultimate-styles');
+    if(styleEl) styleEl.remove();
+    styleEl = document.createElement('style');
+    styleEl.id = 'geo-ultimate-styles';
+    styleEl.textContent = [
+        '#geo-ultimate-vscroll input[type=number]::-webkit-inner-spin-button,',
+        '#geo-ultimate-vscroll input[type=number]::-webkit-outer-spin-button {',
+        '  opacity: 1;',
+        '  background: transparent;',
+        '  border-left: 1px solid transparent;',
+        '}',
+        '#geo-ultimate-vscroll.geo-dark input[type=number]::-webkit-inner-spin-button,',
+        '#geo-ultimate-vscroll.geo-dark input[type=number]::-webkit-outer-spin-button {',
+        '  filter: invert(1) hue-rotate(180deg) brightness(0.7);',
+        '}',
+        '#geo-ultimate-vscroll input[type=number] { -moz-appearance: textfield; }',
+    ].join('\n');
+    document.head.appendChild(styleEl);
+
     var ui = document.createElement('div');
     ui.id = 'geo-ultimate-vscroll';
     ui.style.cssText = 'position:fixed;top:20px;right:20px;width:380px;max-height:88vh;background:#fff;border:1px solid #ddd;border-radius:14px;z-index:10000;padding:0;font-family:system-ui,sans-serif;box-shadow:0 8px 32px rgba(0,0,0,0.18);color:#222;overflow:hidden;display:flex;flex-direction:column;box-sizing:border-box;';
@@ -85,28 +105,39 @@
           '<div id="histList" style="color:#666;line-height:1.8;">No history yet.</div>',
           '<button id="closeHist" style="width:100%;margin-top:10px;padding:6px;border:none;background:#f1f3f4;border-radius:6px;cursor:pointer;font-size:12px;">Dismiss</button>',
         '</div>',
-        '<div id="setMenu" style="display:none;position:absolute;top:50px;right:16px;width:230px;background:#fff;border:1px solid #ddd;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.15);padding:14px;z-index:10005;font-size:12px;">',
-          '<div id="setMenuTitle" style="font-weight:700;margin-bottom:10px;color:#222;">Settings</div>',
-          '<label id="precLabel" style="font-size:11px;color:#555;display:block;margin-bottom:4px;">Decimal places</label>',
-          '<input type="number" id="prec" min="0" max="8" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:6px;box-sizing:border-box;font-size:13px;margin-bottom:10px;">',
-          '<div id="setMenuTitle2" style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;margin-bottom:7px;margin-top:4px;">OUTPUT</div>',
-          '<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;">',
-            '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optSurd"     style="accent-color:#1a73e8;width:14px;height:14px;"> Surd form output</label>',
-            '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optSimplify" style="accent-color:#1a73e8;width:14px;height:14px;"> Simplify surds (e.g. 10\u221a33)</label>',
-            '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optDegrees"  style="accent-color:#1a73e8;width:14px;height:14px;"> Angles in degrees</label>',
-            '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optAdvanced" style="accent-color:#1a73e8;width:14px;height:14px;"> Advanced wording</label>',
+        '<div id="setMenu" style="display:none;position:absolute;top:50px;right:16px;width:240px;background:#fff;border:1px solid #ddd;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.15);padding:14px;z-index:10005;font-size:12px;max-height:80vh;overflow-y:auto;box-sizing:border-box;">',
+          '<div id="setMenuTitle" style="font-weight:700;margin-bottom:12px;color:#222;font-size:13px;">Settings</div>',
+
+          '<!-- OUTPUT section -->',
+          '<div id="setMenuTitle2" style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;margin-bottom:8px;">OUTPUT</div>',
+          '<div style="display:flex;flex-direction:column;gap:7px;margin-bottom:12px;">',
+            '<div style="display:flex;align-items:center;gap:8px;">',
+              '<label id="precLabel" style="font-size:12px;color:#444;flex:1;">Decimal places</label>',
+              '<input type="number" id="prec" min="0" max="8" style="width:52px;padding:4px 6px;border:1px solid #ddd;border-radius:6px;box-sizing:border-box;font-size:13px;text-align:center;">',
+            '</div>',
+            '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optSurd"     style="accent-color:#1a73e8;width:14px;height:14px;flex-shrink:0;"> Surd form output</label>',
+            '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optSimplify" style="accent-color:#1a73e8;width:14px;height:14px;flex-shrink:0;"> Simplify surds (e.g. 10\u221a33)</label>',
+            '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optDegrees"  style="accent-color:#1a73e8;width:14px;height:14px;flex-shrink:0;"> Angles in degrees</label>',
+            '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optAdvanced" style="accent-color:#1a73e8;width:14px;height:14px;flex-shrink:0;"> Advanced wording</label>',
           '</div>',
-          '<div id="setMenuTitle3" style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;margin-bottom:7px;">DISPLAY</div>',
-          '<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;">',
-            '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optDark"      style="accent-color:#1a73e8;width:14px;height:14px;"> Dark mode</label>',
-            '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optDiagram"   style="accent-color:#1a73e8;width:14px;height:14px;"> Show diagram</label>',
-            '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optShowSteps" style="accent-color:#1a73e8;width:14px;height:14px;"> Show steps</label>',
-            '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optShowArea"  style="accent-color:#1a73e8;width:14px;height:14px;"> Show area</label>',
-            '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optShowPerim" style="accent-color:#1a73e8;width:14px;height:14px;"> Show perimeter</label>',
+
+          '<!-- DISPLAY section -->',
+          '<div id="setMenuTitle3" style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;margin-bottom:8px;">DISPLAY</div>',
+          '<div style="display:flex;flex-direction:column;gap:7px;margin-bottom:12px;">',
+            '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optDark"      style="accent-color:#1a73e8;width:14px;height:14px;flex-shrink:0;"> Dark mode</label>',
+            '<div style="height:1px;background:rgba(128,128,128,0.15);margin:2px 0;"></div>',
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">',
+              '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optDiagram"   style="accent-color:#1a73e8;width:13px;height:13px;flex-shrink:0;"> Diagram</label>',
+              '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optShowSteps" style="accent-color:#1a73e8;width:13px;height:13px;flex-shrink:0;"> Steps</label>',
+              '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optShowArea"  style="accent-color:#1a73e8;width:13px;height:13px;flex-shrink:0;"> Area</label>',
+              '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optShowPerim" style="accent-color:#1a73e8;width:13px;height:13px;flex-shrink:0;"> Perimeter</label>',
+            '</div>',
           '</div>',
-          '<div id="setMenuTitle4" style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;margin-bottom:7px;">BEHAVIOUR</div>',
-          '<div style="display:flex;flex-direction:column;gap:8px;">',
-            '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optAutoCalc" style="accent-color:#1a73e8;width:14px;height:14px;"> Auto-calculate</label>',
+
+          '<!-- BEHAVIOUR section -->',
+          '<div id="setMenuTitle4" style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;margin-bottom:8px;">BEHAVIOUR</div>',
+          '<div style="display:flex;flex-direction:column;gap:7px;">',
+            '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optAutoCalc" style="accent-color:#1a73e8;width:14px;height:14px;flex-shrink:0;"> Auto-calculate</label>',
           '</div>',
         '</div>',
     ].join('');
@@ -119,7 +150,10 @@
     miniCalcEl.innerHTML = [
         '<div id="miniCalcHeader" style="padding:9px 12px;background:#1a73e8;border-radius:10px 10px 0 0;cursor:grab;display:flex;justify-content:space-between;align-items:center;">',
           '<span style="font-weight:700;color:#fff;font-size:12px;letter-spacing:0.3px;">&#x1F5A9; Calculator</span>',
-          '<span id="calcSettingsBtn" title="Calculator settings" style="cursor:pointer;font-size:14px;opacity:0.85;color:#fff;padding:2px 5px;border-radius:4px;line-height:1;">&#9881;</span>',
+          '<div style="display:flex;align-items:center;gap:6px;">',
+            '<span id="calcSettingsBtn" title="Calculator settings" style="cursor:pointer;font-size:14px;opacity:0.85;color:#fff;padding:2px 5px;border-radius:4px;line-height:1;">&#9881;</span>',
+            '<span id="calcCloseBtn" title="Close calculator" style="cursor:pointer;font-size:18px;color:#fff;opacity:0.8;line-height:1;padding:0 2px;">&times;</span>',
+          '</div>',
         '</div>',
         '<div id="calcSettingsPanel" style="display:none;padding:10px 12px;background:#f0f6ff;border-bottom:1px solid #dde8fb;font-size:12px;">',
           '<div style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.6px;margin-bottom:7px;">CALCULATOR SETTINGS</div>',
@@ -273,6 +307,7 @@
 
     function applyDark() {
         var d = getDark();
+        ui.classList.toggle('geo-dark', d);
         ui.style.background = dk('uiBg');
         ui.style.borderColor = dk('uiBorder');
         ui.style.color = dk('text');
@@ -337,6 +372,9 @@
             var smt3=get('setMenuTitle3'); if(smt3) smt3.style.color=dk('label');
             var smt4=get('setMenuTitle4'); if(smt4) smt4.style.color=dk('label');
             var pl=get('precLabel'); if(pl) pl.style.color=dk('subtext');
+            // theme the divider inside the DISPLAY section
+            var dividers=get('setMenu').querySelectorAll('div[style*="height:1px"]');
+            dividers.forEach(function(dv){ dv.style.background=d?'rgba(200,200,255,0.12)':'rgba(128,128,128,0.15)'; });
         }
         var dl=get('dlBtn');
         if(dl){ dl.style.background=d?'rgba(30,30,46,0.9)':'rgba(255,255,255,0.92)'; dl.style.borderColor=dk('inputBdr'); dl.style.color=dk('btnTxt'); }
@@ -1121,6 +1159,7 @@
     var mcHeader = get('miniCalcHeader');
     mcHeader.addEventListener('mousedown', function(e) {
         if(e.target.type === 'checkbox') return;
+        if(e.target.id === 'calcCloseBtn' || e.target.id === 'calcSettingsBtn') return;
         e.preventDefault();
         var mc = get('miniCalc');
         var rect = mc.getBoundingClientRect();
@@ -1488,6 +1527,10 @@
         var p = get('calcSettingsPanel');
         p.style.display = p.style.display === 'none' ? 'block' : 'none';
     });
+    get('calcCloseBtn').addEventListener('click', function(e) {
+        e.stopPropagation();
+        get('miniCalc').style.display = 'none';
+    });
     get('calcSettingsPanel').addEventListener('click', function(e) { e.stopPropagation(); });
 
     document.addEventListener('click',function(e){
@@ -1548,7 +1591,7 @@
     var mLen=(methods[currentTri]&&methods[currentTri][currentGoal]?methods[currentTri][currentGoal].length:0);
     if(currentMethod>=mLen) currentMethod=0;
     buildTriBtns();buildGoalBtns();buildMethodBtns();renderInputs();
-    if(initDark) applyDark();
+    if(initDark) { ui.classList.add('geo-dark'); applyDark(); }
     applyDiagramVisibility();
     applyResultVisibility();
 })();
