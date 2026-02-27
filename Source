@@ -359,18 +359,33 @@
         return type;
     }
 
-    function gcd(a,b){ return b<0.5?a:gcd(b,a%b); }
-    function checkTriple(a, b, c) {
+    function gcd(a,b){ a=Math.round(a); b=Math.round(b); while(b){var t=b;b=a%b;a=t;} return a; }
+    // Returns detailed triple info or null.
+    // { pa, pb, pc, scale, isPrimitive, isTriple, allIntegers }
+    function checkTripleDetail(a, b, c) {
         var sides=[a,b,c].sort(function(x,y){return x-y;});
-        var A=sides[0],B=sides[1],C=sides[2];
-        var g=gcd(gcd(Math.round(A*1000),Math.round(B*1000)),Math.round(C*1000))/1000;
-        if(g<1e-9) return null;
-        var pa=Math.round(A/g), pb=Math.round(B/g), pc=Math.round(C/g);
-        if(Math.abs(A/g-pa)>0.001||Math.abs(B/g-pb)>0.001||Math.abs(C/g-pc)>0.001) return null;
-        if(Math.abs(pa*pa+pb*pb-pc*pc)>1) return null;
-        var scale=Math.round(A/pa*1000)/1000;
-        if(Math.abs(scale-1)<0.001) return pa+'-'+pb+'-'+pc;
-        return pa+'-'+pb+'-'+pc+' (scaled \u00d7'+scale+')';
+        var A=sides[0], B=sides[1], C=sides[2];
+        // Must satisfy a²+b²=c² (right triangle check done separately)
+        // Integer check: each value must be within 0.001 of a whole number
+        var Ar=Math.round(A), Br=Math.round(B), Cr=Math.round(C);
+        var allIntegers=(Math.abs(A-Ar)<0.001 && Math.abs(B-Br)<0.001 && Math.abs(C-Cr)<0.001);
+        if(!allIntegers) return {isTriple:false, allIntegers:false, pa:0, pb:0, pc:0, scale:1};
+        // Now work with rounded integers
+        var g=gcd(gcd(Ar,Br),Cr);
+        if(g<1) return {isTriple:false, allIntegers:true, pa:Ar, pb:Br, pc:Cr, scale:1};
+        var pa=Ar/g, pb=Br/g, pc=Cr/g;
+        // Verify the reduced triple is itself a Pythagorean triple
+        if(Math.round(pa*pa+pb*pb) !== Math.round(pc*pc)) return {isTriple:false, allIntegers:true, pa:Ar, pb:Br, pc:Cr, scale:1};
+        var isPrimitive=(g===1);
+        return {isTriple:true, allIntegers:true, pa:pa, pb:pb, pc:pc, scale:g, isPrimitive:isPrimitive, Ar:Ar, Br:Br, Cr:Cr};
+    }
+    // Simple string summary for the auto-detect banner on other right triangle goals
+    function checkTriple(a, b, c) {
+        var d=checkTripleDetail(a,b,c);
+        if(!d.isTriple) return null;
+        var label=d.pa+'-'+d.pb+'-'+d.pc;
+        if(!d.isPrimitive) label+=' \u00d7'+d.scale;
+        return label;
     }
 
     var triTypes=[
@@ -705,41 +720,92 @@
 
         if(type==='rt_triple_check'){
             var legA=v0, legB=v1, hypIn=v2;
+            // Basic sanity
             if(hypIn<=legA||hypIn<=legB){showError('Check your values','Hypotenuse must be larger than both legs.');return;}
-            var hypCalc=Math.sqrt(legA*legA+legB*legB);
-            var isRightTri=Math.abs(hypCalc-hypIn)/hypIn<0.001;
-            var trip=checkTriple(legA,legB,hypIn);
-            s1=legA;b=legB;s2=hypIn;h=legA;
-            area=0.5*legA*legB;perim=legA+legB+hypIn;
-            if(!isRightTri){showError('Not a right triangle','These sides do not satisfy a² + b² = c². Check your values.');return;}
-            if(trip){
-                res=hypIn;
-                formula='Checking: '+legA+'\u00b2 + '+legB+'\u00b2 = '+hypIn+'\u00b2\n'+(legA*legA)+' + '+(legB*legB)+' = '+(hypIn*hypIn)+'\n\u2713 Valid right triangle\n\u2605 Pythagorean triple: '+trip;
-                get('tripleBox').innerText='\u2605 Pythagorean triple: '+trip;
-                get('tripleBox').style.display='block';
-            } else {
-                res=hypIn;
-                formula='Checking: '+legA+'\u00b2 + '+legB+'\u00b2 = '+hypIn+'\u00b2\n'+(legA*legA)+' + '+(legB*legB)+' = '+(hypIn*hypIn)+'\n\u2713 Valid right triangle\n\u2715 Not a Pythagorean triple (sides are not integer ratios)';
-                get('tripleBox').innerText='\u2715 Not a Pythagorean triple';
-                get('tripleBox').style.display='block';
+            // Right triangle check: a²+b²=c²
+            var lhs=legA*legA+legB*legB, rhs=hypIn*hypIn;
+            var isRightTri=Math.abs(lhs-rhs)/rhs<0.001;
+            if(!isRightTri){
+                showError('Not a right triangle','These sides do not satisfy a\u00b2 + b\u00b2 = c\u00b2.\n'+
+                    legA+'\u00b2 + '+legB+'\u00b2 = '+lhs.toFixed(4)+'\n'+
+                    hypIn+'\u00b2 = '+rhs.toFixed(4)+'\nCheck your values.');
+                return;
             }
+            // Now do full triple analysis
+            var td=checkTripleDetail(legA,legB,hypIn);
+            s1=legA; b=legB; s2=hypIn; h=legA;
+            area=0.5*legA*legB; perim=legA+legB+hypIn;
+
+            // Build detailed formula / steps
+            var lhsStr=legA+'\u00b2 + '+legB+'\u00b2 = '+Math.round(lhs);
+            var rhsStr=hypIn+'\u00b2 = '+Math.round(rhs);
+            var formulaLines=[];
+            formulaLines.push('Step 1 \u2014 Check a\u00b2 + b\u00b2 = c\u00b2:');
+            formulaLines.push('  '+lhsStr);
+            formulaLines.push('  '+rhsStr);
+            formulaLines.push('  \u2713 Valid right triangle');
+            formulaLines.push('');
+            formulaLines.push('Step 2 \u2014 Integer requirement:');
+            if(!td.allIntegers){
+                formulaLines.push('  \u2715 Not all sides are whole numbers.');
+                formulaLines.push('  ('+legA+', '+legB+', '+hypIn+') \u2014 not a Pythagorean triple.');
+                formula=formulaLines.join('\n');
+                get('tripleBox').innerHTML='\u2715 Not a Pythagorean triple \u2014 sides must be whole numbers';
+                get('tripleBox').style.display='block';
+                res=hypIn;
+            } else {
+                formulaLines.push('  \u2713 All sides are integers: ('+td.Ar+', '+td.Br+', '+td.Cr+')');
+                formulaLines.push('');
+                formulaLines.push('Step 3 \u2014 Find primitive triple (divide by GCD):');
+                var g=td.scale;
+                formulaLines.push('  GCD('+td.Ar+', '+td.Br+', '+td.Cr+') = '+g);
+                formulaLines.push('  Primitive: ('+td.Ar+'/'+g+', '+td.Br+'/'+g+', '+td.Cr+'/'+g+') = ('+td.pa+', '+td.pb+', '+td.pc+')');
+                formulaLines.push('  Check: '+td.pa+'\u00b2+'+td.pb+'\u00b2 = '+(td.pa*td.pa+td.pb*td.pb)+' = '+td.pc+'\u00b2 \u2713');
+                formulaLines.push('');
+                if(td.isPrimitive){
+                    formulaLines.push('Step 4 \u2014 Primitive check (GCD of triple = 1):');
+                    formulaLines.push('  GCD('+td.pa+', '+td.pb+', '+td.pc+') = 1 \u2713 Primitive triple');
+                    var tripleLabel=td.pa+'-'+td.pb+'-'+td.pc;
+                    formula=formulaLines.join('\n');
+                    get('tripleBox').innerHTML='\u2605 Primitive Pythagorean triple: ('+td.pa+', '+td.pb+', '+td.pc+')';
+                    get('tripleBox').style.display='block';
+                    res=hypIn; get('final').innerText=tripleLabel;
+                } else {
+                    formulaLines.push('Step 4 \u2014 Primitive check:');
+                    formulaLines.push('  GCD('+td.Ar+', '+td.Br+', '+td.Cr+') = '+g+' \u2260 1');
+                    formulaLines.push('  \u2192 Non-primitive triple: ('+td.pa+', '+td.pb+', '+td.pc+') \u00d7 '+g);
+                    formulaLines.push('  Scaling rule: k\u00d7('+td.pa+','+td.pb+','+td.pc+') \u2192 ('+td.Ar+','+td.Br+','+td.Cr+')');
+                    var tripleLabel=(td.pa+'-'+td.pb+'-'+td.pc)+' \u00d7'+g;
+                    formula=formulaLines.join('\n');
+                    get('tripleBox').innerHTML='\u2605 Non-primitive triple: ('+td.Ar+', '+td.Br+', '+td.Cr+') = '+g+'\u00d7('+td.pa+', '+td.pb+', '+td.pc+')';
+                    get('tripleBox').style.display='block';
+                    res=hypIn; get('final').innerText=tripleLabel;
+                }
+            }
+
             var angArr=computeAngles(s1,b,s2);
             var anglesForCanvas=[angArr[2],angArr[1],angArr[0]];
             get('res').style.display='block';
-            get('final').innerText=trip?trip:'Not a triple';
+            if(!td.allIntegers || !td.isTriple) get('final').innerText='Not a triple';
             get('finalApprox').style.display='none';
             get('formulaText').innerText=formula;
             get('areaRes').innerText=area.toFixed(p);
             get('perimRes').innerText=perim.toFixed(p);
             var classTag=get('classTag');
-            classTag.innerText='Right';classTag.style.display='inline-block';
+            classTag.innerText='Right'; classTag.style.display='inline-block';
             var anglesContent=get('anglesContent'); anglesContent.innerHTML='';
             var names=['A','B','C']; var d2=getDark();
-            angArr.forEach(function(ang,i){var sp=document.createElement('span');sp.style.cssText='font-weight:600;color:'+(d2?'#4a9eff':'#1a73e8')+';';sp.innerText=names[i]+' = '+fmtAngle(ang);anglesContent.appendChild(sp);});
+            angArr.forEach(function(ang,i){
+                var sp=document.createElement('span');
+                sp.style.cssText='font-weight:600;color:'+(d2?'#4a9eff':'#1a73e8')+';';
+                sp.innerText=names[i]+' = '+fmtAngle(ang);
+                anglesContent.appendChild(sp);
+            });
             get('anglesBox').style.display='block';
             drawTri(s1,h,b,s2,false,anglesForCanvas);
             applyDark();
-            history.unshift({label:'Py. Triple: '+(trip||'Not a triple'),tri:currentTri,goal:currentGoal,method:currentMethod,inputs:vals.map(String),isExt:false,finalText:trip?trip:'Not a triple',approxText:'',approxVis:'none',formula:formula,area:area.toFixed(p),perim:perim.toFixed(p),ds1:s1,dh:h,db:b,ds2:s2,anglesForCanvas:anglesForCanvas});
+            var finalLabel=get('final').innerText;
+            history.unshift({label:'Py. Triple: '+finalLabel,tri:currentTri,goal:currentGoal,method:currentMethod,inputs:vals.map(String),isExt:false,finalText:finalLabel,approxText:'',approxVis:'none',formula:formula,area:area.toFixed(p),perim:perim.toFixed(p),ds1:s1,dh:h,db:b,ds2:s2,anglesForCanvas:anglesForCanvas});
             if(history.length>10)history.pop();
             get('histList').innerHTML=history.map(function(hh){return'<span style="display:block;padding:3px 0;border-bottom:1px solid #f0f0f0;">'+(hh.label||hh)+'</span>';}).join('');
             saveSettings();
