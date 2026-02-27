@@ -22,6 +22,7 @@
         '<div id="uiHeader" style="padding:14px 18px;background:#1a73e8;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;border-radius:14px 14px 0 0;">',
           '<h3 style="margin:0;font-size:15px;color:#fff;font-weight:700;letter-spacing:0.3px;">&#9651; Geometry Pro</h3>',
           '<div style="display:flex;gap:12px;align-items:center;">',
+            '<span id="calcBtn" title="Calculator" style="cursor:pointer;font-size:16px;opacity:0.9;">&#x1F5A9;</span>',
             '<span id="histBtn" title="History" style="cursor:pointer;font-size:16px;opacity:0.9;">&#128337;</span>',
             '<span id="setBtn"  title="Settings" style="cursor:pointer;font-size:16px;opacity:0.9;">&#9881;</span>',
             '<span id="close"   style="cursor:pointer;font-size:18px;color:#fff;opacity:0.8;line-height:1;">&times;</span>',
@@ -89,6 +90,32 @@
             '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optDegrees"  style="accent-color:#1a73e8;width:14px;height:14px;"> Angles in degrees</label>',
             '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optAdvanced" style="accent-color:#1a73e8;width:14px;height:14px;"> Advanced wording</label>',
             '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optDark"     style="accent-color:#1a73e8;width:14px;height:14px;"> Dark mode</label>',
+          '</div>',
+        '</div>',
+        '<div id="miniCalc" style="display:none;position:absolute;top:50px;left:16px;right:16px;background:#fff;border:1px solid #ddd;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.15);padding:14px;z-index:10005;font-size:12px;">',
+          '<div style="font-weight:700;margin-bottom:10px;color:#333;">Calculator</div>',
+          '<div id="calcDisplay" style="background:#f7f9ff;border:1px solid #dde8fb;border-radius:7px;padding:8px 12px;margin-bottom:3px;text-align:right;font-size:22px;font-weight:700;color:#1a73e8;min-height:36px;overflow:hidden;white-space:nowrap;font-family:monospace;">0</div>',
+          '<div id="calcExpr" style="text-align:right;font-size:10px;color:#999;min-height:14px;margin-bottom:8px;font-family:monospace;overflow:hidden;white-space:nowrap;"></div>',
+          '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;">',
+            '<button class="ck" data-k="C"  style="grid-column:span 2;padding:9px;border:none;border-radius:7px;background:#fee2e2;color:#c0392b;font-weight:700;cursor:pointer;font-size:13px;">C</button>',
+            '<button class="ck" data-k="√"  style="padding:9px;border:none;border-radius:7px;background:#e8f0fe;color:#1a73e8;font-weight:700;cursor:pointer;font-size:13px;">\u221a</button>',
+            '<button class="ck" data-k="⌫"  style="padding:9px;border:none;border-radius:7px;background:#f1f3f4;color:#555;font-weight:700;cursor:pointer;font-size:14px;">\u232b</button>',
+            '<button class="ck" data-k="7"  style="padding:9px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">7</button>',
+            '<button class="ck" data-k="8"  style="padding:9px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">8</button>',
+            '<button class="ck" data-k="9"  style="padding:9px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">9</button>',
+            '<button class="ck" data-k="÷"  style="padding:9px;border:none;border-radius:7px;background:#e8f0fe;color:#1a73e8;font-weight:700;cursor:pointer;font-size:15px;">\u00f7</button>',
+            '<button class="ck" data-k="4"  style="padding:9px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">4</button>',
+            '<button class="ck" data-k="5"  style="padding:9px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">5</button>',
+            '<button class="ck" data-k="6"  style="padding:9px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">6</button>',
+            '<button class="ck" data-k="×"  style="padding:9px;border:none;border-radius:7px;background:#e8f0fe;color:#1a73e8;font-weight:700;cursor:pointer;font-size:15px;">\u00d7</button>',
+            '<button class="ck" data-k="1"  style="padding:9px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">1</button>',
+            '<button class="ck" data-k="2"  style="padding:9px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">2</button>',
+            '<button class="ck" data-k="3"  style="padding:9px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">3</button>',
+            '<button class="ck" data-k="-"  style="padding:9px;border:none;border-radius:7px;background:#e8f0fe;color:#1a73e8;font-weight:700;cursor:pointer;font-size:16px;">-</button>',
+            '<button class="ck" data-k="0"  style="grid-column:span 2;padding:9px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">0</button>',
+            '<button class="ck" data-k="."  style="padding:9px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">.</button>',
+            '<button class="ck" data-k="+"  style="padding:9px;border:none;border-radius:7px;background:#e8f0fe;color:#1a73e8;font-weight:700;cursor:pointer;font-size:16px;">+</button>',
+            '<button class="ck" data-k="="  style="grid-column:span 4;padding:10px;border:none;border-radius:7px;background:#1a73e8;color:#fff;font-weight:700;cursor:pointer;font-size:15px;">=</button>',
           '</div>',
         '</div>'
     ].join('');
@@ -221,10 +248,25 @@
         // finalApprox
         var fa=get('finalApprox'); if(fa) fa.style.color=dk('subtext');
         // menus
-        ['histMenu','setMenu'].forEach(function(id){
+        ['histMenu','setMenu','miniCalc'].forEach(function(id){
             var m=get(id); if(m){ m.style.background=dk('menuBg'); m.style.borderColor=dk('menuBdr'); m.style.color=dk('text'); }
         });
         var hL=get('histList'); if(hL) hL.style.color=dk('subtext');
+        // mini calculator display
+        var cd=get('calcDisplay');
+        if(cd){ cd.style.background=dk('resBg'); cd.style.borderColor=dk('codeBdr'); cd.style.color=d?'#4a9eff':'#1a73e8'; }
+        var ce=get('calcExpr'); if(ce) ce.style.color=dk('subtext');
+        // mini calc digit buttons
+        ui.querySelectorAll('.ck').forEach(function(btn){
+            var k=btn.getAttribute('data-k');
+            if(k==='C'){ btn.style.background=d?'#3a1a1a':'#fee2e2'; btn.style.color=d?'#ff8080':'#c0392b'; }
+            else if(k==='='){ btn.style.background=d?'#1a5090':'#1a73e8'; btn.style.color='#fff'; }
+            else if(k==='+'||k==='-'||k==='×'||k==='÷'||k==='√'){
+                btn.style.background=dk('accentBgCalc'); btn.style.borderColor='';
+                btn.style.background=d?'#1e2a3e':'#e8f0fe'; btn.style.color=d?'#4a9eff':'#1a73e8';
+            } else if(k==='⌫'){ btn.style.background=dk('btnBg'); btn.style.color=dk('btnTxt'); btn.style.borderColor=''; }
+            else { btn.style.background=dk('inputBg'); btn.style.borderColor=dk('inputBdr'); btn.style.color=dk('text'); }
+        });
         // inputs in inputStack
         ui.querySelectorAll('#inputStack input').forEach(function(inp){
             inp.style.background=dk('inputBg'); inp.style.borderColor=dk('inputBdr'); inp.style.color=dk('text');
@@ -957,8 +999,8 @@
     get('clear').onclick   = function(){ui.querySelectorAll('#inputStack input').forEach(function(i){i.value='';});get('res').style.display='none';ctx.clearRect(0,0,canvas.width,canvas.height);};
     get('close').onclick   = function(){ui.remove();};
     get('errClose').onclick= function(){clearError();};
-    get('setBtn').onclick  = function(e){e.stopPropagation();var m=get('setMenu');m.style.display=m.style.display==='none'?'block':'none';get('histMenu').style.display='none';};
-    get('histBtn').onclick = function(e){e.stopPropagation();var m=get('histMenu');m.style.display=m.style.display==='none'?'block':'none';get('setMenu').style.display='none';};
+    get('setBtn').onclick  = function(e){e.stopPropagation();var m=get('setMenu');m.style.display=m.style.display==='none'?'block':'none';get('histMenu').style.display='none';get('miniCalc').style.display='none';};
+    get('histBtn').onclick = function(e){e.stopPropagation();var m=get('histMenu');m.style.display=m.style.display==='none'?'block':'none';get('setMenu').style.display='none';get('miniCalc').style.display='none';};
     get('setMenu').addEventListener('click',function(e){e.stopPropagation();});
     get('histMenu').addEventListener('click',function(e){e.stopPropagation();});
 
@@ -983,11 +1025,88 @@
     });
     document.addEventListener('mouseup',function(){if(!dragState)return;dragState=null;header.style.cursor='grab';});
 
-    get('closeHist').onclick=function(){get('histMenu').style.display='none';};
+    get('calcBtn').onclick = function(e){
+        e.stopPropagation();
+        var m=get('miniCalc');
+        m.style.display=m.style.display==='none'?'block':'none';
+        get('histMenu').style.display='none';
+        get('setMenu').style.display='none';
+    };
+    get('miniCalc').addEventListener('click',function(e){e.stopPropagation();});
+
+    // ── Mini calculator logic ──────────────────────────────────────────────────
+    var ck_display=get('calcDisplay'), ck_expr=get('calcExpr');
+    var ck_cur='0', ck_op=null, ck_prev=null, ck_justEvaled=false;
+    function ck_show(){ ck_display.innerText=ck_cur; }
+    function ck_updateExpr(txt){ ck_expr.innerText=txt||''; }
+    ui.querySelectorAll('.ck').forEach(function(btn){
+        btn.addEventListener('click',function(e){
+            e.stopPropagation();
+            var k=this.getAttribute('data-k');
+            if(k==='C'){
+                ck_cur='0';ck_op=null;ck_prev=null;ck_justEvaled=false;
+                ck_show();ck_updateExpr('');
+            } else if(k==='⌫'){
+                if(ck_justEvaled){ck_cur='0';ck_justEvaled=false;}
+                else{ ck_cur=ck_cur.length>1?ck_cur.slice(0,-1):'0'; }
+                ck_show();
+            } else if(k==='√'){
+                var n=parseFloat(ck_cur);
+                if(n<0){ck_updateExpr('\u221a('+ck_cur+') = Error');ck_cur='Error';}
+                else{ var r=Math.sqrt(n); ck_updateExpr('\u221a('+ck_cur+') = '+r); ck_cur=String(parseFloat(r.toFixed(10))); }
+                ck_justEvaled=true;ck_show();
+            } else if(k==='+'||k==='-'||k==='×'||k==='÷'){
+                if(ck_op&&!ck_justEvaled){ ck_evaluate(false); }
+                ck_prev=parseFloat(ck_cur);ck_op=k;ck_justEvaled=false;
+                ck_updateExpr(ck_cur+' '+k);
+                ck_cur='0';
+            } else if(k==='='){
+                ck_evaluate(true);
+            } else if(k==='.'){
+                if(ck_justEvaled){ck_cur='0';ck_justEvaled=false;}
+                if(ck_cur.indexOf('.')<0) ck_cur+='.';
+                ck_show();
+            } else { // digit
+                if(ck_justEvaled||ck_cur==='0'){ck_cur=k;ck_justEvaled=false;}
+                else if(ck_cur==='Error'){ck_cur=k;}
+                else ck_cur+=k;
+                ck_show();
+            }
+        });
+    });
+    function ck_evaluate(final){
+        if(ck_op===null||ck_prev===null) return;
+        var a=ck_prev, b=parseFloat(ck_cur), r;
+        var opStr=a+' '+ck_op+' '+b+' = ';
+        if(ck_op==='+') r=a+b;
+        else if(ck_op==='-') r=a-b;
+        else if(ck_op==='×') r=a*b;
+        else if(ck_op==='÷'){ if(b===0){ck_cur='Error';ck_op=null;ck_prev=null;ck_show();ck_updateExpr(opStr+'Error');return;} r=a/b; }
+        r=parseFloat(r.toFixed(10));
+        ck_updateExpr(opStr+r);
+        ck_cur=String(r);
+        if(final){ck_op=null;ck_prev=null;ck_justEvaled=true;}
+        else{ck_prev=r;}
+        ck_show();
+    }
+    // keyboard support for mini calc when it's open
+    document.addEventListener('keydown',function(e){
+        if(get('miniCalc').style.display==='none') return;
+        var active=document.activeElement;
+        // don't steal from geometry inputs
+        if(active&&active.closest&&active.closest('#inputStack')) return;
+        if(active&&active.id==='prec') return;
+        var map={'0':'0','1':'1','2':'2','3':'3','4':'4','5':'5','6':'6','7':'7','8':'8','9':'9',
+                 '.':'.','+'  :'+','-':'-','*':'×','/':'÷','Enter':'=','Backspace':'⌫','Escape':'C'};
+        var k=map[e.key];
+        if(k){ e.preventDefault(); ui.querySelector('.ck[data-k="'+k+'"]') && ui.querySelector('.ck[data-k="'+k+'"]').click(); }
+    });
     document.addEventListener('click',function(e){
-        var sm=get('setMenu'),hm=get('histMenu'),sb=get('setBtn'),hb=get('histBtn');
+        var sm=get('setMenu'),hm=get('histMenu'),mc=get('miniCalc');
+        var sb=get('setBtn'),hb=get('histBtn'),cb=get('calcBtn');
         if(sm.style.display!=='none'&&!sm.contains(e.target)&&e.target!==sb) sm.style.display='none';
         if(hm.style.display!=='none'&&!hm.contains(e.target)&&e.target!==hb) hm.style.display='none';
+        if(mc.style.display!=='none'&&!mc.contains(e.target)&&e.target!==cb) mc.style.display='none';
     });
 
     get('prec').addEventListener('change',saveSettings);
