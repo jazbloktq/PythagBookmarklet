@@ -966,20 +966,114 @@
     get('miniCalc').addEventListener('click',function(e){e.stopPropagation();});
 
     // ══════════════════════════════════════════════════════════════════
-    // MINI CALCULATOR — Expression-based, evaluates only on =
+    // MINI CALCULATOR — Token-based, evaluates only on =
+    // Smart bracket inference: √ auto-closes, inferred brackets
+    // won't be re-added if the user manually deleted them.
     // ══════════════════════════════════════════════════════════════════
-    var ck_expr_str = '';   // the raw expression string (uses * for multiply)
-    var ck_display_str = ''; // the display string (uses × for multiply, π for pi)
+
+    /*
+     * Token schema:
+     *   { e: string,   // eval string fragment  e.g. 'Math.sqrt('  or '42'
+     *     d: string,   // display string        e.g. '√('           or '42'
+     *     kind: string // 'num' | 'op' | 'open' | 'close' | 'sqrt-open' | 'pi'
+     *     autoCloseId: number|null  // for 'sqrt-open': unique id; matched close has same id
+     *     isAutoClose: bool         // true if this ')' was auto-inferred
+     *     closingDeleted: bool      // for 'sqrt-open': user deleted the auto-close for this id
+     *   }
+     *
+     * Design rules:
+     *   • sqrt-open pushes a token with kind='sqrt-open' and autoCloseId=N
+     *   • When an op/= is pressed while there are unclosed sqrt-opens whose
+     *     closingDeleted is false, auto-insert close tokens (marked isAutoClose)
+     *   • Backspace on an isAutoClose token: remove it AND mark the matching
+     *     sqrt-open's closingDeleted=true  → that open won't get re-closed
+     *   • Backspace on a sqrt-open that has a later isAutoClose for it:
+     *     first remove that auto-close, then remove the open (cascading)
+     *   • C clears all tokens and all state
+     */
+
+    var ck_tokens = [];       // array of token objects
+    var ck_autoCloseCounter = 0;
     var ck_justEvaled = false;
-    var ck_lastResult = null;
 
     var ckDisplay = get('calcDisplay');
     var ckExpr    = get('calcExpr');
     var ckError   = get('calcError');
 
-    function ck_showDisplay() {
-        ckDisplay.innerText = ck_display_str || '0';
-        // show cursor-like feedback: nothing special needed
+    // ── helpers ────────────────────────────────────────────────────────
+    function ck_newId() { return ++ck_autoCloseCounter; }
+
+    function ck_buildStrings() {
+        // Build display and eval strings from token array
+        var e = '', d = '';
+        for(var i = 0; i < ck_tokens.length; i++) {
+            e += ck_tokens[i].e;
+            d += ck_tokens[i].d;
+        }
+        return { e: e, d: d };
+    }
+
+    function ck_renderDisplay() {
+        var s = ck_buildStrings();
+        // Show pending auto-close brackets dimmed by appending them to display
+        var pending = ck_pendingAutoCloses();
+        var suffix = '';
+        for(var i = 0; i < pending.length; i++) suffix += ')';
+        if(suffix) {
+            // Show the pending closes greyed out — we'll just show them inline
+            // (no color in innerText; we use a simple indicator)
+            ckDisplay.innerText = (s.d || '0') + suffix;
+        } else {
+            ckDisplay.innerText = s.d || '0';
+        }
+    }
+
+    // Returns array of {idx, id} for sqrt-opens that have no matching close yet
+    // and whose closingDeleted is false
+    function ck_pendingAutoCloses() {
+        var opens = [];
+        for(var i = 0; i < ck_tokens.length; i++) {
+            var t = ck_tokens[i];
+            if(t.kind === 'sqrt-open' && !t.closingDeleted) {
+                // Check if there's already a close for this id in tokens
+                var hasClosed = false;
+                for(var j = i+1; j < ck_tokens.length; j++) {
+                    if(ck_tokens[j].isAutoClose && ck_tokens[j].autoCloseId === t.autoCloseId) {
+                        hasClosed = true; break;
+                    }
+                    // A manual ')' also counts as closing this if depths match,
+                    // but tracking depth is complex — treat manual ) as closing
+                    // the innermost open paren regardless.
+                }
+                if(!hasClosed) opens.push({idx: i, id: t.autoCloseId});
+            }
+        }
+        return opens;
+    }
+
+    // How many unclosed parens total (for deciding if auto-close on = is safe)
+    function ck_openDepth() {
+        var depth = 0;
+        for(var i = 0; i < ck_tokens.length; i++) {
+            var k = ck_tokens[i].kind;
+            if(k === 'open' || k === 'sqrt-open') depth++;
+            else if(k === 'close') depth--;
+        }
+        return depth;
+    }
+
+    function ck_lastKind() {
+        if(!ck_tokens.length) return null;
+        return ck_tokens[ck_tokens.length-1].kind;
+    }
+
+    function ck_lastIsOp() {
+        var lk = ck_lastKind();
+        return lk === 'op' || lk === 'sqrt-open' || lk === 'open';
+    }
+    function ck_lastIsNum() {
+        var lk = ck_lastKind();
+        return lk === 'num' || lk === 'close' || lk === 'pi';
     }
 
     function ck_clearCalcError() {
@@ -989,171 +1083,227 @@
     function ck_showCalcError(msg) {
         ckError.style.display = 'block';
         ckError.innerText = msg;
-        var d=getDark();
-        ckError.style.background=d?'#3a1010':'#fff5f5';
-        ckError.style.borderColor=d?'#883333':'#f5c2c2';
-        ckError.style.color=d?'#ff8080':'#c0392b';
+        var d = getDark();
+        ckError.style.background  = d ? '#3a1010' : '#fff5f5';
+        ckError.style.borderColor = d ? '#883333' : '#f5c2c2';
+        ckError.style.color       = d ? '#ff8080' : '#c0392b';
+    }
+
+    // Auto-close any pending sqrt brackets (those not marked closingDeleted)
+    // Returns list of inserted close tokens (so we can record them)
+    function ck_insertPendingCloses() {
+        var pending = ck_pendingAutoCloses();
+        // Insert closes in reverse order (innermost first)
+        for(var i = pending.length - 1; i >= 0; i--) {
+            ck_tokens.push({
+                e: ')', d: ')', kind: 'close',
+                isAutoClose: true, autoCloseId: pending[i].id
+            });
+        }
     }
 
     function ck_evaluate() {
-        if(!ck_expr_str) return;
+        if(!ck_tokens.length) return;
         ck_clearCalcError();
 
-        // Replace π with its value
-        var evalStr = ck_expr_str
-            .replace(/π/g, '(' + Math.PI + ')')
-            .replace(/×/g, '*')
-            .replace(/÷/g, '/');
+        // Auto-close any unclosed inferred brackets before evaluating
+        ck_insertPendingCloses();
 
-        // Safety check: only allow numbers, operators, parens, whitespace, dot
-        if(!/^[\d\s\+\-\*\/\(\)\.\^Math\.PIe]+$/.test(evalStr)) {
-            // Allow the cleaned version
-        }
+        var s = ck_buildStrings();
+        var evalStr = s.e.replace(/π/g, '(' + Math.PI + ')');
 
         try {
-            // Use Function constructor to evaluate safely
             var result = Function('"use strict"; return (' + evalStr + ')')();
-            if(!isFinite(result)) {
-                ck_showCalcError('Cannot divide by zero');
-                return;
-            }
-            if(isNaN(result)) {
-                ck_showCalcError('Invalid expression');
-                return;
-            }
-            // Round to avoid floating point noise
+            if(!isFinite(result)) { ck_showCalcError('Cannot divide by zero'); return; }
+            if(isNaN(result))     { ck_showCalcError('Invalid expression'); return; }
             var rounded = parseFloat(result.toPrecision(12));
-            // Show expression in the tape
-            ckExpr.innerText = ck_display_str + ' =';
-            ck_expr_str = String(rounded);
-            ck_display_str = String(rounded);
-            ck_lastResult = rounded;
+            ckExpr.innerText = s.d + ' =';
+            // Replace token list with single result token
+            ck_tokens = [{ e: String(rounded), d: String(rounded), kind: 'num' }];
             ck_justEvaled = true;
-            ck_showDisplay();
-        } catch(e) {
+            ck_renderDisplay();
+        } catch(err) {
             ck_showCalcError('Invalid expression');
         }
     }
 
-    // Determine if the last character of the expression is an operator
-    function ck_lastIsOp() {
-        var s = ck_expr_str.trimRight();
-        return /[\+\-\*\/×÷\(]$/.test(s);
-    }
-    function ck_lastIsNum() {
-        var s = ck_expr_str.trimRight();
-        return /[\d\)π]$/.test(s);
+    // ── Main input handler ─────────────────────────────────────────────
+    function ck_handleKey(k) {
+        ck_clearCalcError();
+
+        // ── C: full clear ──────────────────────────────────────────────
+        if(k === 'C') {
+            ck_tokens = [];
+            ck_justEvaled = false;
+            ckExpr.innerText = '';
+            ck_renderDisplay();
+            return;
+        }
+
+        // ── Backspace ──────────────────────────────────────────────────
+        if(k === '\u232b') {
+            if(ck_justEvaled) {
+                // Clear the result entirely
+                ck_tokens = [];
+                ck_justEvaled = false;
+                ckExpr.innerText = '';
+                ck_renderDisplay();
+                return;
+            }
+            if(!ck_tokens.length) return;
+
+            var last = ck_tokens[ck_tokens.length - 1];
+
+            // If last token is an auto-close, mark its open as closingDeleted
+            if(last.isAutoClose) {
+                var closeId = last.autoCloseId;
+                ck_tokens.pop();
+                // Find the matching sqrt-open and mark it
+                for(var i = ck_tokens.length - 1; i >= 0; i--) {
+                    if(ck_tokens[i].kind === 'sqrt-open' && ck_tokens[i].autoCloseId === closeId) {
+                        ck_tokens[i].closingDeleted = true;
+                        break;
+                    }
+                }
+                ck_renderDisplay();
+                return;
+            }
+
+            // If last token is a sqrt-open that has a later auto-close for it,
+            // remove that auto-close first (cascade), then remove the open
+            if(last.kind === 'sqrt-open') {
+                var openId = last.autoCloseId;
+                // Look for matching auto-close after this token
+                var closeIdx = -1;
+                for(var j = ck_tokens.length - 1; j >= 0; j--) {
+                    if(ck_tokens[j].isAutoClose && ck_tokens[j].autoCloseId === openId) {
+                        closeIdx = j; break;
+                    }
+                }
+                if(closeIdx >= 0) {
+                    // Remove the auto-close (it's somewhere in the array)
+                    ck_tokens.splice(closeIdx, 1);
+                }
+                // Now remove the sqrt-open itself
+                ck_tokens.pop();
+                ck_renderDisplay();
+                return;
+            }
+
+            // Normal backspace: remove last token
+            ck_tokens.pop();
+            ck_renderDisplay();
+            return;
+        }
+
+        // ── Evaluate ───────────────────────────────────────────────────
+        if(k === '=') {
+            ck_evaluate();
+            return;
+        }
+
+        // ── Post-eval handling ─────────────────────────────────────────
+        if(ck_justEvaled) {
+            var isOp  = (k==='+' || k==='-' || k==='\u00d7' || k==='\u00f7');
+            if(!isOp) {
+                // Start fresh if not continuing with an operator
+                ck_tokens = [];
+                ckExpr.innerText = '';
+            }
+            ck_justEvaled = false;
+        }
+
+        // ── Before adding an operator: auto-close any pending sqrt brackets ──
+        var isOperator = (k==='+' || k==='\u00d7' || k==='\u00f7');
+        // Don't auto-close on '-' because it might be a unary minus
+        if(isOperator && ck_lastIsNum()) {
+            ck_insertPendingCloses();
+        }
+
+        // ── Insert tokens ──────────────────────────────────────────────
+        if(k === '(') {
+            ck_tokens.push({ e:'(', d:'(', kind:'open' });
+
+        } else if(k === ')') {
+            // Only allow ) if there's an unclosed open
+            if(ck_openDepth() > 0) {
+                ck_tokens.push({ e:')', d:')', kind:'close' });
+            }
+
+        } else if(k === '+') {
+            if(ck_lastIsNum()) {
+                ck_tokens.push({ e:'+', d:'+', kind:'op' });
+            }
+
+        } else if(k === '-') {
+            // Allow after op/open/start (unary), or after num (binary)
+            ck_tokens.push({ e:'-', d:'-', kind:'op' });
+
+        } else if(k === '\u00d7') { // ×
+            if(ck_lastIsNum()) {
+                ck_tokens.push({ e:'*', d:'\u00d7', kind:'op' });
+            }
+
+        } else if(k === '\u00f7') { // ÷
+            if(ck_lastIsNum()) {
+                ck_tokens.push({ e:'/', d:'\u00f7', kind:'op' });
+            }
+
+        } else if(k === '\u221a') { // √
+            // If last is a number/close, insert implicit multiply first
+            if(ck_lastIsNum()) {
+                ck_tokens.push({ e:'*', d:'\u00d7', kind:'op' });
+            }
+            var id = ck_newId();
+            ck_tokens.push({
+                e: 'Math.sqrt(', d: '\u221a(',
+                kind: 'sqrt-open',
+                autoCloseId: id,
+                closingDeleted: false
+            });
+
+        } else if(k === '\u03c0') { // π
+            // If last is a number/close, insert implicit multiply
+            if(ck_lastIsNum()) {
+                ck_tokens.push({ e:'*', d:'\u00d7', kind:'op' });
+            }
+            ck_tokens.push({ e:'π', d:'\u03c0', kind:'pi' });
+
+        } else if(k === '.') {
+            // Find the last number token and check if it has a dot
+            var lastNumTok = null;
+            for(var ni = ck_tokens.length - 1; ni >= 0; ni--) {
+                if(ck_tokens[ni].kind === 'num') { lastNumTok = ck_tokens[ni]; break; }
+                if(ck_tokens[ni].kind !== 'num') break;
+            }
+            var lastTokIsNum = ck_lastKind() === 'num';
+            if(lastTokIsNum && ck_tokens[ck_tokens.length-1].e.indexOf('.') < 0) {
+                ck_tokens[ck_tokens.length-1].e += '.';
+                ck_tokens[ck_tokens.length-1].d += '.';
+            } else if(!lastTokIsNum) {
+                // Start new num token with leading 0
+                ck_tokens.push({ e:'0.', d:'0.', kind:'num' });
+            }
+
+        } else {
+            // Digit: append to existing num token or start new one
+            if(ck_lastKind() === 'num') {
+                var nt = ck_tokens[ck_tokens.length-1];
+                // Don't let a bare '0' grow into '01', '02' etc. (replace it)
+                if(nt.e === '0') { nt.e = k; nt.d = k; }
+                else { nt.e += k; nt.d += k; }
+            } else {
+                ck_tokens.push({ e: k, d: k, kind: 'num' });
+            }
+        }
+
+        ck_renderDisplay();
     }
 
     ui.querySelectorAll('.ck').forEach(function(btn){
         btn.addEventListener('click', function(e) {
             e.stopPropagation();
-            var k = this.getAttribute('data-k');
-            ck_clearCalcError();
-
-            if(k === 'C') {
-                ck_expr_str = '';
-                ck_display_str = '';
-                ck_justEvaled = false;
-                ck_lastResult = null;
-                ckExpr.innerText = '';
-                ck_showDisplay();
-                return;
-            }
-
-            if(k === '\u232b') { // backspace
-                if(ck_justEvaled) {
-                    ck_expr_str = '';
-                    ck_display_str = '';
-                    ck_justEvaled = false;
-                    ckExpr.innerText = '';
-                    ck_showDisplay();
-                    return;
-                }
-                // Remove last character (handling multi-char tokens like π)
-                if(ck_expr_str.length > 0) {
-                    // Check if last char in display is π (1 display char = 1 expr char here)
-                    ck_expr_str = ck_expr_str.slice(0, -1);
-                    ck_display_str = ck_display_str.slice(0, -1);
-                }
-                ck_showDisplay();
-                return;
-            }
-
-            if(k === '=') {
-                ck_evaluate();
-                return;
-            }
-
-            // If we just evaluated and user types a digit/pi/bracket, start fresh
-            // If they type an operator, continue with result
-            if(ck_justEvaled) {
-                var isOp = (k==='+' || k==='-' || k==='\u00d7' || k==='\u00f7');
-                var isBracket = (k==='(' || k===')');
-                if(!isOp && !isBracket) {
-                    // Start new expression
-                    ck_expr_str = '';
-                    ck_display_str = '';
-                    ckExpr.innerText = '';
-                }
-                ck_justEvaled = false;
-            }
-
-            // Handle each button type
-            if(k === '(') {
-                ck_expr_str += '(';
-                ck_display_str += '(';
-            } else if(k === ')') {
-                // Only add ) if there's something to close
-                ck_expr_str += ')';
-                ck_display_str += ')';
-            } else if(k === '+') {
-                if(!ck_lastIsOp() || ck_expr_str === '') {
-                    ck_expr_str += '+';
-                    ck_display_str += '+';
-                }
-            } else if(k === '-') {
-                // Allow minus even after operator (for negative numbers)
-                ck_expr_str += '-';
-                ck_display_str += '-';
-            } else if(k === '\u00d7') { // ×
-                if(ck_lastIsNum()) {
-                    ck_expr_str += '*';
-                    ck_display_str += '\u00d7';
-                }
-            } else if(k === '\u00f7') { // ÷
-                if(ck_lastIsNum()) {
-                    ck_expr_str += '/';
-                    ck_display_str += '\u00f7';
-                }
-            } else if(k === '\u221a') { // √
-                // Insert sqrt as Math.sqrt( ... ) — we'll wrap next number
-                // Simpler: just insert sqrt( which user closes with )
-                ck_expr_str += 'Math.sqrt(';
-                ck_display_str += '\u221a(';
-            } else if(k === '\u03c0') { // π
-                ck_expr_str += 'π';
-                ck_display_str += '\u03c0';
-            } else if(k === '.') {
-                // Only add dot if last segment doesn't already have one
-                var segments = ck_expr_str.split(/[\+\-\*\/\(\)]/);
-                var lastSeg = segments[segments.length-1];
-                if(lastSeg.indexOf('.') < 0) {
-                    // If last char is not a digit, add a leading 0
-                    if(!/\d$/.test(ck_expr_str)) {
-                        ck_expr_str += '0';
-                        ck_display_str += '0';
-                    }
-                    ck_expr_str += '.';
-                    ck_display_str += '.';
-                }
-            } else {
-                // Digit
-                ck_expr_str += k;
-                ck_display_str += k;
-            }
-
-            ck_showDisplay();
+            ck_handleKey(this.getAttribute('data-k'));
         });
     });
 
@@ -1165,21 +1315,18 @@
         if(active && active.id === 'prec') return;
 
         var k = e.key;
-        // Map keyboard keys to calculator button data-k values
         var keyMap = {
             '0':'0','1':'1','2':'2','3':'3','4':'4',
             '5':'5','6':'6','7':'7','8':'8','9':'9',
-            '.':'.', '+':'+',
-            '-':'-',
-            '*':'\u00d7',    // * → ×
-            'x':'\u00d7',    // x → ×
-            'X':'\u00d7',    // X → ×
-            '/':'\u00f7',    // / → ÷
-            '`':'\u221a',    // ` → √
-            'p':'\u03c0',    // p → π
-            'P':'\u03c0',    // P → π
-            '(':' (',
-            ')':')',
+            '.':'.', '+':'+', '-':'-',
+            '*':'\u00d7',
+            'x':'\u00d7',
+            'X':'\u00d7',
+            '/':'\u00f7',
+            '`':'\u221a',
+            'p':'\u03c0',
+            'P':'\u03c0',
+            '(':'(', ')':')',
             'Enter':'=',
             'Backspace':'\u232b',
             'Escape':'C'
@@ -1188,8 +1335,7 @@
         var mapped = keyMap[k];
         if(mapped !== undefined) {
             e.preventDefault();
-            var btn = ui.querySelector('.ck[data-k="'+mapped.trim()+'"]');
-            if(btn) btn.click();
+            ck_handleKey(mapped);
         }
     });
 
