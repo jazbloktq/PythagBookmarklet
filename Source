@@ -24,7 +24,9 @@
     var initColorCode     = saved.colorCode     !== false;
     var initPrec          = saved.prec !== undefined ? String(saved.prec) : '2';
     var initUnit          = saved.unit          || 'none';
-    var initOutputUnit     = saved.outputUnit     || 'same';
+    var initOutputUnit    = saved.outputUnit     || 'same';
+    var initCalcPin       = saved.calcPin       !== false;   // default true
+    var initCalcInfer     = saved.calcInfer     !== false;   // default true
 
     var styleEl = document.getElementById('geo-ultimate-styles');
     if(styleEl) styleEl.remove();
@@ -314,7 +316,9 @@
                 clickEdit:  get('optClickEdit').checked,
                 colorCode:  get('optColorCode').checked,
                 unit:       currentUnit,
-                outputUnit: currentOutputUnit
+                outputUnit: currentOutputUnit,
+                calcPin:    get('calcPinOpen') ? get('calcPinOpen').checked : true,
+                calcInfer:  get('calcInferBrackets') ? get('calcInferBrackets').checked : true
             }));
         } catch(e) {}
     }
@@ -331,7 +335,11 @@
         var ab = get('areaBox');
         var pb = get('perimBox');
         if(sb) sb.style.display = getShowSteps() ? 'block' : 'none';
-        var showA = getShowArea(), showP = getShowPerim();
+        var showA = getShowArea();
+        // Perimeter box: always show (unless user toggled it off) — EXCEPT when the goal
+        // IS perimeter, in which case it's already displayed as the main result.
+        var isPerimGoal = (currentGoal === 'perim');
+        var showP = getShowPerim() && !isPerimGoal;
         if(ab) ab.style.display = showA ? '' : 'none';
         if(pb) pb.style.display = showP ? '' : 'none';
         if(ap) ap.style.display = (showA || showP) ? 'grid' : 'none';
@@ -700,14 +708,14 @@
         {id:'right',       label:'Right'}
     ];
     var triGoals={
-        scalene:     ['base','side','height','area'],
-        isosceles:   ['base','side','height','area'],
-        equilateral: ['height','base','area'],
-        right:       ['hypo','side','height','base','triple']
+        scalene:     ['base','side','height','area','perim'],
+        isosceles:   ['base','side','height','area','perim'],
+        equilateral: ['height','base','area','perim'],
+        right:       ['hypo','side','height','base','triple','perim']
     };
     var goalLabel={
-        s:{base:'Base',side:'Side',height:'Height',hypo:'Hypotenuse',area:"Heron's",triple:'Py. Triple'},
-        a:{base:'Base',side:'Lateral Side',height:'Altitude',hypo:'Hypotenuse',area:"Heron's",triple:'Pythagorean Triple'}
+        s:{base:'Base',side:'Side',height:'Height',hypo:'Hypotenuse',area:"Heron's",triple:'Py. Triple',perim:'Perimeter'},
+        a:{base:'Base',side:'Lateral Side',height:'Altitude',hypo:'Hypotenuse',area:"Heron's",triple:'Pythagorean Triple',perim:'Perimeter'}
     };
     var methods={
         scalene:{
@@ -729,6 +737,11 @@
             area:[
                 {id:'sc_a_heron',s:"Heron's formula",a:"Heron's formula",si:['Side 1','Side 2','Side 3'],ai:['Side 1','Side 2','Side 3'],toggle:false},
                 {id:'sc_a_sas',  s:'Side-Angle-Side', a:'Side-Angle-Side (SAS)',si:['Side a','Angle C (\u00b0)','Side b'],ai:['Side a','Angle C (\u00b0)','Side b'],toggle:false,angles:true}
+            ],
+            perim:[
+                {id:'sc_p_sss',s:'Three sides',a:'Three sides',si:['Side 1','Side 2','Side 3'],ai:['Side 1','Side 2','Side 3'],toggle:false},
+                {id:'sc_p_sas',s:'Side-Angle-Side',a:'Side-Angle-Side (SAS)',si:['Side a','Angle C (\u00b0)','Side b'],ai:['Side a','Angle C (\u00b0)','Side b'],toggle:false,angles:true},
+                {id:'sc_p_asa',s:'Angle-Side-Angle',a:'Angle-Side-Angle (ASA)',si:['Angle A (\u00b0)','Side c (between)','Angle B (\u00b0)'],ai:['Angle A (\u00b0)','Side c (between)','Angle B (\u00b0)'],toggle:false,angles:true}
             ]
         },
         isosceles:{
@@ -750,12 +763,19 @@
             area:[
                 {id:'is_a_heron',s:"Heron's formula",a:"Heron's formula",si:['Leg','Leg','Base'],ai:['Leg','Leg','Base'],toggle:false},
                 {id:'is_a_la',s:'Leg + apex angle',a:'Leg + apex angle',si:['Leg','Apex Angle (\u00b0)'],ai:['Leg','Apex Angle (\u00b0)'],toggle:false,angles:true}
+            ],
+            perim:[
+                {id:'is_p_lls',s:'Leg + base',a:'Leg + base',si:['Leg','Base'],ai:['Leg','Base'],toggle:false},
+                {id:'is_p_la',s:'Leg + apex angle',a:'Leg + apex angle',si:['Leg','Apex Angle (\u00b0)'],ai:['Leg','Apex Angle (\u00b0)'],toggle:false,angles:true}
             ]
         },
         equilateral:{
             height:[{id:'eq_h_s',s:'From side',a:'From side',si:['Side'],ai:['Side'],toggle:false}],
             base:[  {id:'eq_b_ah',s:'Area + height',a:'Area + altitude',si:['Area','Height'],ai:['Area','Altitude'],toggle:false}],
-            area:[  {id:'eq_a_heron',s:"Heron's formula",a:"Heron's formula",si:['Side'],ai:['Side'],toggle:false}]
+            area:[  {id:'eq_a_heron',s:"Heron's formula",a:"Heron's formula",si:['Side'],ai:['Side'],toggle:false}],
+            perim:[
+                {id:'eq_p_s',s:'From side',a:'From side',si:['Side'],ai:['Side'],toggle:false}
+            ]
         },
         right:{
             hypo:[
@@ -778,6 +798,11 @@
             ],
             triple:[
                 {id:'rt_triple_check',s:'Enter all three sides',a:'Enter all three sides',si:['Leg a','Leg b','Hypotenuse'],ai:['Leg a','Leg b','Hypotenuse'],toggle:false}
+            ],
+            perim:[
+                {id:'rt_p_ll',s:'Both legs',a:'Both legs',si:['Leg a','Leg b'],ai:['Leg a','Leg b'],toggle:false},
+                {id:'rt_p_cl',s:'Hypotenuse + leg',a:'Hypotenuse + leg',si:['Hypotenuse','Leg'],ai:['Hypotenuse','Leg'],toggle:false},
+                {id:'rt_p_la',s:'Leg + acute angle',a:'Leg + acute angle',si:['Leg a','Angle A (\u00b0)'],ai:['Leg a','Angle A (\u00b0)'],toggle:false,angles:true}
             ]
         }
     };
@@ -1110,7 +1135,120 @@
         var type=cfg.id;
         var res,area,perim,formula,s1,h,b,s2;
 
-        if(type==='rt_triple_check'){
+        // ── PERIMETER GOALS ──────────────────────────────────────────────────────
+        if(type==='sc_p_sss'){
+            s1=v0;s2=v1;b=v2;
+            if(s1+s2<=b||s1+b<=s2||s2+b<=s1){if(!silent)showError('Impossible','These sides don\'t form a valid triangle.');return;}
+            res=s1+s2+b; perim=res; h=0;
+            var sv3=(s1+s2+b)/2; area=Math.sqrt(sv3*(sv3-s1)*(sv3-s2)*(sv3-b));
+            formula='Perimeter = a + b + c\n= '+s1+' + '+s2+' + '+b+' = '+res.toFixed(getPrec());
+        }else if(type==='sc_p_sas'){
+            s1=v0; var angCP=toRad(v1); s2=v2;
+            b=Math.sqrt(s1*s1+s2*s2-2*s1*s2*Math.cos(angCP));
+            area=0.5*s1*s2*Math.sin(angCP); h=(2*area)/b;
+            res=s1+s2+b; perim=res;
+            formula='c = \u221a(a\u00b2+b\u00b2\u22122ab\u00b7cos(C)) = '+b.toFixed(getPrec())+'\nPerimeter = '+s1+' + '+s2+' + '+b.toFixed(getPrec())+' = '+res.toFixed(getPrec());
+        }else if(type==='sc_p_asa'){
+            var angAP=toRad(v0), sidCP=v1, angBP=toRad(v2);
+            var angCP2=Math.PI-angAP-angBP;
+            if(angCP2<=0){if(!silent)showError('Impossible','Angles must sum to less than 180\u00b0.');return;}
+            s1=sidCP*Math.sin(angBP)/Math.sin(angCP2);
+            s2=sidCP*Math.sin(angAP)/Math.sin(angCP2);
+            b=sidCP; h=(2*(0.5*b*b*Math.sin(angAP)*Math.sin(angBP)/Math.sin(angCP2)))/b;
+            area=0.5*b*b*Math.sin(angAP)*Math.sin(angBP)/Math.sin(angCP2);
+            res=s1+s2+b; perim=res;
+            formula='Law of Sines to find all sides\na = '+s1.toFixed(getPrec())+', b = '+s2.toFixed(getPrec())+', c = '+b+'\nPerimeter = '+res.toFixed(getPrec());
+        }else if(type==='is_p_lls'){
+            s1=v0;s2=v0;b=v1;
+            if(2*s1<=b){if(!silent)showError('Impossible','Base too wide for that leg.');return;}
+            h=Math.sqrt(s1*s1-(b/2)*(b/2)); area=0.5*b*h;
+            res=2*s1+b; perim=res;
+            formula='Perimeter = 2 \u00d7 Leg + Base\n= 2 \u00d7 '+s1+' + '+b+' = '+res.toFixed(getPrec());
+        }else if(type==='is_p_la'){
+            var legP=v0, apexP=toRad(v1);
+            b=2*legP*Math.sin(apexP/2); s1=legP; s2=legP;
+            h=legP*Math.cos(apexP/2); area=0.5*b*h;
+            res=2*legP+b; perim=res;
+            formula='Base = 2 \u00d7 Leg \u00d7 sin(Apex/2) = '+b.toFixed(getPrec())+'\nPerimeter = 2 \u00d7 '+legP+' + '+b.toFixed(getPrec())+' = '+res.toFixed(getPrec());
+        }else if(type==='eq_p_s'){
+            s1=v0;s2=v0;b=v0; h=Math.sqrt(3)/2*v0; area=Math.sqrt(3)/4*v0*v0;
+            res=3*v0; perim=res;
+            formula='Perimeter = 3 \u00d7 side\n= 3 \u00d7 '+v0+' = '+res.toFixed(getPrec());
+        }else if(type==='rt_p_ll'){
+            s1=v0;b=v1; s2=Math.sqrt(s1*s1+b*b); h=s1;
+            area=0.5*s1*b; res=s1+b+s2; perim=res;
+            formula='Hypotenuse = \u221a('+s1+'\u00b2+'+b+'\u00b2) = '+s2.toFixed(getPrec())+'\nPerimeter = '+s1+' + '+b+' + '+s2.toFixed(getPrec())+' = '+res.toFixed(getPrec());
+        }else if(type==='rt_p_cl'){
+            var hypP=v0, legP2=v1;
+            if(legP2>=hypP){if(!silent)showError('Impossible','Leg must be shorter than hypotenuse.');return;}
+            var leg2P=Math.sqrt(hypP*hypP-legP2*legP2);
+            s1=legP2; b=leg2P; s2=hypP; h=s1;
+            area=0.5*s1*b; res=s1+b+s2; perim=res;
+            formula='Other leg = \u221a(c\u00b2\u2212a\u00b2) = '+leg2P.toFixed(getPrec())+'\nPerimeter = '+legP2+' + '+leg2P.toFixed(getPrec())+' + '+hypP+' = '+res.toFixed(getPrec());
+        }else if(type==='rt_p_la'){
+            var legRP=v0, angRP=toRad(v1);
+            if(angRP>=Math.PI/2){if(!silent)showError('Impossible','Acute angle must be less than 90\u00b0.');return;}
+            var hypRP=legRP/Math.sin(angRP), leg2RP=hypRP*Math.cos(angRP);
+            s1=legRP; b=leg2RP; s2=hypRP; h=s1;
+            area=0.5*s1*b; res=s1+b+s2; perim=res;
+            formula='Hyp = Leg/sin(A) = '+hypRP.toFixed(getPrec())+'\nOther leg = Hyp\u00d7cos(A) = '+leg2RP.toFixed(getPrec())+'\nPerimeter = '+legRP+' + '+leg2RP.toFixed(getPrec())+' + '+hypRP.toFixed(getPrec())+' = '+res.toFixed(getPrec());
+        }
+
+        if(currentGoal==='perim'&&!isNaN(res)&&res>0){
+            // Perimeter goal: res IS the perimeter, display it as the main result
+            if(isNaN(s1)||!s1)s1=res/3; if(isNaN(s2)||!s2)s2=s1;
+            if(isNaN(b)||!b)b=s1; if(isNaN(h)||!h)h=s1;
+            if(isNaN(area)||!area) area=0.5*b*h;
+            perim=res;
+            get('res').style.display='block';
+            var approxElP=get('finalApprox');
+            var effOutUnitP = currentOutputUnit!=='same' ? currentOutputUnit : (workingUnit!=='none'?workingUnit:(currentUnit!=='none'?currentUnit:'none'));
+            function toOutUnitP(val,isArea2){
+                if(effOutUnitP==='none'||workingUnit==='none') return val;
+                if(effOutUnitP===workingUnit) return val;
+                var fF=unitFactors[workingUnit]||1, tF=unitFactors[effOutUnitP]||1;
+                return isArea2 ? val*(tF*tF)/(fF*fF) : val*tF/fF;
+            }
+            var resOutP=toOutUnitP(res,false);
+            var unitSfx = effOutUnitP!=='none' ? ' '+effOutUnitP : '';
+            get('final').innerText = resOutP.toFixed(getPrec())+unitSfx;
+            approxElP.style.display='none';
+            get('formulaText').innerText=formula||'';
+            get('areaRes').innerText=toOutUnitP(area,true).toFixed(getPrec())+(effOutUnitP!=='none'?' '+effOutUnitP+'\u00b2':'');
+            // perimBox is hidden when goal=perim (it IS the main result), so no need to set it
+            var classTagP=get('classTag');
+            classTagP.innerText=classifyTriangle(s1,s2,b); classTagP.style.display='inline-block';
+            var angArrP=computeAngles(s1,b,s2);
+            var afP=[angArrP[2],angArrP[1],angArrP[0]];
+            get('anglesContent').innerHTML='';
+            var d2P=getDark();
+            ['A','B','C'].forEach(function(n,i){
+                var sp=document.createElement('span');
+                sp.style.cssText='font-weight:600;color:'+(d2P?'#4a9eff':'#1a73e8')+';';
+                sp.innerText=n+' = '+fmtAngle(angArrP[i]);
+                get('anglesContent').appendChild(sp);
+            });
+            get('anglesBox').style.display='block';
+            get('tripleBox').style.display='none';
+            var drawS1P=s1,drawHP=h,drawBP=b,drawS2P=s2;
+            if(currentTri==='right') drawHP=s1;
+            lastCalcResult={res:res,s1:drawS1P,h:drawHP,b:drawBP,s2:drawS2P,area:area,perim:perim,anglesForCanvas:afP,isExt:false,goal:'perim',workingUnit:workingUnit,resOut:resOutP,effOutUnit:effOutUnitP};
+            drawTri(drawS1P,drawHP,drawBP,drawS2P,false,afP,'perim');
+            applyDark(); applyDiagramVisibility(); applyResultVisibility();
+            renderUnitConverter(resOutP);
+            if(!silent){
+                var adv2P=getAdv();
+                var gLblP=((adv2P?goalLabel.a:goalLabel.s)['perim'])||'Perimeter';
+                var inputValsP=[]; cfg.inputs.forEach(function(_,i){var el=get('v'+i);inputValsP.push(el?el.value:'');});
+                history.unshift({label:gLblP+': '+get('final').innerText,tri:currentTri,goal:currentGoal,method:currentMethod,inputs:inputValsP,isExt:false,finalText:get('final').innerText,approxText:'',approxVis:'none',formula:formula||'',area:toOutUnitP(area,true).toFixed(getPrec()),perim:resOutP.toFixed(getPrec()),ds1:drawS1P,dh:drawHP,db:drawBP,ds2:drawS2P,anglesForCanvas:afP});
+                if(history.length>10)history.pop();
+                get('histList').innerHTML=history.map(function(hh){return'<span style="display:block;padding:3px 0;border-bottom:1px solid #f0f0f0;">'+(hh.label||hh)+'</span>';}).join('');
+                saveSettings();
+            }
+            return;
+        }
+
+                if(type==='rt_triple_check'){
             var legA=v0, legB=v1, hypIn=v2;
             if(hypIn<=legA||hypIn<=legB){if(!silent)showError('Check your values','Hypotenuse must be larger than both legs.');return;}
             var lhs=legA*legA+legB*legB, rhs=hypIn*hypIn;
@@ -1805,19 +1943,25 @@
     var ck_tokens = [];
     var ck_autoCloseCounter = 0;
     var ck_justEvaled = false;
-    var ck_pinOpen = false;
-    var ck_inferBrackets = true;
+    var ck_pinOpen = initCalcPin;
+    var ck_inferBrackets = initCalcInfer;
 
     var ckDisplay = get('calcDisplay');
     var ckExpr    = get('calcExpr');
     var ckError   = get('calcError');
 
+    // Apply saved (or default) values to the checkboxes
+    get('calcPinOpen').checked      = ck_pinOpen;
+    get('calcInferBrackets').checked = ck_inferBrackets;
+
     get('calcPinOpen').addEventListener('change', function() {
         ck_pinOpen = this.checked;
+        saveSettings();
     });
     get('calcInferBrackets').addEventListener('change', function() {
         ck_inferBrackets = this.checked;
         ck_renderDisplay();
+        saveSettings();
     });
 
     function ck_newId() { return ++ck_autoCloseCounter; }
@@ -2181,8 +2325,14 @@
         var clickedInside = _calcClickedInside;
         _calcClickedInside = false;
         if(!isPinned && !clickedInside && mc.style.display!=='none' && e.target!==cb) {
-            if(calcFocusMode) setCalcFocusMode(false);
-            mc.style.display='none';
+            mc.style.display = 'none';
+            // Restore main panel if it was hidden in focus mode
+            if(calcFocusMode) {
+                calcFocusMode = false;
+                ui.style.display = 'flex';
+                var fb = get('calcFocusBtn');
+                if(fb) { fb.title = 'Hide main panel (calc only mode)'; fb.innerHTML = '&#x26F6;'; fb.style.opacity = '0.85'; }
+            }
         }
     });
 
