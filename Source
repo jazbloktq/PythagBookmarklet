@@ -62,6 +62,7 @@
               '<label style="cursor:pointer;display:flex;align-items:center;gap:5px;"><input type="radio" name="geopro_pos" value="ext" style="accent-color:#1a73e8;"> <span id="posExt">External</span></label>',
             '</div>',
           '</div>',
+          '<div id="unitContextBar" style="display:none;padding:5px 10px;border-radius:6px;margin-bottom:8px;font-size:11px;font-weight:600;background:#e8f0fe;color:#1a73e8;border:1px solid #c5d8f8;"></div>',
           '<div id="inputStack" style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px;"></div>',
           '<div id="canvasBox" style="position:relative;width:100%;margin-bottom:14px;border:1px solid #eee;border-radius:8px;overflow:hidden;background:#fafafa;">',
             '<canvas id="triCanvas" width="340" height="210" style="width:100%;display:block;"></canvas>',
@@ -129,8 +130,9 @@
                 '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optAdvanced" style="accent-color:#1a73e8;width:14px;height:14px;flex-shrink:0;"> Advanced wording</label>',
               '</div>',
               '<div style="height:1px;background:#eee;margin:10px 0;"></div>',
-              '<div style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;margin-bottom:7px;">UNIT CONVERTER</div>',
-              '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;margin-bottom:7px;"><input type="checkbox" id="optShowUnits" style="accent-color:#1a73e8;width:14px;height:14px;flex-shrink:0;"> Show unit conversions</label>',
+              '<div style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;margin-bottom:4px;">INPUT UNIT</div>',
+              '<div style="font-size:10px;color:#999;margin-bottom:7px;line-height:1.4;">Plain numbers are treated as this unit. Override per-field by typing e.g. <b>4cm</b> or <b>12in</b>.</div>',
+              '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;margin-bottom:7px;"><input type="checkbox" id="optShowUnits" style="accent-color:#1a73e8;width:14px;height:14px;flex-shrink:0;"> Show unit conversion table</label>',
               '<div id="unitSelRow" style="display:flex;flex-wrap:wrap;gap:5px;">',
                 '<button class="unitBtn" data-u="none"  style="padding:3px 8px;border-radius:5px;border:1px solid #ddd;font-size:11px;cursor:pointer;background:#e8f0fe;color:#1a73e8;font-weight:700;">No unit</button>',
                 '<button class="unitBtn" data-u="mm"    style="padding:3px 8px;border-radius:5px;border:1px solid #ddd;font-size:11px;cursor:pointer;background:#fff;color:#555;">mm</button>',
@@ -320,6 +322,56 @@
 
     var unitFactors={mm:1000,cm:100,m:1,km:0.001,in:39.3701,ft:3.28084};
     var unitLabels={mm:'mm',cm:'cm',m:'m',km:'km',in:'in',ft:'ft'};
+    var unitSuffixes=['mm','cm','km','in','ft','m']; // ordered longest-first for matching
+
+    // Parse "4cm", "12.5 in", "6", etc.
+    // Returns value converted to the currentUnit's scale (or raw if currentUnit=none).
+    // angleField=true → just parse the number, ignore unit suffixes entirely.
+    function parseInputVal(raw, angleField) {
+        raw = String(raw).trim();
+        if(raw === '') return NaN;
+        if(angleField) return parseFloat(raw);
+        // Try to detect a unit suffix
+        var detectedUnit = null, numStr = raw;
+        var lraw = raw.toLowerCase().replace(/\s+/g, '');
+        for(var ui=0; ui<unitSuffixes.length; ui++) {
+            var sfx = unitSuffixes[ui];
+            if(lraw.endsWith(sfx)) {
+                detectedUnit = sfx;
+                numStr = lraw.slice(0, lraw.length - sfx.length);
+                break;
+            }
+        }
+        var num = parseFloat(numStr);
+        if(isNaN(num)) return NaN;
+        if(detectedUnit === null) return num; // plain number: treat as currentUnit, no conversion needed
+        if(currentUnit === 'none') return num; // no base unit set: just use raw number
+        // Convert from detectedUnit to currentUnit
+        var fromFactor = unitFactors[detectedUnit] || 1;
+        var toFactor   = unitFactors[currentUnit]  || 1;
+        return num * (toFactor / fromFactor);
+    }
+
+    // Show a small unit badge on an input if it has an explicit unit override
+    function updateInputUnitBadge(el, raw) {
+        var existing = el.parentNode.querySelector('.unitBadge');
+        if(existing) existing.remove();
+        if(!el || !raw) return;
+        var lraw = String(raw).trim().toLowerCase().replace(/\s+/g,'');
+        var d = getDark();
+        for(var ui=0; ui<unitSuffixes.length; ui++) {
+            if(lraw.endsWith(unitSuffixes[ui])) {
+                var badge = document.createElement('span');
+                badge.className = 'unitBadge';
+                badge.style.cssText = 'position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:10px;font-weight:700;color:'+(d?'#4a9eff':'#1a73e8')+';pointer-events:none;background:'+(d?'#1e2e4e':'#e8f0fe')+';padding:2px 5px;border-radius:3px;';
+                badge.innerText = unitSuffixes[ui];
+                el.parentNode.style.position = 'relative';
+                el.parentNode.appendChild(badge);
+                break;
+            }
+        }
+    }
+
     function renderUnitConverter(rawValue) {
         var ub=get('unitBox'), ur=get('unitRows');
         if(!ub||!ur) return;
@@ -342,6 +394,19 @@
                 '<span style="font-size:12px;font-weight:'+(isActive?'700':'500')+';color:'+(isActive?(d?'#4a9eff':'#1a73e8'):(d?'#e0e0f0':'#222'))+'">'+(isActive?'\u2605 ':'')+disp+' '+u+'</span>'+
                 '</div>';
         }).join('');
+    }
+
+    // Show/hide the input unit context bar above inputs
+    function updateUnitContextBar() {
+        var bar = get('unitContextBar');
+        if(!bar) return;
+        if(currentUnit === 'none') { bar.style.display = 'none'; return; }
+        var d = getDark();
+        bar.style.display = 'block';
+        bar.style.background = d ? '#1e2e4e' : '#e8f0fe';
+        bar.style.color = d ? '#4a9eff' : '#1a73e8';
+        bar.style.borderColor = d ? '#3a5080' : '#c5d8f8';
+        bar.innerHTML = '📏 Plain numbers = <strong>' + currentUnit + '</strong> &nbsp;·&nbsp; <span style="font-weight:400;opacity:0.75;">Override per-field: e.g. <code>4cm</code></span>';
     }
 
     var DK = {
@@ -454,6 +519,7 @@
         buildTriBtns(); buildGoalBtns(); buildMethodBtns();
         applyDiagramVisibility();
         applyResultVisibility();
+        updateUnitContextBar();
     }
 
     var errTimer = null;
@@ -704,8 +770,10 @@
         var cfg=list[Math.min(currentMethod,list.length-1)];
         var d=getDark();
         get('inputStack').innerHTML=cfg.inputs.map(function(lbl,i){
-            return '<div><div style="font-size:10px;font-weight:700;color:'+(d?'#7070a0':'#888')+';letter-spacing:0.6px;margin-bottom:4px;">'+lbl.toUpperCase()+'</div>'+
-                   '<input type="number" id="v'+i+'" placeholder="0" style="width:100%;padding:9px 11px;border:1.5px solid '+(d?'#444466':'#ddd')+';border-radius:7px;box-sizing:border-box;font-size:14px;outline:none;background:'+(d?'#2a2a3e':'#fff')+';color:'+(d?'#e0e0f0':'#222')+';" onfocus="this.style.borderColor=\'#1a73e8\'" onblur="this.style.borderColor=\''+(d?'#444466':'#ddd')+'\'"></div>';
+            var isAng=isAngleLbl(lbl);
+            var ph=isAng?'e.g. 45':(currentUnit!=='none'?'e.g. 4 or 4cm':'e.g. 4');
+            return '<div style="position:relative;"><div style="font-size:10px;font-weight:700;color:'+(d?'#7070a0':'#888')+';letter-spacing:0.6px;margin-bottom:4px;">'+lbl.toUpperCase()+'</div>'+
+                   '<input type="text" inputmode="decimal" id="v'+i+'" placeholder="'+ph+'" style="width:100%;padding:9px 11px;border:1.5px solid '+(d?'#444466':'#ddd')+';border-radius:7px;box-sizing:border-box;font-size:14px;outline:none;background:'+(d?'#2a2a3e':'#fff')+';color:'+(d?'#e0e0f0':'#222')+';" onfocus="this.style.borderColor=\'#1a73e8\'" onblur="this.style.borderColor=\''+(d?'#444466':'#ddd')+'\'"></div>';
         }).join('');
         cfg.inputs.forEach(function(_,i){
             var inp=get('v'+i);
@@ -713,11 +781,13 @@
                 if(e.key==='Enter'||e.keyCode===13){e.preventDefault();e.stopPropagation();doCalculate(false);}
             },true);
             if(inp) inp.addEventListener('input',function(){
+                updateInputUnitBadge(this, this.value);
                 if(!getAutoCalc()) return;
                 clearTimeout(autoCalcTimer);
                 autoCalcTimer = setTimeout(function(){ doCalculate(true); }, 350);
             });
         });
+        updateUnitContextBar();
         var tog=get('posToggle');
         if(cfg.toggle){
             var adv=getAdv();
@@ -923,9 +993,13 @@
         var cfg=list[Math.min(currentMethod,list.length-1)];
         var vals=[],missing=[];
         cfg.inputs.forEach(function(lbl,i){
-            var el=get('v'+i),v=el?parseFloat(el.value):NaN;
+            var el=get('v'+i);
+            var rawStr=el?el.value.trim():'';
+            var isAng=isAngleLbl(lbl);
+            var v=parseInputVal(rawStr,isAng);
             vals.push(v);
-            if(isNaN(v)||!el||el.value.trim()==='') missing.push(lbl);
+            if(el) updateInputUnitBadge(el, rawStr);
+            if(isNaN(v)||rawStr==='') missing.push(lbl);
         });
         if(missing.length){if(!silent)showError('Missing values','Please fill in: '+missing.join(', ')+'.');return;}
         for(var j=0;j<vals.length;j++){
@@ -1264,16 +1338,20 @@
         get('res').style.display='block';
 
         var approxEl=get('finalApprox');
+        var unitSuffix = (currentUnit !== 'none' && !isAngleLbl((cfg.inputs[0]||''))) ? ' '+currentUnit : '';
+        if(currentGoal==='area' && currentUnit !== 'none') unitSuffix = ' '+currentUnit+'²';
         if(useSurd){
             var ss=toSurdStr(res);
-            if(ss){get('final').innerText=ss;approxEl.innerText='\u2248 '+res.toFixed(p);approxEl.style.display='block';}
-            else{get('final').innerText=fmt(res);approxEl.style.display='none';}
+            if(ss){get('final').innerText=ss+unitSuffix;approxEl.innerText='\u2248 '+res.toFixed(p)+unitSuffix;approxEl.style.display='block';}
+            else{get('final').innerText=fmt(res)+unitSuffix;approxEl.style.display='none';}
         }else{
-            get('final').innerText=res.toFixed(p);approxEl.style.display='none';
+            get('final').innerText=res.toFixed(p)+unitSuffix;approxEl.style.display='none';
         }
         get('formulaText').innerText=formula||'';
-        get('areaRes').innerText=area.toFixed(p);
-        get('perimRes').innerText=perim.toFixed(p);
+        var _uS = currentUnit !== 'none' ? ' '+currentUnit : '';
+        var _uS2 = currentUnit !== 'none' ? ' '+currentUnit+'²' : '';
+        get('areaRes').innerText=area.toFixed(p)+_uS2;
+        get('perimRes').innerText=perim.toFixed(p)+_uS;
 
         var classTag=get('classTag');
         var classification=classifyTriangle(s1,s2,b);
@@ -1400,7 +1478,9 @@
             else                            _r = newBase;
             if(!isNaN(_r) && _r > 0) {
                 var _f = get('final');
-                if(_f) _f.innerText = _r.toFixed(p);
+                var _dUnitS = currentUnit !== 'none' ? ' '+currentUnit : '';
+                if(currentGoal==='area' && currentUnit !== 'none') _dUnitS = ' '+currentUnit+'²';
+                if(_f) _f.innerText = _r.toFixed(p) + _dUnitS;
                 var _a = get('finalApprox');
                 if(_a) _a.style.display = 'none';
             }
@@ -2010,6 +2090,7 @@
             e.stopPropagation();
             currentUnit=this.getAttribute('data-u');
             updateUnitBtns();
+            updateUnitContextBar();
             if(lastCalcResult) renderUnitConverter(lastCalcResult.res);
             saveSettings();
         });
@@ -2057,6 +2138,7 @@
     if(initDark) { ui.classList.add('geo-dark'); applyDark(); }
     applyDiagramVisibility();
     applyResultVisibility();
+    updateUnitContextBar();
 
     // ── FIX 2: Guarantee all panels/menus start closed on every load ─────────
     get('setMenu').style.display = 'none';
