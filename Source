@@ -93,11 +93,18 @@
           '</div>',
         '</div>',
         // ── Mini Calculator (rebuilt) ──
-        '<div id="miniCalc" style="display:none;position:absolute;top:50px;left:16px;right:16px;background:#fff;border:1px solid #ddd;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.15);padding:14px;z-index:10005;font-size:12px;">',
-          '<div style="font-weight:700;margin-bottom:8px;color:#333;font-size:13px;">Calculator</div>',
+        '<div id="miniCalc" style="display:none;position:fixed;top:80px;right:420px;width:260px;background:#fff;border:1px solid #ddd;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.15);padding:0;z-index:10006;font-size:12px;user-select:none;">',
+          '<div id="miniCalcHeader" style="padding:9px 12px;background:#1a73e8;border-radius:10px 10px 0 0;cursor:grab;display:flex;justify-content:space-between;align-items:center;">',
+            '<span style="font-weight:700;color:#fff;font-size:12px;letter-spacing:0.3px;">&#x1F5A9; Calculator</span>',
+            '<label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:10px;color:rgba(255,255,255,0.85);white-space:nowrap;" title="Keep open when clicking outside">',
+              '<input type="checkbox" id="calcPin" style="accent-color:#fff;width:11px;height:11px;cursor:pointer;">',
+              'Pin open',
+            '</label>',
+          '</div>',
+          '<div style="padding:12px;">',
           // expression tape (what you're building)
           '<div id="calcExpr" style="text-align:right;font-size:11px;color:#999;min-height:16px;margin-bottom:4px;font-family:monospace;overflow:hidden;white-space:nowrap;padding:0 2px;"></div>',
-          // main display
+          // main display — uses innerHTML so pending ) can be styled
           '<div id="calcDisplay" style="background:#f7f9ff;border:1px solid #dde8fb;border-radius:7px;padding:8px 12px;margin-bottom:8px;text-align:right;font-size:20px;font-weight:700;color:#1a73e8;min-height:36px;overflow:hidden;white-space:nowrap;font-family:monospace;letter-spacing:0.5px;">0</div>',
           '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:5px;">',
             // Row 1: C  (  )  ⌫  √
@@ -130,6 +137,7 @@
             '<button class="ck" data-k="="   style="grid-column:span 5;padding:10px;border:none;border-radius:7px;background:#1a73e8;color:#fff;font-weight:700;cursor:pointer;font-size:15px;">=</button>',
           '</div>',
           '<div id="calcError" style="display:none;margin-top:8px;padding:6px 10px;background:#fff5f5;border:1px solid #f5c2c2;border-radius:6px;font-size:11px;color:#c0392b;font-weight:600;"></div>',
+          '</div>',
         '</div>'
     ].join('');
     document.body.appendChild(ui);
@@ -241,6 +249,10 @@
         ['histMenu','setMenu','miniCalc'].forEach(function(id){
             var m=get(id); if(m){ m.style.background=dk('menuBg'); m.style.borderColor=dk('menuBdr'); m.style.color=dk('text'); }
         });
+        // miniCalc header bar — same as main header
+        var mch=get('miniCalcHeader'); if(mch) mch.style.background=dk('headerBg');
+        // re-render pending brackets so dim colour updates with theme
+        ck_renderDisplay();
         var hL=get('histList'); if(hL) hL.style.color=dk('subtext');
         var cd=get('calcDisplay');
         if(cd){ cd.style.background=dk('resBg'); cd.style.borderColor=dk('codeBdr'); cd.style.color=d?'#4a9eff':'#1a73e8'; }
@@ -965,6 +977,36 @@
     };
     get('miniCalc').addEventListener('click',function(e){e.stopPropagation();});
 
+    // ── miniCalc independent drag ──────────────────────────────────────
+    var mcDragState = null;
+    var mcHeader = get('miniCalcHeader');
+    mcHeader.addEventListener('mousedown', function(e) {
+        if(e.target.type === 'checkbox') return; // don't drag when clicking pin
+        e.preventDefault();
+        var mc = get('miniCalc');
+        var rect = mc.getBoundingClientRect();
+        mcDragState = { startX: e.clientX - rect.left, startY: e.clientY - rect.top };
+        mcHeader.style.cursor = 'grabbing';
+        mc.style.right = 'auto';
+        mc.style.left = rect.left + 'px';
+        mc.style.top  = rect.top  + 'px';
+    });
+    document.addEventListener('mousemove', function(e) {
+        if(!mcDragState) return;
+        var mc = get('miniCalc');
+        var x = e.clientX - mcDragState.startX;
+        var y = e.clientY - mcDragState.startY;
+        x = Math.max(0, Math.min(window.innerWidth  - mc.offsetWidth,  x));
+        y = Math.max(0, Math.min(window.innerHeight - mc.offsetHeight, y));
+        mc.style.left = x + 'px';
+        mc.style.top  = y + 'px';
+    });
+    document.addEventListener('mouseup', function() {
+        if(!mcDragState) return;
+        mcDragState = null;
+        mcHeader.style.cursor = 'grab';
+    });
+
     // ══════════════════════════════════════════════════════════════════
     // MINI CALCULATOR — Token-based, evaluates only on =
     // Smart bracket inference: √ auto-closes, inferred brackets
@@ -1015,16 +1057,19 @@
 
     function ck_renderDisplay() {
         var s = ck_buildStrings();
-        // Show pending auto-close brackets dimmed by appending them to display
         var pending = ck_pendingAutoCloses();
         var suffix = '';
         for(var i = 0; i < pending.length; i++) suffix += ')';
+        // Theme-aware dim colour for inferred brackets
+        var dimCol = getDark() ? 'rgba(74,158,255,0.28)' : 'rgba(26,115,232,0.25)';
+        var mainText = s.d || '0';
         if(suffix) {
-            // Show the pending closes greyed out — we'll just show them inline
-            // (no color in innerText; we use a simple indicator)
-            ckDisplay.innerText = (s.d || '0') + suffix;
+            // Use innerHTML so we can colour the pending bracket differently
+            ckDisplay.innerHTML =
+                '<span>' + mainText.replace(/&/g,'&amp;').replace(/</g,'&lt;') + '</span>' +
+                '<span style="color:' + dimCol + ';font-style:italic;">' + suffix + '</span>';
         } else {
-            ckDisplay.innerText = s.d || '0';
+            ckDisplay.innerHTML = '<span>' + mainText.replace(/&/g,'&amp;').replace(/</g,'&lt;') + '</span>';
         }
     }
 
@@ -1135,8 +1180,9 @@
         if(k === 'C') {
             ck_tokens = [];
             ck_justEvaled = false;
+            ck_clearCalcError();
             ckExpr.innerText = '';
-            ck_renderDisplay();
+            ckDisplay.innerHTML = '<span>0</span>';
             return;
         }
 
@@ -1344,7 +1390,8 @@
         var sb=get('setBtn'),hb=get('histBtn'),cb=get('calcBtn');
         if(sm.style.display!=='none'&&!sm.contains(e.target)&&e.target!==sb) sm.style.display='none';
         if(hm.style.display!=='none'&&!hm.contains(e.target)&&e.target!==hb) hm.style.display='none';
-        if(mc.style.display!=='none'&&!mc.contains(e.target)&&e.target!==cb) mc.style.display='none';
+        var pinned = get('calcPin') && get('calcPin').checked;
+        if(!pinned && mc.style.display!=='none'&&!mc.contains(e.target)&&e.target!==cb) mc.style.display='none';
     });
 
     get('prec').addEventListener('change',saveSettings);
