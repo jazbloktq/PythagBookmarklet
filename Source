@@ -797,6 +797,7 @@
             tog.style.display='block';
         } else { tog.style.display='none'; }
         get('res').style.display='none';
+        var _ub=get('unitBox');if(_ub)_ub.style.display='none';
         ctx.clearRect(0,0,canvas.width,canvas.height);
     }
     function rebuildAll(){buildTriBtns();buildGoalBtns();buildMethodBtns();renderInputs();}
@@ -1591,7 +1592,7 @@
 
     get('copy').onclick    = function(){navigator.clipboard.writeText(get('final').innerText);this.innerText='Copied!';var self=this;setTimeout(function(){self.innerText='Copy';},1500);};
     get('dlBtn').onclick   = function(){var l=document.createElement('a');l.download='triangle.png';l.href=canvas.toDataURL();l.click();};
-    get('clear').onclick   = function(){ui.querySelectorAll('#inputStack input').forEach(function(i){i.value='';});get('res').style.display='none';ctx.clearRect(0,0,canvas.width,canvas.height);};
+    get('clear').onclick   = function(){ui.querySelectorAll('#inputStack input').forEach(function(i){i.value='';});get('res').style.display='none';var _ub=get('unitBox');if(_ub)_ub.style.display='none';ctx.clearRect(0,0,canvas.width,canvas.height);};
     get('close').onclick   = function(){ui.remove(); if(miniCalcEl.parentNode) miniCalcEl.remove();};
     get('errClose').onclick= function(){clearError();};
     get('setBtn').onclick  = function(e){e.stopPropagation();var m=get('setMenu');m.style.display=m.style.display==='none'?'flex':'none';get('histMenu').style.display='none';get('miniCalc').style.display='none';};
