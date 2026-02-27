@@ -14,6 +14,7 @@
     var initDark      = saved.dark      === true;
     var initDegrees   = saved.degrees   !== false;
     var initPrec      = saved.prec !== undefined ? String(saved.prec) : '2';
+    var initDiagram   = saved.diagram   !== false;
 
     var ui = document.createElement('div');
     ui.id = 'geo-ultimate-vscroll';
@@ -89,15 +90,14 @@
             '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optSimplify" style="accent-color:#1a73e8;width:14px;height:14px;"> Simplify surds (e.g. 10\u221a33)</label>',
             '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optDegrees"  style="accent-color:#1a73e8;width:14px;height:14px;"> Angles in degrees</label>',
             '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optAdvanced" style="accent-color:#1a73e8;width:14px;height:14px;"> Advanced wording</label>',
+            '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optDiagram"  style="accent-color:#1a73e8;width:14px;height:14px;"> Show diagram</label>',
             '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optDark"     style="accent-color:#1a73e8;width:14px;height:14px;"> Dark mode</label>',
           '</div>',
         '</div>',
-        // miniCalc appended separately to document.body — see below
     ].join('');
     document.body.appendChild(ui);
 
     // ── Mini Calculator — separate DOM element appended directly to body ──
-    // (Keeps it outside ui's overflow:hidden so clicks always register)
     var miniCalcEl = document.createElement('div');
     miniCalcEl.id = 'miniCalc';
     miniCalcEl.style.cssText = 'display:none;position:fixed;top:80px;right:420px;width:260px;background:#fff;border:1px solid #ddd;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.18);padding:0;z-index:99999;font-family:system-ui,sans-serif;font-size:12px;color:#222;';
@@ -165,6 +165,10 @@
     get('optAdvanced').checked = initAdvanced;
     get('optDark').checked     = initDark;
     get('optDegrees').checked  = initDegrees;
+    get('optDiagram').checked  = initDiagram;
+
+    // Apply initial diagram visibility
+    get('canvasBox').style.display = initDiagram ? 'block' : 'none';
 
     function getAdv()      { return get('optAdvanced').checked; }
     function getSurd()     { return get('optSurd').checked; }
@@ -172,6 +176,7 @@
     function getPrec()     { return parseInt(get('prec').value) || 2; }
     function getDark()     { return get('optDark').checked; }
     function getDeg()      { return get('optDegrees').checked; }
+    function getDiagram()  { return get('optDiagram').checked; }
 
     function saveSettings() {
         try {
@@ -182,7 +187,8 @@
                 simplify: get('optSimplify').checked,
                 advanced: get('optAdvanced').checked,
                 dark: get('optDark').checked,
-                degrees: get('optDegrees').checked
+                degrees: get('optDegrees').checked,
+                diagram: get('optDiagram').checked
             }));
         } catch(e) {}
     }
@@ -256,13 +262,10 @@
         ['histMenu','setMenu','miniCalc'].forEach(function(id){
             var m=get(id); if(m){ m.style.background=dk('menuBg'); m.style.borderColor=dk('menuBdr'); m.style.color=dk('text'); }
         });
-        // miniCalc header bar — same as main header
         var mch=get('miniCalcHeader'); if(mch) mch.style.background=dk('headerBg');
-        // calc settings panel
         var csp=get('calcSettingsPanel');
         if(csp){ csp.style.background=dk('resBg'); csp.style.borderColor=dk('codeBdr');
                  csp.querySelectorAll('label').forEach(function(l){l.style.color=dk('text');}); }
-        // re-render pending brackets so dim colour updates with theme
         if(typeof ck_renderDisplay==='function') ck_renderDisplay();
         var hL=get('histList'); if(hL) hL.style.color=dk('subtext');
         var cd=get('calcDisplay');
@@ -360,26 +363,19 @@
     }
 
     function gcd(a,b){ a=Math.round(a); b=Math.round(b); while(b){var t=b;b=a%b;a=t;} return a; }
-    // Returns detailed triple info or null.
-    // { pa, pb, pc, scale, isPrimitive, isTriple, allIntegers }
     function checkTripleDetail(a, b, c) {
         var sides=[a,b,c].sort(function(x,y){return x-y;});
         var A=sides[0], B=sides[1], C=sides[2];
-        // Must satisfy a²+b²=c² (right triangle check done separately)
-        // Integer check: each value must be within 0.001 of a whole number
         var Ar=Math.round(A), Br=Math.round(B), Cr=Math.round(C);
         var allIntegers=(Math.abs(A-Ar)<0.001 && Math.abs(B-Br)<0.001 && Math.abs(C-Cr)<0.001);
         if(!allIntegers) return {isTriple:false, allIntegers:false, pa:0, pb:0, pc:0, scale:1};
-        // Now work with rounded integers
         var g=gcd(gcd(Ar,Br),Cr);
         if(g<1) return {isTriple:false, allIntegers:true, pa:Ar, pb:Br, pc:Cr, scale:1};
         var pa=Ar/g, pb=Br/g, pc=Cr/g;
-        // Verify the reduced triple is itself a Pythagorean triple
         if(Math.round(pa*pa+pb*pb) !== Math.round(pc*pc)) return {isTriple:false, allIntegers:true, pa:Ar, pb:Br, pc:Cr, scale:1};
         var isPrimitive=(g===1);
         return {isTriple:true, allIntegers:true, pa:pa, pb:pb, pc:pc, scale:g, isPrimitive:isPrimitive, Ar:Ar, Br:Br, Cr:Cr};
     }
-    // Simple string summary for the auto-detect banner on other right triangle goals
     function checkTriple(a, b, c) {
         var d=checkTripleDetail(a,b,c);
         if(!d.isTriple) return null;
@@ -555,6 +551,9 @@
     function rebuildAll(){buildTriBtns();buildGoalBtns();buildMethodBtns();renderInputs();}
 
     function drawTri(s1, h, b, s2, isExt, anglesData) {
+        // Skip drawing entirely if diagram is disabled
+        if(!getDiagram()) return;
+
         var W=canvas.width, H=canvas.height;
         ctx.clearRect(0,0,W,H);
         var d=getDark();
@@ -720,9 +719,7 @@
 
         if(type==='rt_triple_check'){
             var legA=v0, legB=v1, hypIn=v2;
-            // Basic sanity
             if(hypIn<=legA||hypIn<=legB){showError('Check your values','Hypotenuse must be larger than both legs.');return;}
-            // Right triangle check: a²+b²=c²
             var lhs=legA*legA+legB*legB, rhs=hypIn*hypIn;
             var isRightTri=Math.abs(lhs-rhs)/rhs<0.001;
             if(!isRightTri){
@@ -731,12 +728,10 @@
                     hypIn+'\u00b2 = '+rhs.toFixed(4)+'\nCheck your values.');
                 return;
             }
-            // Now do full triple analysis
             var td=checkTripleDetail(legA,legB,hypIn);
             s1=legA; b=legB; s2=hypIn; h=legA;
             area=0.5*legA*legB; perim=legA+legB+hypIn;
 
-            // Build detailed formula / steps
             var lhsStr=legA+'\u00b2 + '+legB+'\u00b2 = '+Math.round(lhs);
             var rhsStr=hypIn+'\u00b2 = '+Math.round(rhs);
             var formulaLines=[];
@@ -1052,14 +1047,13 @@
         get('histMenu').style.display='none';
         get('setMenu').style.display='none';
     };
-    // miniCalcEl is a separate body element; its click stopProp is handled below
     miniCalcEl.addEventListener('click', function(e) { e.stopPropagation(); });
 
-    // ── miniCalc independent drag ──────────────────────────────────────
+    // ── miniCalc independent drag ──────────────────────────────────────────
     var mcDragState = null;
     var mcHeader = get('miniCalcHeader');
     mcHeader.addEventListener('mousedown', function(e) {
-        if(e.target.type === 'checkbox') return; // don't drag when clicking pin
+        if(e.target.type === 'checkbox') return;
         e.preventDefault();
         var mc = get('miniCalc');
         var rect = mc.getBoundingClientRect();
@@ -1086,56 +1080,30 @@
     });
 
     // ══════════════════════════════════════════════════════════════════
-    // MINI CALCULATOR — Token-based, evaluates only on =
-    // Smart bracket inference: √ auto-closes, inferred brackets
-    // won't be re-added if the user manually deleted them.
+    // MINI CALCULATOR
     // ══════════════════════════════════════════════════════════════════
 
-    /*
-     * Token schema:
-     *   { e: string,   // eval string fragment  e.g. 'Math.sqrt('  or '42'
-     *     d: string,   // display string        e.g. '√('           or '42'
-     *     kind: string // 'num' | 'op' | 'open' | 'close' | 'sqrt-open' | 'pi'
-     *     autoCloseId: number|null  // for 'sqrt-open': unique id; matched close has same id
-     *     isAutoClose: bool         // true if this ')' was auto-inferred
-     *     closingDeleted: bool      // for 'sqrt-open': user deleted the auto-close for this id
-     *   }
-     *
-     * Design rules:
-     *   • sqrt-open pushes a token with kind='sqrt-open' and autoCloseId=N
-     *   • When an op/= is pressed while there are unclosed sqrt-opens whose
-     *     closingDeleted is false, auto-insert close tokens (marked isAutoClose)
-     *   • Backspace on an isAutoClose token: remove it AND mark the matching
-     *     sqrt-open's closingDeleted=true  → that open won't get re-closed
-     *   • Backspace on a sqrt-open that has a later isAutoClose for it:
-     *     first remove that auto-close, then remove the open (cascading)
-     *   • C clears all tokens and all state
-     */
-
-    var ck_tokens = [];       // array of token objects
+    var ck_tokens = [];
     var ck_autoCloseCounter = 0;
     var ck_justEvaled = false;
-    var ck_pinOpen = false;        // mirrors #calcPinOpen checkbox
-    var ck_inferBrackets = true;   // mirrors #calcInferBrackets checkbox
+    var ck_pinOpen = false;
+    var ck_inferBrackets = true;
 
     var ckDisplay = get('calcDisplay');
     var ckExpr    = get('calcExpr');
     var ckError   = get('calcError');
 
-    // Wire settings checkboxes to JS state vars
     get('calcPinOpen').addEventListener('change', function() {
         ck_pinOpen = this.checked;
     });
     get('calcInferBrackets').addEventListener('change', function() {
         ck_inferBrackets = this.checked;
-        ck_renderDisplay(); // re-render: ghost brackets may appear/disappear
+        ck_renderDisplay();
     });
 
-    // ── helpers ────────────────────────────────────────────────────────
     function ck_newId() { return ++ck_autoCloseCounter; }
 
     function ck_buildStrings() {
-        // Build display and eval strings from token array
         var e = '', d = '';
         for(var i = 0; i < ck_tokens.length; i++) {
             e += ck_tokens[i].e;
@@ -1149,12 +1117,10 @@
     function ck_renderDisplay() {
         var s = ck_buildStrings();
         var mainText = s.d || '0';
-        // Only show ghost brackets if infer is enabled
         if(ck_inferBrackets) {
             var pending = ck_pendingAutoCloses();
             var suffix = '';
             for(var i = 0; i < pending.length; i++) suffix += ')';
-            // Theme-aware dim colour: close to background, clearly different from real text
             var dimCol = getDark() ? 'rgba(200,220,255,0.30)' : 'rgba(26,115,232,0.22)';
             if(suffix) {
                 ckDisplay.innerHTML =
@@ -1166,22 +1132,16 @@
         ckDisplay.innerHTML = '<span>' + ck_escHtml(mainText) + '</span>';
     }
 
-    // Returns array of {idx, id} for sqrt-opens that have no matching close yet
-    // and whose closingDeleted is false
     function ck_pendingAutoCloses() {
         var opens = [];
         for(var i = 0; i < ck_tokens.length; i++) {
             var t = ck_tokens[i];
             if(t.kind === 'sqrt-open' && !t.closingDeleted) {
-                // Check if there's already a close for this id in tokens
                 var hasClosed = false;
                 for(var j = i+1; j < ck_tokens.length; j++) {
                     if(ck_tokens[j].isAutoClose && ck_tokens[j].autoCloseId === t.autoCloseId) {
                         hasClosed = true; break;
                     }
-                    // A manual ')' also counts as closing this if depths match,
-                    // but tracking depth is complex — treat manual ) as closing
-                    // the innermost open paren regardless.
                 }
                 if(!hasClosed) opens.push({idx: i, id: t.autoCloseId});
             }
@@ -1189,7 +1149,6 @@
         return opens;
     }
 
-    // How many unclosed parens total (for deciding if auto-close on = is safe)
     function ck_openDepth() {
         var depth = 0;
         for(var i = 0; i < ck_tokens.length; i++) {
@@ -1227,11 +1186,9 @@
         ckError.style.color       = d ? '#ff8080' : '#c0392b';
     }
 
-    // Auto-close any pending sqrt brackets (those not marked closingDeleted)
     function ck_insertPendingCloses() {
-        if(!ck_inferBrackets) return; // respect setting
+        if(!ck_inferBrackets) return;
         var pending = ck_pendingAutoCloses();
-        // Insert closes in reverse order (innermost first)
         for(var i = pending.length - 1; i >= 0; i--) {
             ck_tokens.push({
                 e: ')', d: ')', kind: 'close',
@@ -1243,20 +1200,15 @@
     function ck_evaluate() {
         if(!ck_tokens.length) return;
         ck_clearCalcError();
-
-        // Auto-close any unclosed inferred brackets before evaluating
         ck_insertPendingCloses();
-
         var s = ck_buildStrings();
         var evalStr = s.e.replace(/π/g, '(' + Math.PI + ')');
-
         try {
             var result = Function('"use strict"; return (' + evalStr + ')')();
             if(!isFinite(result)) { ck_showCalcError('Cannot divide by zero'); return; }
             if(isNaN(result))     { ck_showCalcError('Invalid expression'); return; }
             var rounded = parseFloat(result.toPrecision(12));
             ckExpr.innerText = s.d + ' =';
-            // Replace token list with single result token
             ck_tokens = [{ e: String(rounded), d: String(rounded), kind: 'num' }];
             ck_justEvaled = true;
             ck_renderDisplay();
@@ -1265,11 +1217,9 @@
         }
     }
 
-    // ── Main input handler ─────────────────────────────────────────────
     function ck_handleKey(k) {
         ck_clearCalcError();
 
-        // ── C: full clear ──────────────────────────────────────────────
         if(k === 'C') {
             ck_tokens = [];
             ck_justEvaled = false;
@@ -1279,10 +1229,8 @@
             return;
         }
 
-        // ── Backspace ──────────────────────────────────────────────────
         if(k === '\u232b') {
             if(ck_justEvaled) {
-                // Clear the result entirely
                 ck_tokens = [];
                 ck_justEvaled = false;
                 ckExpr.innerText = '';
@@ -1290,14 +1238,10 @@
                 return;
             }
             if(!ck_tokens.length) return;
-
             var last = ck_tokens[ck_tokens.length - 1];
-
-            // If last token is an auto-close, mark its open as closingDeleted
             if(last.isAutoClose) {
                 var closeId = last.autoCloseId;
                 ck_tokens.pop();
-                // Find the matching sqrt-open and mark it
                 for(var i = ck_tokens.length - 1; i >= 0; i--) {
                     if(ck_tokens[i].kind === 'sqrt-open' && ck_tokens[i].autoCloseId === closeId) {
                         ck_tokens[i].closingDeleted = true;
@@ -1307,69 +1251,39 @@
                 ck_renderDisplay();
                 return;
             }
-
-            // If last token is a sqrt-open that has a later auto-close for it,
-            // remove that auto-close first (cascade), then remove the open
             if(last.kind === 'sqrt-open') {
                 var openId = last.autoCloseId;
-                // Look for matching auto-close after this token
                 var closeIdx = -1;
                 for(var j = ck_tokens.length - 1; j >= 0; j--) {
                     if(ck_tokens[j].isAutoClose && ck_tokens[j].autoCloseId === openId) {
                         closeIdx = j; break;
                     }
                 }
-                if(closeIdx >= 0) {
-                    // Remove the auto-close (it's somewhere in the array)
-                    ck_tokens.splice(closeIdx, 1);
-                }
-                // Now remove the sqrt-open itself
+                if(closeIdx >= 0) { ck_tokens.splice(closeIdx, 1); }
                 ck_tokens.pop();
                 ck_renderDisplay();
                 return;
             }
-
-            // Normal backspace: remove last token
             ck_tokens.pop();
             ck_renderDisplay();
             return;
         }
 
-        // ── Evaluate ───────────────────────────────────────────────────
-        if(k === '=') {
-            ck_evaluate();
-            return;
-        }
+        if(k === '=') { ck_evaluate(); return; }
 
-        // ── Post-eval handling ─────────────────────────────────────────
         if(ck_justEvaled) {
             var isOp  = (k==='+' || k==='-' || k==='\u00d7' || k==='\u00f7');
-            if(!isOp) {
-                // Start fresh if not continuing with an operator
-                ck_tokens = [];
-                ckExpr.innerText = '';
-            }
+            if(!isOp) { ck_tokens = []; ckExpr.innerText = ''; }
             ck_justEvaled = false;
         }
 
-        // ── Before adding an operator: auto-close any pending sqrt brackets ──
         var isOperator = (k==='+' || k==='\u00d7' || k==='\u00f7');
-        // Don't auto-close on '-' because it might be a unary minus
-        if(isOperator && ck_lastIsNum()) {
-            ck_insertPendingCloses();
-        }
+        if(isOperator && ck_lastIsNum()) { ck_insertPendingCloses(); }
 
-        // ── Insert tokens ──────────────────────────────────────────────
         if(k === '(') {
             ck_tokens.push({ e:'(', d:'(', kind:'open' });
-
         } else if(k === ')') {
-            // Only allow ) if there's an unclosed open
             if(ck_openDepth() > 0) {
-                // Check: is the innermost unclosed paren a sqrt-open with a pending
-                // ghost bracket? If so, "realize" it — convert ghost to real close.
-                // But only if the sqrt-open is the INNERMOST unclosed paren.
-                // (If there are manual opens inside the sqrt-open, the ) closes those first.)
                 var innermostOpen = null;
                 var innermostIdx = -1;
                 var depthCheck = 0;
@@ -1378,78 +1292,39 @@
                     if(ck === 'open' || ck === 'sqrt-open') { depthCheck++; innermostOpen = ck_tokens[ci]; innermostIdx = ci; }
                     else if(ck === 'close') { depthCheck--; }
                 }
-                // If innermost unclosed is a sqrt-open with an active ghost (not closingDeleted)
-                // AND ck_inferBrackets is on: realize the ghost → mark closingDeleted and push real close
                 if(ck_inferBrackets && innermostOpen && innermostOpen.kind === 'sqrt-open' && !innermostOpen.closingDeleted) {
-                    // Mark this sqrt-open so ghost won't show, push a REAL close for it
-                    innermostOpen.closingDeleted = true; // ghost gone
-                    ck_tokens.push({ e:')', d:')', kind:'close',
-                        realizedFromId: innermostOpen.autoCloseId }); // real bracket
+                    innermostOpen.closingDeleted = true;
+                    ck_tokens.push({ e:')', d:')', kind:'close', realizedFromId: innermostOpen.autoCloseId });
                 } else {
                     ck_tokens.push({ e:')', d:')', kind:'close' });
                 }
             }
-
         } else if(k === '+') {
-            if(ck_lastIsNum()) {
-                ck_tokens.push({ e:'+', d:'+', kind:'op' });
-            }
-
+            if(ck_lastIsNum()) { ck_tokens.push({ e:'+', d:'+', kind:'op' }); }
         } else if(k === '-') {
-            // Allow after op/open/start (unary), or after num (binary)
             ck_tokens.push({ e:'-', d:'-', kind:'op' });
-
-        } else if(k === '\u00d7') { // ×
-            if(ck_lastIsNum()) {
-                ck_tokens.push({ e:'*', d:'\u00d7', kind:'op' });
-            }
-
-        } else if(k === '\u00f7') { // ÷
-            if(ck_lastIsNum()) {
-                ck_tokens.push({ e:'/', d:'\u00f7', kind:'op' });
-            }
-
-        } else if(k === '\u221a') { // √
-            // If last is a number/close, insert implicit multiply first
-            if(ck_lastIsNum()) {
-                ck_tokens.push({ e:'*', d:'\u00d7', kind:'op' });
-            }
+        } else if(k === '\u00d7') {
+            if(ck_lastIsNum()) { ck_tokens.push({ e:'*', d:'\u00d7', kind:'op' }); }
+        } else if(k === '\u00f7') {
+            if(ck_lastIsNum()) { ck_tokens.push({ e:'/', d:'\u00f7', kind:'op' }); }
+        } else if(k === '\u221a') {
+            if(ck_lastIsNum()) { ck_tokens.push({ e:'*', d:'\u00d7', kind:'op' }); }
             var id = ck_newId();
-            ck_tokens.push({
-                e: 'Math.sqrt(', d: '\u221a(',
-                kind: 'sqrt-open',
-                autoCloseId: id,
-                closingDeleted: false
-            });
-
-        } else if(k === '\u03c0') { // π
-            // If last is a number/close, insert implicit multiply
-            if(ck_lastIsNum()) {
-                ck_tokens.push({ e:'*', d:'\u00d7', kind:'op' });
-            }
+            ck_tokens.push({ e: 'Math.sqrt(', d: '\u221a(', kind: 'sqrt-open', autoCloseId: id, closingDeleted: false });
+        } else if(k === '\u03c0') {
+            if(ck_lastIsNum()) { ck_tokens.push({ e:'*', d:'\u00d7', kind:'op' }); }
             ck_tokens.push({ e:'π', d:'\u03c0', kind:'pi' });
-
         } else if(k === '.') {
-            // Find the last number token and check if it has a dot
-            var lastNumTok = null;
-            for(var ni = ck_tokens.length - 1; ni >= 0; ni--) {
-                if(ck_tokens[ni].kind === 'num') { lastNumTok = ck_tokens[ni]; break; }
-                if(ck_tokens[ni].kind !== 'num') break;
-            }
             var lastTokIsNum = ck_lastKind() === 'num';
             if(lastTokIsNum && ck_tokens[ck_tokens.length-1].e.indexOf('.') < 0) {
                 ck_tokens[ck_tokens.length-1].e += '.';
                 ck_tokens[ck_tokens.length-1].d += '.';
             } else if(!lastTokIsNum) {
-                // Start new num token with leading 0
                 ck_tokens.push({ e:'0.', d:'0.', kind:'num' });
             }
-
         } else {
-            // Digit: append to existing num token or start new one
             if(ck_lastKind() === 'num') {
                 var nt = ck_tokens[ck_tokens.length-1];
-                // Don't let a bare '0' grow into '01', '02' etc. (replace it)
                 if(nt.e === '0') { nt.e = k; nt.d = k; }
                 else { nt.e += k; nt.d += k; }
             } else {
@@ -1467,39 +1342,26 @@
         });
     });
 
-    // Keyboard support for mini calc
     document.addEventListener('keydown', function(e) {
         if(get('miniCalc').style.display === 'none') return;
         var active = document.activeElement;
         if(active && active.closest && active.closest('#inputStack')) return;
         if(active && active.id === 'prec') return;
-
         var k = e.key;
         var keyMap = {
             '0':'0','1':'1','2':'2','3':'3','4':'4',
             '5':'5','6':'6','7':'7','8':'8','9':'9',
             '.':'.', '+':'+', '-':'-',
-            '*':'\u00d7',
-            'x':'\u00d7',
-            'X':'\u00d7',
-            '/':'\u00f7',
-            '`':'\u221a',
-            'p':'\u03c0',
-            'P':'\u03c0',
+            '*':'\u00d7', 'x':'\u00d7', 'X':'\u00d7',
+            '/':'\u00f7', '`':'\u221a',
+            'p':'\u03c0', 'P':'\u03c0',
             '(':'(', ')':')',
-            'Enter':'=',
-            'Backspace':'\u232b',
-            'Escape':'C'
+            'Enter':'=', 'Backspace':'\u232b', 'Escape':'C'
         };
-
         var mapped = keyMap[k];
-        if(mapped !== undefined) {
-            e.preventDefault();
-            ck_handleKey(mapped);
-        }
+        if(mapped !== undefined) { e.preventDefault(); ck_handleKey(mapped); }
     });
 
-    // ── Calc settings btn handler ─────────────────────────────────────
     get('calcSettingsBtn').addEventListener('click', function(e) {
         e.stopPropagation();
         var p = get('calcSettingsPanel');
@@ -1507,8 +1369,6 @@
     });
     get('calcSettingsPanel').addEventListener('click', function(e) { e.stopPropagation(); });
 
-    // ── Click outside — reads from JS state variable ck_pinOpen ──────
-    // (DOM checkbox updates ck_pinOpen via change listener below)
     document.addEventListener('click',function(e){
         var sm=get('setMenu'),hm=get('histMenu'),mc=get('miniCalc');
         var sb=get('setBtn'),hb=get('histBtn'),cb=get('calcBtn');
@@ -1523,6 +1383,18 @@
     get('optDegrees').addEventListener('change',saveSettings);
     get('optAdvanced').addEventListener('change',function(){rebuildAll();saveSettings();});
     get('optDark').addEventListener('change',function(){applyDark();saveSettings();});
+
+    // ── Diagram toggle ────────────────────────────────────────────────
+    get('optDiagram').addEventListener('change', function() {
+        var show = this.checked;
+        var cb = get('canvasBox');
+        cb.style.display = show ? 'block' : 'none';
+        if(!show) {
+            // Clear the canvas when hidden so it doesn't hold stale data
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+        saveSettings();
+    });
 
     var historyIndex=-1;
     function restoreEntry(entry){
@@ -1540,7 +1412,7 @@
         applyDark();
     }
     document.addEventListener('keydown',function(e){
-        if(get('miniCalc').style.display!=='none') return; // let calc handle keys
+        if(get('miniCalc').style.display!=='none') return;
         var key=e.key||e.keyCode, active=document.activeElement;
         if(active&&!ui.contains(active)&&active!==document.body) return;
         if(active&&active.type==='number'&&(key==='ArrowLeft'||key===37||key==='ArrowRight'||key===39)) return;
