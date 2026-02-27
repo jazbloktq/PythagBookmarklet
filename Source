@@ -14,6 +14,10 @@
     var initDark      = saved.dark      === true;
     var initDegrees   = saved.degrees   !== false;
     var initDiagram   = saved.diagram   !== false;
+    var initAutoCalc  = saved.autoCalc  === true;
+    var initShowSteps = saved.showSteps !== false;
+    var initShowArea  = saved.showArea  !== false;
+    var initShowPerim = saved.showPerim !== false;
     var initPrec      = saved.prec !== undefined ? String(saved.prec) : '2';
 
     var ui = document.createElement('div');
@@ -61,7 +65,7 @@
                 '<div id="classTag" style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;background:#e8f0fe;color:#1a73e8;display:none;"></div>',
               '</div>',
             '</div>',
-            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;font-size:12px;border-top:1px solid #c5d8f8;padding-top:10px;">',
+            '<div id="areaPerimRow" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;font-size:12px;border-top:1px solid #c5d8f8;padding-top:10px;">',
               '<div id="areaBox" style="background:#fff;padding:8px;border-radius:6px;"><div style="color:#888;font-size:10px;font-weight:600;">AREA</div><div id="areaRes" style="font-weight:700;color:#222;font-size:14px;"></div></div>',
               '<div id="perimBox" style="background:#fff;padding:8px;border-radius:6px;"><div style="color:#888;font-size:10px;font-weight:600;">PERIMETER</div><div id="perimRes" style="font-weight:700;color:#222;font-size:14px;"></div></div>',
             '</div>',
@@ -70,7 +74,7 @@
               '<div style="color:#888;font-size:10px;font-weight:600;margin-bottom:4px;">ANGLES</div>',
               '<div id="anglesContent" style="display:flex;gap:10px;flex-wrap:wrap;"></div>',
             '</div>',
-            '<div style="border-top:1px solid #c5d8f8;padding-top:10px;">',
+            '<div id="stepsBox" style="border-top:1px solid #c5d8f8;padding-top:10px;">',
               '<div style="font-size:10px;font-weight:700;color:#1a73e8;margin-bottom:5px;letter-spacing:0.5px;">STEPS:</div>',
               '<code id="formulaText" style="display:block;background:#fff;padding:8px;border-radius:6px;border:1px solid #dde8fb;white-space:pre-wrap;font-family:monospace;font-size:11px;color:#333;line-height:1.5;"></code>',
             '</div>',
@@ -81,17 +85,28 @@
           '<div id="histList" style="color:#666;line-height:1.8;">No history yet.</div>',
           '<button id="closeHist" style="width:100%;margin-top:10px;padding:6px;border:none;background:#f1f3f4;border-radius:6px;cursor:pointer;font-size:12px;">Dismiss</button>',
         '</div>',
-        '<div id="setMenu" style="display:none;position:absolute;top:50px;right:16px;width:220px;background:#fff;border:1px solid #ddd;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.15);padding:14px;z-index:10005;font-size:12px;">',
-          '<div style="font-weight:700;margin-bottom:10px;color:#333;">Settings</div>',
-          '<label style="font-size:11px;color:#666;display:block;margin-bottom:4px;">Decimal places</label>',
+        '<div id="setMenu" style="display:none;position:absolute;top:50px;right:16px;width:230px;background:#fff;border:1px solid #ddd;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.15);padding:14px;z-index:10005;font-size:12px;">',
+          '<div id="setMenuTitle" style="font-weight:700;margin-bottom:10px;color:#222;">Settings</div>',
+          '<label id="precLabel" style="font-size:11px;color:#555;display:block;margin-bottom:4px;">Decimal places</label>',
           '<input type="number" id="prec" min="0" max="8" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:6px;box-sizing:border-box;font-size:13px;margin-bottom:10px;">',
-          '<div style="border-top:1px solid #eee;padding-top:10px;display:flex;flex-direction:column;gap:8px;">',
+          '<div id="setMenuTitle2" style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;margin-bottom:7px;margin-top:4px;">OUTPUT</div>',
+          '<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;">',
             '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optSurd"     style="accent-color:#1a73e8;width:14px;height:14px;"> Surd form output</label>',
             '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optSimplify" style="accent-color:#1a73e8;width:14px;height:14px;"> Simplify surds (e.g. 10\u221a33)</label>',
             '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optDegrees"  style="accent-color:#1a73e8;width:14px;height:14px;"> Angles in degrees</label>',
             '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optAdvanced" style="accent-color:#1a73e8;width:14px;height:14px;"> Advanced wording</label>',
-            '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optDark"     style="accent-color:#1a73e8;width:14px;height:14px;"> Dark mode</label>',
-            '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optDiagram"  style="accent-color:#1a73e8;width:14px;height:14px;"> Show diagram</label>',
+          '</div>',
+          '<div id="setMenuTitle3" style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;margin-bottom:7px;">DISPLAY</div>',
+          '<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;">',
+            '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optDark"      style="accent-color:#1a73e8;width:14px;height:14px;"> Dark mode</label>',
+            '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optDiagram"   style="accent-color:#1a73e8;width:14px;height:14px;"> Show diagram</label>',
+            '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optShowSteps" style="accent-color:#1a73e8;width:14px;height:14px;"> Show steps</label>',
+            '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optShowArea"  style="accent-color:#1a73e8;width:14px;height:14px;"> Show area</label>',
+            '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optShowPerim" style="accent-color:#1a73e8;width:14px;height:14px;"> Show perimeter</label>',
+          '</div>',
+          '<div id="setMenuTitle4" style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;margin-bottom:7px;">BEHAVIOUR</div>',
+          '<div style="display:flex;flex-direction:column;gap:8px;">',
+            '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optAutoCalc" style="accent-color:#1a73e8;width:14px;height:14px;"> Auto-calculate</label>',
           '</div>',
         '</div>',
     ].join('');
@@ -158,6 +173,7 @@
     var get = function(id) { return document.getElementById(id); };
     var canvas = get('triCanvas'), ctx = canvas.getContext('2d');
     var history = [];
+    var autoCalcTimer = null;
 
     get('prec').value          = initPrec;
     get('optSurd').checked     = initSurd;
@@ -166,6 +182,10 @@
     get('optDark').checked     = initDark;
     get('optDegrees').checked  = initDegrees;
     get('optDiagram').checked  = initDiagram;
+    get('optAutoCalc').checked  = initAutoCalc;
+    get('optShowSteps').checked = initShowSteps;
+    get('optShowArea').checked  = initShowArea;
+    get('optShowPerim').checked = initShowPerim;
 
     function getAdv()      { return get('optAdvanced').checked; }
     function getSurd()     { return get('optSurd').checked; }
@@ -173,7 +193,11 @@
     function getPrec()     { return parseInt(get('prec').value) || 2; }
     function getDark()     { return get('optDark').checked; }
     function getDeg()      { return get('optDegrees').checked; }
-    function getDiagram()  { return get('optDiagram').checked; }
+    function getDiagram()   { return get('optDiagram').checked; }
+    function getAutoCalc()  { return get('optAutoCalc').checked; }
+    function getShowSteps() { return get('optShowSteps').checked; }
+    function getShowArea()  { return get('optShowArea').checked; }
+    function getShowPerim() { return get('optShowPerim').checked; }
 
     function saveSettings() {
         try {
@@ -185,7 +209,11 @@
                 advanced: get('optAdvanced').checked,
                 dark: get('optDark').checked,
                 degrees: get('optDegrees').checked,
-                diagram: get('optDiagram').checked
+                diagram: get('optDiagram').checked,
+                autoCalc:  get('optAutoCalc').checked,
+                showSteps: get('optShowSteps').checked,
+                showArea:  get('optShowArea').checked,
+                showPerim: get('optShowPerim').checked
             }));
         } catch(e) {}
     }
@@ -194,6 +222,19 @@
         var show = getDiagram();
         var cb = get('canvasBox');
         if(cb) cb.style.display = show ? 'block' : 'none';
+    }
+
+    function applyResultVisibility() {
+        var sb = get('stepsBox');
+        var ap = get('areaPerimRow');
+        var ab = get('areaBox');
+        var pb = get('perimBox');
+        if(sb) sb.style.display = getShowSteps() ? 'block' : 'none';
+        // area/perim row: show if either is enabled
+        var showA = getShowArea(), showP = getShowPerim();
+        if(ab) ab.style.display = showA ? '' : 'none';
+        if(pb) pb.style.display = showP ? '' : 'none';
+        if(ap) ap.style.display = (showA || showP) ? 'grid' : 'none';
     }
 
     var DK = {
@@ -262,7 +303,7 @@
         var ct=get('classTag');
         if(ct){ ct.style.background=dk('tagBg'); ct.style.color=dk('tagTxt'); }
         var fa=get('finalApprox'); if(fa) fa.style.color=dk('subtext');
-        ['histMenu','setMenu','miniCalc'].forEach(function(id){
+        ['histMenu','miniCalc'].forEach(function(id){
             var m=get(id); if(m){ m.style.background=dk('menuBg'); m.style.borderColor=dk('menuBdr'); m.style.color=dk('text'); }
         });
         var mch=get('miniCalcHeader'); if(mch) mch.style.background=dk('headerBg');
@@ -288,12 +329,21 @@
         });
         var prec=get('prec'); if(prec){ prec.style.background=dk('inputBg'); prec.style.borderColor=dk('inputBdr'); prec.style.color=dk('text'); }
         var sm=get('setMenu');
-        if(sm){ sm.querySelectorAll('label').forEach(function(l){ l.style.color=dk('text'); }); }
+        if(sm){
+            sm.style.background=dk('menuBg'); sm.style.borderColor=dk('menuBdr'); sm.style.color=dk('text');
+            sm.querySelectorAll('label').forEach(function(l){ l.style.color=dk('text'); });
+            var smt=get('setMenuTitle'); if(smt) smt.style.color=dk('text');
+            var smt2=get('setMenuTitle2'); if(smt2) smt2.style.color=dk('label');
+            var smt3=get('setMenuTitle3'); if(smt3) smt3.style.color=dk('label');
+            var smt4=get('setMenuTitle4'); if(smt4) smt4.style.color=dk('label');
+            var pl=get('precLabel'); if(pl) pl.style.color=dk('subtext');
+        }
         var dl=get('dlBtn');
         if(dl){ dl.style.background=d?'rgba(30,30,46,0.9)':'rgba(255,255,255,0.92)'; dl.style.borderColor=dk('inputBdr'); dl.style.color=dk('btnTxt'); }
         var ch=get('closeHist'); if(ch){ ch.style.background=dk('btnBg'); ch.style.color=dk('btnTxt'); }
         buildTriBtns(); buildGoalBtns(); buildMethodBtns();
         applyDiagramVisibility();
+        applyResultVisibility();
     }
 
     var errTimer = null;
@@ -538,8 +588,13 @@
         cfg.inputs.forEach(function(_,i){
             var inp=get('v'+i);
             if(inp) inp.addEventListener('keydown',function(e){
-                if(e.key==='Enter'||e.keyCode===13){e.preventDefault();e.stopPropagation();get('calc').click();}
+                if(e.key==='Enter'||e.keyCode===13){e.preventDefault();e.stopPropagation();doCalculate(false);}
             },true);
+            if(inp) inp.addEventListener('input',function(){
+                if(!getAutoCalc()) return;
+                clearTimeout(autoCalcTimer);
+                autoCalcTimer = setTimeout(function(){ doCalculate(true); }, 350);
+            });
         });
         var tog=get('posToggle');
         if(cfg.toggle){
@@ -697,10 +752,11 @@
         }
     }
 
-    get('calc').onclick = function() {
-        clearError();
+    // ── Core calculation — silent=true suppresses error toasts (used by auto-calc) ──
+    function doCalculate(silent) {
+        if(!silent) clearError();
         var list=getMethodList();
-        if(!list.length){showError('Not available','No formula for this combination.');return;}
+        if(!list.length){if(!silent)showError('Not available','No formula for this combination.');return;}
         var cfg=list[Math.min(currentMethod,list.length-1)];
         var vals=[],missing=[];
         cfg.inputs.forEach(function(lbl,i){
@@ -708,8 +764,8 @@
             vals.push(v);
             if(isNaN(v)||!el||el.value.trim()==='') missing.push(lbl);
         });
-        if(missing.length){showError('Missing values','Please fill in: '+missing.join(', ')+'.');return;}
-        for(var j=0;j<vals.length;j++) if(vals[j]<=0){showError('Values must be positive',cfg.inputs[j]+' must be greater than zero.');return;}
+        if(missing.length){if(!silent)showError('Missing values','Please fill in: '+missing.join(', ')+'.');return;}
+        for(var j=0;j<vals.length;j++) if(vals[j]<=0){if(!silent)showError('Values must be positive',cfg.inputs[j]+' must be greater than zero.');return;}
 
         var v0=vals[0],v1=vals.length>1?vals[1]:NaN,v2=vals.length>2?vals[2]:NaN;
         var p=getPrec(),useSurd=getSurd();
@@ -720,11 +776,11 @@
 
         if(type==='rt_triple_check'){
             var legA=v0, legB=v1, hypIn=v2;
-            if(hypIn<=legA||hypIn<=legB){showError('Check your values','Hypotenuse must be larger than both legs.');return;}
+            if(hypIn<=legA||hypIn<=legB){if(!silent)showError('Check your values','Hypotenuse must be larger than both legs.');return;}
             var lhs=legA*legA+legB*legB, rhs=hypIn*hypIn;
             var isRightTri=Math.abs(lhs-rhs)/rhs<0.001;
             if(!isRightTri){
-                showError('Not a right triangle','These sides do not satisfy a\u00b2 + b\u00b2 = c\u00b2.\n'+
+                if(!silent)showError('Not a right triangle','These sides do not satisfy a\u00b2 + b\u00b2 = c\u00b2.\n'+
                     legA+'\u00b2 + '+legB+'\u00b2 = '+lhs.toFixed(4)+'\n'+
                     hypIn+'\u00b2 = '+rhs.toFixed(4)+'\nCheck your values.');
                 return;
@@ -801,19 +857,22 @@
             drawTri(s1,h,b,s2,false,anglesForCanvas);
             applyDark();
             applyDiagramVisibility();
-            var finalLabel=get('final').innerText;
-            history.unshift({label:'Py. Triple: '+finalLabel,tri:currentTri,goal:currentGoal,method:currentMethod,inputs:vals.map(String),isExt:false,finalText:finalLabel,approxText:'',approxVis:'none',formula:formula,area:area.toFixed(p),perim:perim.toFixed(p),ds1:s1,dh:h,db:b,ds2:s2,anglesForCanvas:anglesForCanvas});
-            if(history.length>10)history.pop();
-            get('histList').innerHTML=history.map(function(hh){return'<span style="display:block;padding:3px 0;border-bottom:1px solid #f0f0f0;">'+(hh.label||hh)+'</span>';}).join('');
-            saveSettings();
+            applyResultVisibility();
+            if(!silent){
+                var finalLabel=get('final').innerText;
+                history.unshift({label:'Py. Triple: '+finalLabel,tri:currentTri,goal:currentGoal,method:currentMethod,inputs:vals.map(String),isExt:false,finalText:finalLabel,approxText:'',approxVis:'none',formula:formula,area:area.toFixed(p),perim:perim.toFixed(p),ds1:s1,dh:h,db:b,ds2:s2,anglesForCanvas:anglesForCanvas});
+                if(history.length>10)history.pop();
+                get('histList').innerHTML=history.map(function(hh){return'<span style="display:block;padding:3px 0;border-bottom:1px solid #f0f0f0;">'+(hh.label||hh)+'</span>';}).join('');
+                saveSettings();
+            }
             return;
         }
 
         try{
         if(type==='sc_b_shs'){
             s1=v0;h=v1;s2=v2;
-            if(h>=s1){showError('Impossible','Height must be less than Side 1.');return;}
-            if(h>=s2){showError('Impossible','Height must be less than Side 2.');return;}
+            if(h>=s1){if(!silent)showError('Impossible','Height must be less than Side 1.');return;}
+            if(h>=s2){if(!silent)showError('Impossible','Height must be less than Side 2.');return;}
             var xA=Math.sqrt(s1*s1-h*h),xB=Math.sqrt(s2*s2-h*h);
             res=isExt?Math.abs(xA-xB):(xA+xB);b=res;
             formula='Part1 = \u221a('+s1+'\u00b2 \u2212 '+h+'\u00b2) = '+fmtS(xA)+'\nPart2 = \u221a('+s2+'\u00b2 \u2212 '+h+'\u00b2) = '+fmtS(xB)+'\nBase = '+fmtS(xA)+(isExt?' \u2212 ':' + ')+fmtS(xB)+' = '+fmtS(res);
@@ -822,10 +881,10 @@
             formula='Base = (2 \u00d7 Area) / Height\n= (2 \u00d7 '+v0+') / '+v1+' = '+fmtS(res);
         }else if(type==='sc_s_shb'){
             s1=v0;h=v1;b=v2;
-            if(h>=s1){showError('Impossible','Height must be less than Known Side.');return;}
+            if(h>=s1){if(!silent)showError('Impossible','Height must be less than Known Side.');return;}
             var xxS=Math.sqrt(s1*s1-h*h);
             if(isExt){
-                if(xxS<=b){showError('Impossible','Side\'s reach must exceed base.');return;}
+                if(xxS<=b){if(!silent)showError('Impossible','Side\'s reach must exceed base.');return;}
                 res=Math.sqrt(b*b+h*h);s2=res;
                 formula='Reach = \u221a('+s1+'\u00b2 \u2212 '+h+'\u00b2) = '+fmtS(xxS)+'\nSide 2 = \u221a('+b+'\u00b2 + '+h+'\u00b2) = '+fmtS(res);
             }else{
@@ -840,19 +899,19 @@
             formula='Height = (2 \u00d7 Area) / Base\n= (2 \u00d7 '+v0+') / '+v1+' = '+fmtS(res);
         }else if(type==='sc_h_ssb'){
             s1=v0;s2=v1;b=v2;
-            if(b/2>=s1){showError('Impossible','Base is too wide for Side 1.');return;}
+            if(b/2>=s1){if(!silent)showError('Impossible','Base is too wide for Side 1.');return;}
             res=Math.sqrt(s1*s1-(b/2)*(b/2));h=res;
             formula='Height = \u221a(S1\u00b2 \u2212 (Base/2)\u00b2)\n= \u221a('+s1+'\u00b2 \u2212 '+(b/2)+'\u00b2) = '+fmtS(res);
         }else if(type==='sc_a_heron'||type==='is_a_heron'){
             s1=v0;s2=v1;b=v2;
             var sv=(s1+s2+b)/2;
             var areaH=Math.sqrt(sv*(sv-s1)*(sv-s2)*(sv-b));
-            if(isNaN(areaH)||areaH<=0){showError('Impossible','These sides don\'t form a valid triangle.');return;}
+            if(isNaN(areaH)||areaH<=0){if(!silent)showError('Impossible','These sides don\'t form a valid triangle.');return;}
             res=areaH;area=areaH;h=(2*areaH)/b;perim=s1+s2+b;
             formula="Heron's: s = ("+s1+'+'+s2+'+'+b+') / 2 = '+sv.toFixed(p)+'\nArea = \u221a(s(s\u2212a)(s\u2212b)(s\u2212c))\n= \u221a('+sv.toFixed(p)+'\u00d7'+(sv-s1).toFixed(p)+'\u00d7'+(sv-s2).toFixed(p)+'\u00d7'+(sv-b).toFixed(p)+')\n= '+fmtS(res);
         }else if(type==='is_b_sh'){
             s1=v0;h=v1;s2=v0;
-            if(h>=s1){showError('Impossible','Height must be less than Leg.');return;}
+            if(h>=s1){if(!silent)showError('Impossible','Height must be less than Leg.');return;}
             var hfI=Math.sqrt(s1*s1-h*h);res=2*hfI;b=res;
             formula='Half-base = \u221a('+s1+'\u00b2 \u2212 '+h+'\u00b2) = '+fmtS(hfI)+'\nBase = 2 \u00d7 '+fmtS(hfI)+' = '+fmtS(res);
         }else if(type==='is_b_ah'){
@@ -860,9 +919,9 @@
             formula='Base = (2 \u00d7 Area) / Height\n= (2 \u00d7 '+v0+') / '+v1+' = '+fmtS(res);
         }else if(type==='is_b_al'){
             var Ai=v0,Si=v1,inner=4*Si*Si*Si*Si-16*Ai*Ai;
-            if(inner<0){showError('Impossible','Area too large for that leg.');return;}
+            if(inner<0){if(!silent)showError('Impossible','Area too large for that leg.');return;}
             var u=2*Si*Si-Math.sqrt(inner);
-            if(u<=0){showError('Impossible','No valid solution.');return;}
+            if(u<=0){if(!silent)showError('Impossible','No valid solution.');return;}
             res=Math.sqrt(u);b=res;s1=Si;s2=Si;h=(2*Ai)/b;
             formula='b\u00b2 = 2s\u00b2 \u2212 \u221a(4s\u2074\u22124A\u00b2)\nBase = \u221a'+fmtS(res);
         }else if(type==='is_s_bh'){
@@ -873,7 +932,7 @@
             formula='h = 2A/b = '+fmtS(h)+'\nLeg = \u221a(h\u00b2+(b/2)\u00b2) = '+fmtS(res);
         }else if(type==='is_h_bl'){
             b=v0;s1=v1;s2=v1;
-            if(b/2>=s1){showError('Impossible','Base too wide for Leg.');return;}
+            if(b/2>=s1){if(!silent)showError('Impossible','Base too wide for Leg.');return;}
             res=Math.sqrt(s1*s1-(b/2)*(b/2));h=res;
             formula='Height = \u221a(Leg\u00b2 \u2212 (Base/2)\u00b2)\n= \u221a('+s1+'\u00b2 \u2212 '+(b/2)+'\u00b2) = '+fmtS(res);
         }else if(type==='is_h_ab'){
@@ -886,7 +945,7 @@
         }else if(type==='eq_b_ah'){
             var hConsistent=Math.sqrt(v0*Math.sqrt(3));
             if(Math.abs(hConsistent-v1)>0.001*v1){
-                showError('Impossible combination','For an equilateral triangle, Area and Height are not independent. With Area = '+v0+', the height must be \u2248 '+hConsistent.toFixed(getPrec())+', not '+v1+'.');
+                if(!silent)showError('Impossible combination','For an equilateral triangle, Area and Height are not independent. With Area = '+v0+', the height must be \u2248 '+hConsistent.toFixed(getPrec())+', not '+v1+'.');
                 return;
             }
             var beq=(2*v0)/v1;
@@ -906,13 +965,13 @@
             formula='Other leg = (2A)/known = '+fmtS(h)+'\nc = \u221a('+legA+'\u00b2 + '+fmtS(h)+'\u00b2) = '+fmtS(res);
         }else if(type==='rt_l_cl'){
             var hyp=v0,oLeg=v1;
-            if(oLeg>=hyp){showError('Impossible','Leg must be shorter than hypotenuse.');return;}
+            if(oLeg>=hyp){if(!silent)showError('Impossible','Leg must be shorter than hypotenuse.');return;}
             res=Math.sqrt(hyp*hyp-oLeg*oLeg);s1=res;b=oLeg;s2=hyp;h=res;
             formula='Leg = \u221a(c\u00b2 \u2212 b\u00b2)\n= \u221a('+hyp+'\u00b2 \u2212 '+oLeg+'\u00b2)\n= \u221a'+(hyp*hyp-oLeg*oLeg)+' = '+fmtS(res);
         }else if(type==='rt_l_ac'){
             var hypR=v1;
             var inner3=hypR*hypR-4*v0;
-            if(inner3<0){showError('Impossible','Area is too large for that hypotenuse.');return;}
+            if(inner3<0){if(!silent)showError('Impossible','Area is too large for that hypotenuse.');return;}
             res=(Math.sqrt(hypR*hypR+4*v0)+Math.sqrt(inner3))/2;
             s1=res;h=res;
             b=(Math.sqrt(hypR*hypR+4*v0)-Math.sqrt(inner3))/2;
@@ -926,22 +985,22 @@
             var hypH=v1;res=(2*v0)/hypH;h=res;
             var sumAB=Math.sqrt(hypH*hypH+4*v0);
             var inner2=hypH*hypH-4*v0;
-            if(inner2<0){showError('Impossible','Area is too large for that hypotenuse.');return;}
+            if(inner2<0){if(!silent)showError('Impossible','Area is too large for that hypotenuse.');return;}
             var diffAB=Math.sqrt(inner2);
             s1=(sumAB+diffAB)/2; b=(sumAB-diffAB)/2; s2=hypH;
             formula='Altitude = (2A) / c = (2 \u00d7 '+v0+') / '+hypH+' = '+fmtS(res);
         }else if(type==='rt_b_cl'){
             var hypB=v0,legB=v1;
-            if(legB>=hypB){showError('Impossible','Leg must be shorter than hypotenuse.');return;}
+            if(legB>=hypB){if(!silent)showError('Impossible','Leg must be shorter than hypotenuse.');return;}
             res=Math.sqrt(hypB*hypB-legB*legB);b=res;s1=legB;s2=hypB;h=legB;
             formula='Base = \u221a(c\u00b2 \u2212 leg\u00b2)\n= \u221a('+hypB+'\u00b2 \u2212 '+legB+'\u00b2)\n= \u221a'+(hypB*hypB-legB*legB)+' = '+fmtS(res);
         }else if(type==='rt_b_ah'){
             res=(2*v0)/v1;b=res;h=v1;s1=h;s2=Math.sqrt(h*h+b*b);
             formula='Base = (2A) / height\n= (2 \u00d7 '+v0+') / '+v1+' = '+fmtS(res);
         }
-        }catch(e){showError('Calculation error','Double-check your values form a valid triangle.');return;}
+        }catch(e){if(!silent)showError('Calculation error','Double-check your values form a valid triangle.');return;}
 
-        if(isNaN(res)||res<=0||!isFinite(res)){showError('No solution','These values don\'t form a valid triangle.');return;}
+        if(isNaN(res)||res<=0||!isFinite(res)){if(!silent)showError('No solution','These values don\'t form a valid triangle.');return;}
         if(!s1||isNaN(s1))s1=res; if(!s2||isNaN(s2))s2=res;
         if(!b||isNaN(b))b=res;   if(!h||isNaN(h))h=res;
 
@@ -993,25 +1052,30 @@
 
         applyDark();
         applyDiagramVisibility();
+        applyResultVisibility();
 
-        var adv=getAdv();
-        var gLbl=((adv?goalLabel.a:goalLabel.s)[currentGoal])||currentGoal;
-        var inputVals=[];
-        cfg.inputs.forEach(function(_,i){var el=get('v'+i);inputVals.push(el?el.value:'');});
-        history.unshift({
-            label:gLbl+': '+get('final').innerText,
-            tri:currentTri,goal:currentGoal,method:currentMethod,
-            inputs:inputVals,isExt:isExt,
-            finalText:get('final').innerText,
-            approxText:approxEl.innerText,approxVis:approxEl.style.display,
-            formula:formula||'',area:area.toFixed(p),perim:perim.toFixed(p),
-            ds1:drawS1,dh:drawH,db:drawB,ds2:drawS2,
-            anglesForCanvas:anglesForCanvas
-        });
-        if(history.length>10)history.pop();
-        get('histList').innerHTML=history.map(function(hh){return'<span style="display:block;padding:3px 0;border-bottom:1px solid #f0f0f0;">'+(hh.label||hh)+'</span>';}).join('');
-        saveSettings();
-    };
+        if(!silent){
+            var adv=getAdv();
+            var gLbl=((adv?goalLabel.a:goalLabel.s)[currentGoal])||currentGoal;
+            var inputVals=[];
+            cfg.inputs.forEach(function(_,i){var el=get('v'+i);inputVals.push(el?el.value:'');});
+            history.unshift({
+                label:gLbl+': '+get('final').innerText,
+                tri:currentTri,goal:currentGoal,method:currentMethod,
+                inputs:inputVals,isExt:isExt,
+                finalText:get('final').innerText,
+                approxText:approxEl.innerText,approxVis:approxEl.style.display,
+                formula:formula||'',area:area.toFixed(p),perim:perim.toFixed(p),
+                ds1:drawS1,dh:drawH,db:drawB,ds2:drawS2,
+                anglesForCanvas:anglesForCanvas
+            });
+            if(history.length>10)history.pop();
+            get('histList').innerHTML=history.map(function(hh){return'<span style="display:block;padding:3px 0;border-bottom:1px solid #f0f0f0;">'+(hh.label||hh)+'</span>';}).join('');
+            saveSettings();
+        }
+    }
+
+    get('calc').onclick = function() { doCalculate(false); };
 
     get('copy').onclick    = function(){navigator.clipboard.writeText(get('final').innerText);this.innerText='Copied!';var self=this;setTimeout(function(){self.innerText='Copy';},1500);};
     get('dlBtn').onclick   = function(){var l=document.createElement('a');l.download='triangle.png';l.href=canvas.toDataURL();l.click();};
@@ -1441,6 +1505,10 @@
     get('optAdvanced').addEventListener('change',function(){rebuildAll();saveSettings();});
     get('optDark').addEventListener('change',function(){applyDark();saveSettings();});
     get('optDiagram').addEventListener('change',function(){applyDiagramVisibility();saveSettings();});
+    get('optAutoCalc').addEventListener('change',function(){saveSettings();});
+    get('optShowSteps').addEventListener('change',function(){applyResultVisibility();saveSettings();});
+    get('optShowArea').addEventListener('change',function(){applyResultVisibility();saveSettings();});
+    get('optShowPerim').addEventListener('change',function(){applyResultVisibility();saveSettings();});
 
     var historyIndex=-1;
     function restoreEntry(entry){
@@ -1457,6 +1525,7 @@
         drawTri(entry.ds1,entry.dh,entry.db,entry.ds2,entry.isExt,entry.anglesForCanvas);
         applyDark();
         applyDiagramVisibility();
+        applyResultVisibility();
     }
     document.addEventListener('keydown',function(e){
         if(get('miniCalc').style.display!=='none') return;
@@ -1481,4 +1550,5 @@
     buildTriBtns();buildGoalBtns();buildMethodBtns();renderInputs();
     if(initDark) applyDark();
     applyDiagramVisibility();
+    applyResultVisibility();
 })();
