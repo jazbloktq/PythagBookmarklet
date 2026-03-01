@@ -3120,6 +3120,9 @@
 
     function doSolveAll(silent) {
         var d=getDark(), p=getPrec(), html='', warn='';
+        var saArea=NaN, saPerim=NaN;
+        // Variables for diagram: s1=leg/side, h=height, b=base, s2=other side, angles
+        var diagS1=NaN, diagH=NaN, diagB=NaN, diagS2=NaN, diagAngles=null;
         var bdr=d?'rgba(200,200,255,0.08)':'#e8effe';
         function saRow(lbl,val,sfx){
             var vStr=isNaN(val)?null:(typeof val==='string'?val:val.toFixed(p));
@@ -3140,6 +3143,9 @@
             else {
                 var eh=Math.sqrt(3)/2*ea, eArea=Math.sqrt(3)/4*ea*ea, ePerim=3*ea;
                 var eInR=ea/(2*Math.sqrt(3)), eCircR=ea/Math.sqrt(3);
+                saArea=eArea; saPerim=ePerim;
+                diagS1=ea; diagH=eh; diagB=ea; diagS2=ea;
+                diagAngles=[Math.PI/3,Math.PI/3,Math.PI/3];
                 html+=saRow('Side',ea); html+=saRow('Height',eh); html+=saRow('All angles',fmtAng(60),angSfx);
                 html+=saRow('Area',eArea); html+=saRow('Perimeter',ePerim);
                 html+=saRow('Inradius',eInR); html+=saRow('Circumradius',eCircR);
@@ -3178,6 +3184,9 @@
                 if(isNaN(angA)) angA=Math.atan2(a,b)*180/Math.PI;
                 if(isNaN(angB)) angB=90-angA;
                 var rPerim=a+b+c, rInR=area/((a+b+c)/2);
+                saArea=area; saPerim=rPerim;
+                diagS1=a; diagH=a; diagB=b; diagS2=c;
+                diagAngles=[Math.PI/2, angB*Math.PI/180, angA*Math.PI/180];
                 var td=checkTripleDetail(a,b,c);
                 html+=saRow('Leg a',a); html+=saRow('Leg b',b); html+=saRow('Hypotenuse c',c);
                 html+=saRow('Height (altitude)',h);
@@ -3213,6 +3222,9 @@
                 if(isNaN(iBase)) iBase=(180-iApex)/2;
                 if(isNaN(iArea)) iArea=0.5*ib*ih;
                 var iPerim=2*ia+ib, iInR=iArea/((2*ia+ib)/2);
+                saArea=iArea; saPerim=iPerim;
+                diagS1=ia; diagH=ih; diagB=ib; diagS2=ia;
+                diagAngles=[iBase*Math.PI/180, iApex*Math.PI/180, iBase*Math.PI/180];
                 html+=saRow('Leg (equal side)',ia); html+=saRow('Base',ib); html+=saRow('Height',ih);
                 html+=saRow('Apex angle',fmtAng(iApex),angSfx); html+=saRow('Base angle \u00d72',fmtAng(iBase),angSfx);
                 html+=saRow('Area',iArea); html+=saRow('Perimeter',iPerim); html+=saRow('Inradius',iInR);
@@ -3255,6 +3267,9 @@
             if(!warn){
                 if(isNaN(sH)) sH=2*sArea/sc;
                 var sPerim=sa+sb+sc, sInR=sArea/((sa+sb+sc)/2), sCircR=(sa*sb*sc)/(4*sArea);
+                saArea=sArea; saPerim=sPerim;
+                diagS1=sa; diagH=sH; diagB=sc; diagS2=sb;
+                diagAngles=[sC*Math.PI/180, sB*Math.PI/180, sA*Math.PI/180];
                 html+=saRow('Side a',sa); html+=saRow('Side b',sb); html+=saRow('Side c',sc);
                 html+=saRow('Height (to c)',sH);
                 html+=saRow('Angle A',fmtAng(sA),angSfx); html+=saRow('Angle B',fmtAng(sB),angSfx); html+=saRow('Angle C',fmtAng(sC),angSfx);
@@ -3283,8 +3298,20 @@
         get('anglesBox').style.display='none';
         var stb=get('stepsBox'); if(stb) stb.style.display='none';
         get('formulaText').innerText='';
-        get('areaRes').innerText='';
-        get('perimRes').innerText='';
+        // Update the area/perimeter boxes in the result panel
+        var areaEl=get('areaRes'), perimEl=get('perimRes');
+        if(areaEl) areaEl.innerText=(!warn&&!isNaN(saArea))?saArea.toFixed(p):'';
+        if(perimEl) perimEl.innerText=(!warn&&!isNaN(saPerim))?saPerim.toFixed(p):'';
+        // Show area/perimeter boxes regardless of goal setting since we computed them
+        var areaBox=get('areaBox'), perimBox=get('perimBox');
+        if(!warn){
+            if(areaBox) areaBox.style.display='flex';
+            if(perimBox) perimBox.style.display='flex';
+        }
+        // Draw the triangle diagram
+        if(!warn && !isNaN(diagS1) && !isNaN(diagH) && !isNaN(diagB)){
+            drawTri(diagS1, diagH, diagB, diagS2, false, diagAngles, 'all');
+        }
         applyDark(); applyDiagramVisibility(); applyResultVisibility();
     }
 
