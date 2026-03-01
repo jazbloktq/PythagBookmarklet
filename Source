@@ -112,7 +112,7 @@
           '<div id="histList" style="color:#666;line-height:1.8;">No history yet.</div>',
           '<button id="closeHist" style="width:100%;margin-top:10px;padding:6px;border:none;background:#f1f3f4;border-radius:6px;cursor:pointer;font-size:12px;">Dismiss</button>',
         '</div>',
-        '<div id="setMenu" style="display:none;position:absolute;top:50px;right:16px;width:250px;background:#fff;border:1px solid #ddd;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.15);padding:0;z-index:10005;font-size:12px;max-height:85vh;overflow:hidden;box-sizing:border-box;display:flex;flex-direction:column;">',
+        '<div id="setMenu" style="display:none;position:absolute;top:50px;right:16px;width:250px;background:#fff;border:1px solid #ddd;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.15);padding:0;z-index:10005;font-size:12px;max-height:85vh;overflow:hidden;box-sizing:border-box;flex-direction:column;">',
           '<div id="setMenuTitle" style="font-weight:700;padding:12px 14px 8px;color:#222;font-size:13px;flex-shrink:0;">Settings</div>',
           '<div id="setTabs" style="display:flex;border-bottom:1px solid #eee;flex-shrink:0;padding:0 10px;gap:2px;">',
             '<button class="setTab" data-tab="output"    style="padding:6px 8px;border:none;background:none;font-size:11px;font-weight:700;cursor:pointer;border-bottom:2px solid #1a73e8;color:#1a73e8;margin-bottom:-1px;">Output</button>',
@@ -880,6 +880,33 @@
 
     function toRad(v) { return v * Math.PI / 180; }
     function isAngleLbl(lbl) { return lbl.indexOf('\u00b0') >= 0 || lbl.toLowerCase().indexOf('angle') >= 0; }
+
+    // ── Solve All field definitions (must be before renderInputs) ─────────────
+    var solveAllFields = {
+        right:       [{id:'sa_a',   lbl:'Leg a'},
+                      {id:'sa_b',   lbl:'Leg b'},
+                      {id:'sa_c',   lbl:'Hypotenuse c'},
+                      {id:'sa_angA',lbl:'Angle A (°)',    isAngle:true},
+                      {id:'sa_angB',lbl:'Angle B (°)',    isAngle:true},
+                      {id:'sa_area',lbl:'Area'},
+                      {id:'sa_h',   lbl:'Height (altitude)'}],
+        scalene:     [{id:'sa_a',   lbl:'Side a'},
+                      {id:'sa_b',   lbl:'Side b'},
+                      {id:'sa_c',   lbl:'Side c'},
+                      {id:'sa_angA',lbl:'Angle A (°)',    isAngle:true},
+                      {id:'sa_angB',lbl:'Angle B (°)',    isAngle:true},
+                      {id:'sa_angC',lbl:'Angle C (°)',    isAngle:true},
+                      {id:'sa_area',lbl:'Area'},
+                      {id:'sa_h',   lbl:'Height (to c)'}],
+        isosceles:   [{id:'sa_a',   lbl:'Leg (equal side)'},
+                      {id:'sa_b',   lbl:'Base'},
+                      {id:'sa_h',   lbl:'Height'},
+                      {id:'sa_apex',lbl:'Apex angle (°)', isAngle:true},
+                      {id:'sa_base',lbl:'Base angle (°)', isAngle:true},
+                      {id:'sa_area',lbl:'Area'}],
+        equilateral: [{id:'sa_a',   lbl:'Side'}]
+    };
+    function gsa(id){ var el=get(id); if(!el||el.value.trim()==='') return NaN; var v=parseFloat(el.value); return isNaN(v)?NaN:v; }
 
     function bBaseStyle()   {
         var d=getDark();
@@ -2953,7 +2980,8 @@
     var mLen=(methods[currentTri]&&methods[currentTri][currentGoal]?methods[currentTri][currentGoal].length:0);
     if(currentMethod>=mLen) currentMethod=0;
     buildTriBtns();buildGoalBtns();buildMethodBtns();renderInputs();
-    if(initDark) { ui.classList.add('geo-dark'); applyDark(); }
+    if(initDark) ui.classList.add('geo-dark');
+    applyDark();
     applyDiagramVisibility();
     applyResultVisibility();
     updateUnitContextBar();
@@ -3088,35 +3116,6 @@
         get('areaRes').innerText=(0.5*newBase*newH).toFixed(getPrec());
         get('perimRes').innerText=(newS1+newS2+newBase).toFixed(getPrec());
     });
-
-    // ── Solve All: field definitions per triangle type ────────────────────────
-    // These ids are read by both renderInputs (when goal==='all') and doCalculate
-    var solveAllFields = {
-        right:       [{id:'sa_a',   lbl:'Leg a'},
-                      {id:'sa_b',   lbl:'Leg b'},
-                      {id:'sa_c',   lbl:'Hypotenuse c'},
-                      {id:'sa_angA',lbl:'Angle A (°)',    isAngle:true},
-                      {id:'sa_angB',lbl:'Angle B (°)',    isAngle:true},
-                      {id:'sa_area',lbl:'Area'},
-                      {id:'sa_h',   lbl:'Height (altitude)'}],
-        scalene:     [{id:'sa_a',   lbl:'Side a'},
-                      {id:'sa_b',   lbl:'Side b'},
-                      {id:'sa_c',   lbl:'Side c'},
-                      {id:'sa_angA',lbl:'Angle A (°)',    isAngle:true},
-                      {id:'sa_angB',lbl:'Angle B (°)',    isAngle:true},
-                      {id:'sa_angC',lbl:'Angle C (°)',    isAngle:true},
-                      {id:'sa_area',lbl:'Area'},
-                      {id:'sa_h',   lbl:'Height (to c)'}],
-        isosceles:   [{id:'sa_a',   lbl:'Leg (equal side)'},
-                      {id:'sa_b',   lbl:'Base'},
-                      {id:'sa_h',   lbl:'Height'},
-                      {id:'sa_apex',lbl:'Apex angle (°)', isAngle:true},
-                      {id:'sa_base',lbl:'Base angle (°)', isAngle:true},
-                      {id:'sa_area',lbl:'Area'}],
-        equilateral: [{id:'sa_a',   lbl:'Side'}]
-    };
-
-    function gsa(id){ var el=get(id); if(!el||el.value.trim()==='') return NaN; var v=parseFloat(el.value); return isNaN(v)?NaN:v; }
 
     function doSolveAll(silent) {
         var d=getDark(), p=getPrec(), html='', warn='';
