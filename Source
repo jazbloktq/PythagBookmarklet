@@ -48,9 +48,10 @@
         '<div id="uiHeader" style="padding:14px 18px;background:#1a73e8;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;border-radius:14px 14px 0 0;">',
           '<h3 style="margin:0;font-size:15px;color:#fff;font-weight:700;letter-spacing:0.3px;">&#9651; Geometry Pro</h3>',
           '<div style="display:flex;gap:12px;align-items:center;">',
-            '<span id="calcBtn" title="Calculator" style="cursor:pointer;font-size:16px;opacity:0.9;">&#x1F5A9;</span>',
-            '<span id="histBtn" title="History" style="cursor:pointer;font-size:16px;opacity:0.9;">&#128337;</span>',
-            '<span id="setBtn"  title="Settings" style="cursor:pointer;font-size:16px;opacity:0.9;">&#9881;</span>',
+            '<span id="calcBtn"   title="Calculator" style="cursor:pointer;font-size:16px;opacity:0.9;">&#x1F5A9;</span>',
+            '<span id="solverBtn" title="Triangle Solver" style="cursor:pointer;font-size:15px;opacity:0.9;">&#9650;</span>',
+            '<span id="histBtn"   title="History" style="cursor:pointer;font-size:16px;opacity:0.9;">&#128337;</span>',
+            '<span id="setBtn"    title="Settings" style="cursor:pointer;font-size:16px;opacity:0.9;">&#9881;</span>',
             '<span id="close"   style="cursor:pointer;font-size:18px;color:#fff;opacity:0.8;line-height:1;">&times;</span>',
           '</div>',
         '</div>',
@@ -70,6 +71,7 @@
           '<div id="canvasBox" style="position:relative;width:100%;margin-bottom:14px;border:1px solid #eee;border-radius:8px;overflow:hidden;background:#fafafa;">',
             '<canvas id="triCanvas" width="340" height="210" style="width:100%;display:block;"></canvas>',
             '<button id="dlBtn" style="position:absolute;bottom:7px;right:7px;background:rgba(255,255,255,0.92);border:1px solid #ddd;padding:4px 9px;border-radius:4px;font-size:10px;cursor:pointer;font-weight:600;color:#555;">Save PNG</button>',
+            '<button id="lockTypeBtn" title="Lock triangle type while dragging" style="position:absolute;bottom:7px;left:7px;background:rgba(255,255,255,0.92);border:1px solid #ddd;padding:4px 7px;border-radius:4px;font-size:13px;cursor:pointer;line-height:1;">&#128275;</button>',
           '</div>',
           '<div style="display:flex;gap:8px;margin-bottom:14px;">',
             '<button id="calc"  style="flex:2;padding:11px;background:#1a73e8;color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px;">Calculate</button>',
@@ -110,6 +112,18 @@
           '<div style="font-weight:700;margin-bottom:8px;color:#333;">Recent Calculations</div>',
           '<div id="histList" style="color:#666;line-height:1.8;">No history yet.</div>',
           '<button id="closeHist" style="width:100%;margin-top:10px;padding:6px;border:none;background:#f1f3f4;border-radius:6px;cursor:pointer;font-size:12px;">Dismiss</button>',
+        '</div>',
+        '<div id="solverMenu" style="display:none;position:absolute;top:50px;left:16px;right:16px;background:#fff;border:1px solid #ddd;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.15);padding:14px;z-index:10005;font-size:12px;max-height:78vh;overflow-y:auto;box-sizing:border-box;">',
+          '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">',
+            '<div style="font-weight:700;color:#333;font-size:13px;">&#9651; Triangle Solver</div>',
+            '<button id="closeSolver" style="border:none;background:none;font-size:18px;cursor:pointer;color:#888;line-height:1;">&times;</button>',
+          '</div>',
+          '<div style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;margin-bottom:6px;">TRIANGLE TYPE</div>',
+          '<div id="svTriBtns" style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:10px;"></div>',
+          '<div style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;margin-bottom:6px;">KNOWN VALUES <span style="font-weight:400;font-size:10px;text-transform:none;letter-spacing:0;">(leave blank what you want to find)</span></div>',
+          '<div id="svInputs" style="display:flex;flex-direction:column;gap:7px;margin-bottom:10px;"></div>',
+          '<button id="svCalcBtn" style="width:100%;padding:10px;background:#1a73e8;color:#fff;border:none;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;margin-bottom:10px;">Solve</button>',
+          '<div id="svResults" style="display:none;background:#f0f6ff;border:1px solid #c5d8f8;border-radius:8px;padding:12px;font-size:12px;"></div>',
         '</div>',
         '<div id="setMenu" style="display:none;position:absolute;top:50px;right:16px;width:250px;background:#fff;border:1px solid #ddd;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.15);padding:0;z-index:10005;font-size:12px;max-height:85vh;overflow:hidden;box-sizing:border-box;display:flex;flex-direction:column;">',
           '<div id="setMenuTitle" style="font-weight:700;padding:12px 14px 8px;color:#222;font-size:13px;flex-shrink:0;">Settings</div>',
@@ -926,7 +940,7 @@
             var isAng=isAngleLbl(lbl);
             var ph=isAng?'e.g. 45':(currentUnit!=='none'?'e.g. 4 or 4cm':'e.g. 4');
             return '<div style="position:relative;"><div style="font-size:10px;font-weight:700;color:'+(d?'#7070a0':'#888')+';letter-spacing:0.6px;margin-bottom:4px;">'+lbl.toUpperCase()+'</div>'+
-                   '<input type="text" inputmode="decimal" id="v'+i+'" placeholder="'+ph+'" style="width:100%;padding:9px 11px;border:1.5px solid '+(d?'#444466':'#ddd')+';border-radius:7px;box-sizing:border-box;font-size:14px;outline:none;background:'+(d?'#2a2a3e':'#fff')+';color:'+(d?'#e0e0f0':'#222')+';" onfocus="this.style.borderColor=\'#1a73e8\'" onblur="this.style.borderColor=\''+(d?'#444466':'#ddd')+'\'"></div>';
+                   '<input type="text" inputmode="decimal" id="v'+i+'" placeholder="'+ph+'" style="width:100%;padding:9px 42px 9px 11px;border:1.5px solid '+(d?'#444466':'#ddd')+';border-radius:7px;box-sizing:border-box;font-size:14px;outline:none;background:'+(d?'#2a2a3e':'#fff')+';color:'+(d?'#e0e0f0':'#222')+';" onfocus="this.style.borderColor=\'#1a73e8\'" onblur="this.style.borderColor=\''+(d?'#444466':'#ddd')+'\'"></div>';
         }).join('');
         cfg.inputs.forEach(function(_,i){
             var inp=get('v'+i);
@@ -2753,10 +2767,11 @@
     get('calcSettingsPanel').addEventListener('click', function(e) { e.stopPropagation(); });
 
     document.addEventListener('click',function(e){
-        var sm=get('setMenu'),hm=get('histMenu'),mc=get('miniCalc');
-        var sb=get('setBtn'),hb=get('histBtn'),cb=get('calcBtn');
+        var sm=get('setMenu'),hm=get('histMenu'),mc=get('miniCalc'),sv=get('solverMenu');
+        var sb=get('setBtn'),hb=get('histBtn'),cb=get('calcBtn'),svb=get('solverBtn');
         if(sm.style.display!=='none'&&!sm.contains(e.target)&&e.target!==sb) sm.style.display='none';
         if(hm.style.display!=='none'&&!hm.contains(e.target)&&e.target!==hb) hm.style.display='none';
+        if(sv&&sv.style.display!=='none'&&!sv.contains(e.target)&&e.target!==svb) sv.style.display='none';
         var pinEl = get('calcPinOpen');
         var isPinned = pinEl && pinEl.checked;
         var clickedInside = _calcClickedInside;
@@ -2907,6 +2922,314 @@
     applyDiagramVisibility();
     applyResultVisibility();
     updateUnitContextBar();
+
+    // ── Lock-type button ──────────────────────────────────────────────────────
+    var diagTypeLocked = false;
+    var lockBtn = get('lockTypeBtn');
+    if(lockBtn) {
+        lockBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            diagTypeLocked = !diagTypeLocked;
+            lockBtn.innerHTML = diagTypeLocked ? '&#128274;' : '&#128275;';
+            lockBtn.title = diagTypeLocked ? 'Type locked — click to unlock' : 'Lock triangle type while dragging';
+            lockBtn.style.background = diagTypeLocked ? 'rgba(26,115,232,0.15)' : 'rgba(255,255,255,0.92)';
+            lockBtn.style.borderColor = diagTypeLocked ? '#1a73e8' : '#ddd';
+            lockBtn.style.color = diagTypeLocked ? '#1a73e8' : '#555';
+        });
+        applyDark_lockBtn = function() {
+            var d = getDark();
+            lockBtn.style.background = diagTypeLocked ? (d?'rgba(74,158,255,0.2)':'rgba(26,115,232,0.15)') : (d?'rgba(30,30,46,0.9)':'rgba(255,255,255,0.92)');
+            lockBtn.style.borderColor = diagTypeLocked ? (d?'#4a9eff':'#1a73e8') : (d?'#444466':'#ddd');
+            lockBtn.style.color = diagTypeLocked ? (d?'#4a9eff':'#1a73e8') : (d?'#c0c0e0':'#555');
+        };
+    }
+    // Override the applyDark call to also update lockBtn
+    var _origApplyDark = applyDark;
+    applyDark = function() { _origApplyDark(); if(typeof applyDark_lockBtn==='function') applyDark_lockBtn(); };
+
+    // Patch the drag mousemove to enforce type constraints when locked
+    // We need to wrap the constraint logic into the drag handler.
+    // The original handler is inlined on canvas mousemove; we add a post-drag correction.
+    var _origMouseMove = null; // capture via event override isn't possible cleanly
+    // Instead, we monkey-patch the drag result via the existing mousemove handler
+    // by replacing it. Let's remove existing and re-add with lock logic:
+    // Actually the cleanest approach is to hook into the diagram redraw.
+    // We'll track the locked type and project the dragged vertices onto it.
+    // The existing handler updates diagVertices directly; we'll intercept via a
+    // second 'mousemove' that fires after (capture=false, same phase) — no, that's fragile.
+    // Best: re-register the mousemove with full lock logic.
+    // We remove and re-add canvas mousemove. The original was set earlier; we wrap:
+    canvas.addEventListener('mousemove', function(e) {
+        if(!diagTypeLocked || diagDragIdx < 0 || !lastCalcResult) return;
+        // After the original handler has updated diagVertices, enforce type constraints
+        // The original handler already ran (it was added first). Now enforce.
+        var pA = diagVertices[0], pB = diagVertices[1], pC = diagVertices[2];
+        var lockedType = currentTri;
+        function dist2v(a,b){return Math.sqrt((a.x-b.x)*(a.x-b.x)+(a.y-b.y)*(a.y-b.y));}
+
+        if(lockedType === 'equilateral') {
+            // Keep it equilateral: compute average side, rebuild symmetric
+            var s = (dist2v(pA,pB)+dist2v(pB,pC)+dist2v(pA,pC))/3;
+            // Center
+            var cx = (pA.x+pB.x+pC.x)/3, cy = (pA.y+pB.y+pC.y)/3;
+            // Orientation: keep apex (pB) direction
+            var ang = Math.atan2(pB.y-cy, pB.x-cx);
+            var r = s / Math.sqrt(3);
+            diagVertices[0].x = cx + r*Math.cos(ang+2*Math.PI/3);
+            diagVertices[0].y = cy + r*Math.sin(ang+2*Math.PI/3);
+            diagVertices[1].x = cx + r*Math.cos(ang);
+            diagVertices[1].y = cy + r*Math.sin(ang);
+            diagVertices[2].x = cx + r*Math.cos(ang-2*Math.PI/3);
+            diagVertices[2].y = cy + r*Math.sin(ang-2*Math.PI/3);
+        } else if(lockedType === 'isosceles') {
+            // pA=left base, pC=right base, pB=apex — keep pA.y === pC.y and symmetry
+            // Mirror pC to match pA's y relative to base midpoint
+            var midX = (pA.x + pC.x)/2;
+            var baseY = (pA.y + pC.y)/2; // average; keep base horizontal
+            // Force pA.y = pC.y = baseY, and pA.x symmetric around midX
+            var halfBase = dist2v(pA,pC)/2;
+            diagVertices[0].x = midX - halfBase; diagVertices[0].y = baseY;
+            diagVertices[2].x = midX + halfBase; diagVertices[2].y = baseY;
+            // apex stays where user dragged it (pB), just ensure x is on midline
+            if(diagDragIdx === 1) { diagVertices[1].x = midX; }
+            // else apex x snaps to midX
+            else { diagVertices[1].x = midX; }
+        } else if(lockedType === 'right') {
+            // pA = right-angle vertex (bottom-left), pB = top, pC = bottom-right
+            // Maintain right angle at pA: ensure pA.y === pC.y and pA.x === pB.x
+            if(diagDragIdx === 0) {
+                // dragging right-angle vertex: update both constraints
+                diagVertices[1].x = diagVertices[0].x;
+                diagVertices[2].y = diagVertices[0].y;
+            } else if(diagDragIdx === 1) {
+                // dragging top vertex: keep x aligned with pA
+                diagVertices[1].x = diagVertices[0].x;
+            } else if(diagDragIdx === 2) {
+                // dragging bottom-right: keep y aligned with pA
+                diagVertices[2].y = diagVertices[0].y;
+            }
+        }
+        // Redraw with corrected vertices
+        var pA2 = diagVertices[0], pB2 = diagVertices[1], pC2 = diagVertices[2];
+        var newS1=dist2v(pA2,pB2)/diagScale, newS2=dist2v(pB2,pC2)/diagScale, newBase=dist2v(pA2,pC2)/diagScale;
+        var acLen=dist2v(pA2,pC2)||1;
+        var cross=Math.abs((pC2.x-pA2.x)*(pA2.y-pB2.y)-(pA2.x-pB2.x)*(pC2.y-pA2.y));
+        var newH=cross/acLen/diagScale;
+        var W2=canvas.width, H2=canvas.height;
+        var dc=getDark(), tc=dc?'#4a9eff':'#1a73e8';
+        ctx.clearRect(0,0,W2,H2);
+        ctx.beginPath();ctx.moveTo(pA2.x,pA2.y);ctx.lineTo(pB2.x,pB2.y);ctx.lineTo(pC2.x,pC2.y);ctx.closePath();
+        ctx.fillStyle=dc?'rgba(74,158,255,0.08)':'rgba(26,115,232,0.07)';ctx.fill();
+        ctx.strokeStyle=tc;ctx.lineWidth=2.5;ctx.lineJoin='round';
+        ctx.beginPath();ctx.moveTo(pA2.x,pA2.y);ctx.lineTo(pB2.x,pB2.y);ctx.lineTo(pC2.x,pC2.y);ctx.closePath();ctx.stroke();
+        if(lockedType==='right'){var sq=7;ctx.strokeStyle=dc?'#888':'#888';ctx.lineWidth=1.2;ctx.strokeRect(pA2.x,pA2.y-sq,sq,sq);}
+        diagVertices.forEach(function(v){
+            ctx.beginPath();ctx.arc(v.x,v.y,6,0,2*Math.PI);
+            ctx.fillStyle=dc?'rgba(74,158,255,0.5)':'rgba(26,115,232,0.35)';ctx.fill();
+            ctx.strokeStyle=tc;ctx.lineWidth=1.5;ctx.stroke();
+        });
+        ctx.fillStyle=tc;ctx.font='bold 11px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';
+        var cxD=(pA2.x+pB2.x+pC2.x)/3, cyD=(pA2.y+pB2.y+pC2.y)/3;
+        function lbD2(ax,ay,bx,by,lbl){
+            var mx=(ax+bx)/2,my=(ay+by)/2,dx=bx-ax,dy=by-ay,len=Math.sqrt(dx*dx+dy*dy)||1;
+            var nx=-dy/len,ny=dx/len;
+            if((mx+nx-cxD)*nx+(my+ny-cyD)*ny<0){nx=-nx;ny=-ny;}
+            ctx.fillText(lbl,mx+nx*16,my+ny*16);
+        }
+        lbD2(pA2.x,pA2.y,pB2.x,pB2.y,newS1.toFixed(2));
+        lbD2(pB2.x,pB2.y,pC2.x,pC2.y,newS2.toFixed(2));
+        lbD2(pA2.x,pA2.y,pC2.x,pC2.y,newBase.toFixed(2));
+        // Update inputs
+        var cfg2b=(getMethodList())[Math.min(currentMethod,(getMethodList()).length-1)];
+        if(cfg2b){
+            cfg2b.inputs.forEach(function(lbl,i){
+                var ll=lbl.toLowerCase(), el=get('v'+i); if(!el) return;
+                if(ll.indexOf('side 1')>=0||ll.indexOf('leg a')>=0||(ll.indexOf('leg')>=0&&i===0)) el.value=newS1.toFixed(4);
+                else if((ll.indexOf('side 2')>=0||ll.indexOf('leg b')>=0)&&i>0) el.value=newS2.toFixed(4);
+                else if(ll.indexOf('base')>=0||ll.indexOf('hyp')>=0) el.value=newBase.toFixed(4);
+                else if(ll.indexOf('height')>=0||ll.indexOf('alt')>=0) el.value=newH.toFixed(4);
+            });
+        }
+        get('areaRes').innerText=(0.5*newBase*newH).toFixed(getPrec());
+        get('perimRes').innerText=(newS1+newS2+newBase).toFixed(getPrec());
+    });
+
+    // ── Triangle Solver ───────────────────────────────────────────────────────
+    var svTriType = 'right';
+    var svMenu = get('solverMenu');
+    var svResults = get('svResults');
+
+    var svFields = {
+        right:       [{id:'sva',lbl:'Leg a'},{id:'svb',lbl:'Leg b'},{id:'svc',lbl:'Hypotenuse (c)'},{id:'svh',lbl:'Height (altitude)'},{id:'svA',lbl:'Angle A (°)',isAngle:true},{id:'svB',lbl:'Angle B (°)',isAngle:true}],
+        scalene:     [{id:'sva',lbl:'Side a'},{id:'svb',lbl:'Side b'},{id:'svc',lbl:'Side c'},{id:'svh',lbl:'Height'},{id:'svA',lbl:'Angle A (°)',isAngle:true},{id:'svB',lbl:'Angle B (°)',isAngle:true},{id:'svC',lbl:'Angle C (°)',isAngle:true}],
+        isosceles:   [{id:'sva',lbl:'Leg (equal side)'},{id:'svb',lbl:'Base'},{id:'svh',lbl:'Height'},{id:'svApex',lbl:'Apex angle (°)',isAngle:true},{id:'svBase',lbl:'Base angle (°)',isAngle:true}],
+        equilateral: [{id:'sva',lbl:'Side'}]
+    };
+
+    function buildSvTriBtns() {
+        var el = get('svTriBtns'); el.innerHTML='';
+        var types=[{id:'right',lbl:'Right'},{id:'scalene',lbl:'Scalene'},{id:'isosceles',lbl:'Isosceles'},{id:'equilateral',lbl:'Equilateral'}];
+        var d=getDark();
+        types.forEach(function(t){
+            var b=document.createElement('button');
+            var active=t.id===svTriType;
+            b.style.cssText=(active?'border:2px solid #1a73e8;background:'+(d?'#1e2e4e':'#e8f0fe')+';color:'+(d?'#4a9eff':'#1a73e8')+';font-weight:700;':'border:2px solid '+(d?'#444466':'#e0e0e0')+';background:'+(d?'#2a2a3e':'#fff')+';color:'+(d?'#c0c0e0':'#555')+';font-weight:600;')+'border-radius:7px;padding:7px 8px;cursor:pointer;font-size:12px;text-align:center;';
+            b.innerText=t.lbl;
+            b.onclick=function(e){e.stopPropagation();svTriType=t.id;buildSvTriBtns();buildSvInputs();get('svResults').style.display='none';};
+            el.appendChild(b);
+        });
+    }
+
+    function buildSvInputs() {
+        var cont = get('svInputs'); cont.innerHTML='';
+        var fields = svFields[svTriType]||[];
+        var d=getDark();
+        fields.forEach(function(f){
+            var wrap=document.createElement('div');
+            wrap.style.cssText='display:flex;align-items:center;gap:8px;';
+            wrap.innerHTML='<label style="font-size:11px;font-weight:600;color:'+(d?'#9090b0':'#888')+';width:140px;flex-shrink:0;">'+f.lbl+'</label>'+
+                '<input type="text" inputmode="decimal" id="'+f.id+'" placeholder="'+(f.isAngle?'e.g. 45':'e.g. 5')+'" style="flex:1;padding:7px 10px;border:1.5px solid '+(d?'#444466':'#ddd')+';border-radius:6px;font-size:13px;box-sizing:border-box;background:'+(d?'#2a2a3e':'#fff')+';color:'+(d?'#e0e0f0':'#222')+';">';
+            cont.appendChild(wrap);
+        });
+    }
+
+    function svGetVal(id) { var el=get(id); return el&&el.value.trim()!==''?parseFloat(el.value):NaN; }
+    function svFmt(v) { return isNaN(v)?'?':v.toFixed(getPrec()); }
+    function svRow(label, val, unit) {
+        var d=getDark();
+        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid '+(d?'rgba(200,200,255,0.08)':'#e8effe')+';">'+
+            '<span style="color:'+(d?'#9090b0':'#666')+';">'+label+'</span>'+
+            '<span style="font-weight:700;color:'+(d?'#e0e8ff':'#222')+';">'+(isNaN(val)?'—':val.toFixed(getPrec()))+(unit||'')+'</span>'+
+            '</div>';
+    }
+    function svBadge(txt, col, bg) {
+        return '<div style="display:inline-block;padding:3px 9px;border-radius:10px;font-size:11px;font-weight:700;color:'+col+';background:'+bg+';margin-top:6px;">'+txt+'</div>';
+    }
+
+    function doSolve() {
+        get('svResults').style.display='none';
+        var d=getDark();
+        var html='', warn='';
+        try {
+        if(svTriType==='right') {
+            var a=svGetVal('sva'), b=svGetVal('svb'), c=svGetVal('svc');
+            var h=svGetVal('svh'), angA=svGetVal('svA'), angB=svGetVal('svB');
+            // Derive from known combos
+            if(!isNaN(a)&&!isNaN(b)) { c=Math.sqrt(a*a+b*b); h=a*b/c; angA=Math.atan2(a,b)*180/Math.PI; angB=90-angA; }
+            else if(!isNaN(a)&&!isNaN(c)) { if(a>=c){warn='Leg must be shorter than hypotenuse.';} else {b=Math.sqrt(c*c-a*a);h=a*b/c;angA=Math.asin(a/c)*180/Math.PI;angB=90-angA;} }
+            else if(!isNaN(b)&&!isNaN(c)) { if(b>=c){warn='Leg must be shorter than hypotenuse.';} else {a=Math.sqrt(c*c-b*b);h=a*b/c;angA=Math.asin(a/c)*180/Math.PI;angB=90-angA;} }
+            else if(!isNaN(a)&&!isNaN(angA)) { angA=Math.min(89.9,Math.max(0.1,angA));b=a/Math.tan(angA*Math.PI/180);c=a/Math.sin(angA*Math.PI/180);h=a*b/c;angB=90-angA; }
+            else if(!isNaN(a)&&!isNaN(angB)) { angB=Math.min(89.9,Math.max(0.1,angB));angA=90-angB;b=a/Math.tan(angA*Math.PI/180);c=a/Math.sin(angA*Math.PI/180);h=a*b/c; }
+            else if(!isNaN(b)&&!isNaN(angA)) { angA=Math.min(89.9,Math.max(0.1,angA));a=b*Math.tan(angA*Math.PI/180);c=b/Math.cos(angA*Math.PI/180);h=a*b/c;angB=90-angA; }
+            else if(!isNaN(c)&&!isNaN(angA)) { angA=Math.min(89.9,Math.max(0.1,angA));a=c*Math.sin(angA*Math.PI/180);b=c*Math.cos(angA*Math.PI/180);h=a*b/c;angB=90-angA; }
+            else if(!isNaN(h)&&!isNaN(a)) { b=a*a/h; /* h=ab/c, if we know h and a... need more info */ b=NaN; warn='Not enough info — try leg a + leg b, or a side + angle.'; }
+            else { warn='Please enter at least 2 known values (e.g. both legs, or leg + angle).'; }
+            if(!warn && (isNaN(a)||isNaN(b)||isNaN(c))) { warn='Could not solve — check your inputs.'; }
+            if(!warn) {
+                var perim=a+b+c, area=0.5*a*b;
+                var td=checkTripleDetail(a,b,c);
+                html+=svRow('Leg a', a);
+                html+=svRow('Leg b', b);
+                html+=svRow('Hypotenuse c', c);
+                html+=svRow('Height (altitude)', h);
+                html+=svRow('Angle A', angA, '°');
+                html+=svRow('Angle B', angB, '°');
+                html+=svRow('Angle C', 90, '°');
+                html+=svRow('Area', area);
+                html+=svRow('Perimeter', perim);
+                if(td.isTriple) html+=svBadge('★ Pythagorean triple: '+td.pa+'-'+td.pb+'-'+td.pc+(td.isPrimitive?'':' ×'+td.scale),'#2a7a2a',d?'#1a2e1a':'#e8f8e8');
+                else html+=svBadge('Not a Pythagorean triple', d?'#9090b0':'#888', d?'#2a2a3e':'#f0f0f0');
+            }
+        } else if(svTriType==='scalene') {
+            var sa=svGetVal('sva'), sb=svGetVal('svb'), sc2=svGetVal('svc');
+            var sA=svGetVal('svA'), sB=svGetVal('svB'), sC=svGetVal('svC');
+            var sh=svGetVal('svh');
+            // Convert angles to radians for computation
+            var rA=sA*Math.PI/180, rB=sB*Math.PI/180, rC=sC*Math.PI/180;
+            // Fill in missing angle
+            var knownAngs=[!isNaN(sA),!isNaN(sB),!isNaN(sC)].filter(Boolean).length;
+            if(knownAngs===2&&isNaN(sC)) { sC=180-sA-sB; rC=sC*Math.PI/180; }
+            else if(knownAngs===2&&isNaN(sB)) { sB=180-sA-sC; rB=sB*Math.PI/180; }
+            else if(knownAngs===2&&isNaN(sA)) { sA=180-sB-sC; rA=sA*Math.PI/180; }
+            // SSS
+            if(!isNaN(sa)&&!isNaN(sb)&&!isNaN(sc2)) {
+                if(sa+sb<=sc2||sa+sc2<=sb||sb+sc2<=sa){warn='These sides don\'t form a valid triangle.';}
+                else{rA=Math.acos((sb*sb+sc2*sc2-sa*sa)/(2*sb*sc2));rB=Math.acos((sa*sa+sc2*sc2-sb*sb)/(2*sa*sc2));rC=Math.PI-rA-rB;sA=rA*180/Math.PI;sB=rB*180/Math.PI;sC=rC*180/Math.PI;}
+            }
+            // AAS / ASA
+            else if(!isNaN(sa)&&!isNaN(sA)&&!isNaN(sB)) { rA=sA*Math.PI/180;rB=sB*Math.PI/180;rC=Math.PI-rA-rB;sC=180-sA-sB;sb=sa*Math.sin(rB)/Math.sin(rA);sc2=sa*Math.sin(rC)/Math.sin(rA); }
+            else if(!isNaN(sb)&&!isNaN(sA)&&!isNaN(sB)) { rA=sA*Math.PI/180;rB=sB*Math.PI/180;rC=Math.PI-rA-rB;sC=180-sA-sB;sa=sb*Math.sin(rA)/Math.sin(rB);sc2=sb*Math.sin(rC)/Math.sin(rB); }
+            // SAS
+            else if(!isNaN(sa)&&!isNaN(sb)&&!isNaN(sC)) { rC=sC*Math.PI/180;sc2=Math.sqrt(sa*sa+sb*sb-2*sa*sb*Math.cos(rC));rA=Math.acos((sb*sb+sc2*sc2-sa*sa)/(2*sb*sc2));rB=Math.PI-rA-rC;sA=rA*180/Math.PI;sB=rB*180/Math.PI; }
+            else if(!isNaN(sa)&&!isNaN(sc2)&&!isNaN(sB)) { rB=sB*Math.PI/180;sb=Math.sqrt(sa*sa+sc2*sc2-2*sa*sc2*Math.cos(rB));rA=Math.acos((sb*sb+sc2*sc2-sa*sa)/(2*sb*sc2));rC=Math.PI-rA-rB;sA=rA*180/Math.PI;sC=rC*180/Math.PI; }
+            else if(!isNaN(sb)&&!isNaN(sc2)&&!isNaN(sA)) { rA=sA*Math.PI/180;sa=Math.sqrt(sb*sb+sc2*sc2-2*sb*sc2*Math.cos(rA));rB=Math.acos((sa*sa+sc2*sc2-sb*sb)/(2*sa*sc2));rC=Math.PI-rA-rB;sB=rB*180/Math.PI;sC=rC*180/Math.PI; }
+            else { warn='Enter at least 3 values (e.g. SSS, SAS, AAS).'; }
+            if(!warn) {
+                if(isNaN(sa)||isNaN(sb)||isNaN(sc2)){warn='Could not solve — check your inputs.';}
+                else {
+                    var sv2=(sa+sb+sc2)/2, areaS=Math.sqrt(sv2*(sv2-sa)*(sv2-sb)*(sv2-sc2));
+                    var htS=isNaN(sh)?(2*areaS)/sc2:sh;
+                    html+=svRow('Side a', sa); html+=svRow('Side b', sb); html+=svRow('Side c', sc2);
+                    html+=svRow('Height (to c)', htS); html+=svRow('Angle A', sA,'°'); html+=svRow('Angle B', sB,'°'); html+=svRow('Angle C', sC,'°');
+                    html+=svRow('Area', areaS); html+=svRow('Perimeter', sa+sb+sc2);
+                    html+=svBadge(classifyTriangle(sa,sb,sc2)+' triangle','#1a73e8',d?'#1e2e4e':'#e8f0fe');
+                }
+            }
+        } else if(svTriType==='isosceles') {
+            var ia=svGetVal('sva'), ib=svGetVal('svb'), ih=svGetVal('svh');
+            var iApex=svGetVal('svApex'), iBase=svGetVal('svBase');
+            if(!isNaN(ia)&&!isNaN(ib)) { ih=Math.sqrt(ia*ia-(ib/2)*(ib/2)); iApex=2*Math.asin(ib/(2*ia))*180/Math.PI; iBase=(180-iApex)/2; }
+            else if(!isNaN(ia)&&!isNaN(ih)) { ib=2*Math.sqrt(ia*ia-ih*ih); iApex=2*Math.asin(ib/(2*ia))*180/Math.PI; iBase=(180-iApex)/2; }
+            else if(!isNaN(ia)&&!isNaN(iApex)) { ih=ia*Math.cos(iApex/2*Math.PI/180); ib=2*ia*Math.sin(iApex/2*Math.PI/180); iBase=(180-iApex)/2; }
+            else if(!isNaN(ia)&&!isNaN(iBase)) { iApex=180-2*iBase; ih=ia*Math.cos(iApex/2*Math.PI/180); ib=2*ia*Math.sin(iApex/2*Math.PI/180); }
+            else if(!isNaN(ib)&&!isNaN(ih)) { ia=Math.sqrt(ih*ih+(ib/2)*(ib/2)); iApex=2*Math.asin(ib/(2*ia))*180/Math.PI; iBase=(180-iApex)/2; }
+            else if(!isNaN(ib)&&!isNaN(iApex)) { ia=ib/(2*Math.sin(iApex/2*Math.PI/180)); ih=ia*Math.cos(iApex/2*Math.PI/180); iBase=(180-iApex)/2; }
+            else { warn='Enter at least 2 known values.'; }
+            if(!warn) {
+                if(isNaN(ia)||isNaN(ib)||isNaN(ih)){warn='Could not solve — check inputs.';}
+                else {
+                    var iPerim=2*ia+ib, iArea=0.5*ib*ih;
+                    html+=svRow('Leg (equal side)', ia); html+=svRow('Base', ib); html+=svRow('Height', ih);
+                    html+=svRow('Apex angle', iApex,'°'); html+=svRow('Base angle', iBase,'°'); html+=svRow('Area', iArea); html+=svRow('Perimeter', iPerim);
+                }
+            }
+        } else if(svTriType==='equilateral') {
+            var ea=svGetVal('sva');
+            if(isNaN(ea)){warn='Enter the side length.';}
+            else {
+                var eh=Math.sqrt(3)/2*ea, eArea=Math.sqrt(3)/4*ea*ea, ePerim=3*ea;
+                var eInR=ea/(2*Math.sqrt(3)), eCircR=ea/Math.sqrt(3);
+                html+=svRow('Side', ea); html+=svRow('Height', eh); html+=svRow('Area', eArea); html+=svRow('Perimeter', ePerim);
+                html+=svRow('All angles', 60,'°'); html+=svRow('Inradius', eInR); html+=svRow('Circumradius', eCircR);
+            }
+        }
+        } catch(err) { warn='Calculation error: '+err.message; }
+        var rd=get('svResults');
+        rd.style.display='block';
+        if(warn) {
+            rd.innerHTML='<div style="color:#c0392b;font-weight:600;font-size:12px;">⚠ '+warn+'</div>';
+        } else {
+            rd.innerHTML='<div style="font-size:10px;font-weight:700;color:#1a73e8;letter-spacing:0.5px;margin-bottom:8px;">RESULTS</div>'+html;
+        }
+    }
+
+    get('svCalcBtn').addEventListener('click', function(e){e.stopPropagation();doSolve();});
+    get('svResults').addEventListener('click',function(e){e.stopPropagation();});
+
+    get('solverBtn').addEventListener('click', function(e) {
+        e.stopPropagation();
+        var m=get('solverMenu');
+        var isOpen=m.style.display!=='none';
+        m.style.display=isOpen?'none':'block';
+        get('histMenu').style.display='none';
+        get('setMenu').style.display='none';
+        get('miniCalc').style.display='none';
+        if(!isOpen){buildSvTriBtns();buildSvInputs();get('svResults').style.display='none';}
+    });
+    get('closeSolver').addEventListener('click',function(e){e.stopPropagation();get('solverMenu').style.display='none';});
+    get('solverMenu').addEventListener('click',function(e){e.stopPropagation();});
+
+    buildSvTriBtns(); buildSvInputs();
 
     get('setMenu').style.display = 'none';
     get('histMenu').style.display = 'none';
