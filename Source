@@ -70,8 +70,8 @@
           '<div id="inputStack" style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px;"></div>',
           '<div id="canvasBox" style="position:relative;width:100%;margin-bottom:14px;border:1px solid #eee;border-radius:8px;overflow:hidden;background:#fafafa;">',
             '<canvas id="triCanvas" width="340" height="210" style="width:100%;display:block;"></canvas>',
-            '<button id="dlBtn" style="position:absolute;bottom:7px;right:7px;background:rgba(255,255,255,0.92);border:1px solid #ddd;padding:4px 9px;border-radius:4px;font-size:10px;cursor:pointer;font-weight:600;color:#555;">Save PNG</button>',
-            '<button id="lockTypeBtn" title="Lock triangle type while dragging" style="position:absolute;bottom:7px;left:7px;background:rgba(255,255,255,0.92);border:1px solid #ddd;padding:4px 7px;border-radius:4px;font-size:13px;cursor:pointer;line-height:1;">&#128275;</button>',
+            '<button id="dlBtn" style="position:absolute;bottom:7px;right:7px;z-index:2;background:rgba(255,255,255,0.92);border:1px solid #ddd;padding:4px 9px;border-radius:4px;font-size:10px;cursor:pointer;font-weight:600;color:#555;">Save PNG</button>',
+            '<button id="lockTypeBtn" title="Lock triangle type while dragging" style="position:absolute;bottom:7px;left:7px;z-index:2;background:rgba(255,255,255,0.92);border:1px solid #ddd;padding:4px 7px;border-radius:4px;font-size:13px;cursor:pointer;line-height:1;">&#128275;</button>',
           '</div>',
           '<div style="display:flex;gap:8px;margin-bottom:14px;">',
             '<button id="calc"  style="flex:2;padding:11px;background:#1a73e8;color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px;">Calculate</button>',
@@ -421,9 +421,6 @@
         return parseInputValWithUnit(raw, angleField, currentUnit);
     }
 
-    // Show a badge on an input indicating which unit is active for that field.
-    // Orange badge = explicit unit typed by user.
-    // Blue badge   = assumed from working unit (bare number).
     function updateInputUnitBadge(el, raw, workingUnit) {
         var existing = el.parentNode.querySelector('.unitBadge');
         if(existing) existing.remove();
@@ -436,7 +433,7 @@
             var badge = document.createElement('span');
             badge.className = 'unitBadge';
             badge.title = 'Explicit unit: overrides input unit setting';
-            badge.style.cssText = 'position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:10px;font-weight:700;color:'+(d?'#ffa040':'#c05800')+';pointer-events:none;background:'+(d?'#3a2a10':'#fff5e6')+';padding:2px 5px;border-radius:3px;border:1px solid '+(d?'#7a4a10':'#f0c080')+';';
+            badge.style.cssText = 'position:absolute;right:9px;bottom:9px;font-size:10px;font-weight:700;color:'+(d?'#ffa040':'#c05800')+';pointer-events:none;background:'+(d?'#3a2a10':'#fff5e6')+';padding:2px 5px;border-radius:3px;border:1px solid '+(d?'#7a4a10':'#f0c080')+';';
             badge.innerText = detectedUnit;
             el.parentNode.appendChild(badge);
         } else if(rawStr !== '') {
@@ -445,7 +442,7 @@
                 var badge2 = document.createElement('span');
                 badge2.className = 'unitBadge';
                 badge2.title = 'Assumed unit (from input unit setting)';
-                badge2.style.cssText = 'position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:10px;font-weight:700;color:'+(d?'#4a9eff':'#1a73e8')+';pointer-events:none;background:'+(d?'#1e2e4e':'#e8f0fe')+';padding:2px 5px;border-radius:3px;border:1px solid '+(d?'#3a5080':'#c5d8f8')+';';
+                badge2.style.cssText = 'position:absolute;right:9px;bottom:9px;font-size:10px;font-weight:700;color:'+(d?'#4a9eff':'#1a73e8')+';pointer-events:none;background:'+(d?'#1e2e4e':'#e8f0fe')+';padding:2px 5px;border-radius:3px;border:1px solid '+(d?'#3a5080':'#c5d8f8')+';';
                 badge2.innerText = wu;
                 el.parentNode.appendChild(badge2);
             }
@@ -729,14 +726,14 @@
         {id:'right',       label:'Right'}
     ];
     var triGoals={
-        scalene:     ['base','side','height','area','perim'],
-        isosceles:   ['base','side','height','area','perim'],
-        equilateral: ['height','base','area','perim'],
-        right:       ['hypo','side','height','base','triple','perim']
+        scalene:     ['base','side','height','area','perim','all'],
+        isosceles:   ['base','side','height','area','perim','all'],
+        equilateral: ['height','base','area','perim','all'],
+        right:       ['hypo','side','height','base','triple','perim','all']
     };
     var goalLabel={
-        s:{base:'Base',side:'Side',height:'Height',hypo:'Hypotenuse',area:"Heron's",triple:'Py. Triple',perim:'Perimeter'},
-        a:{base:'Base',side:'Lateral Side',height:'Altitude',hypo:'Hypotenuse',area:"Heron's",triple:'Pythagorean Triple',perim:'Perimeter'}
+        s:{base:'Base',side:'Side',height:'Height',hypo:'Hypotenuse',area:"Heron's",triple:'Py. Triple',perim:'Perimeter',all:'Solve All'},
+        a:{base:'Base',side:'Lateral Side',height:'Altitude',hypo:'Hypotenuse',area:"Heron's",triple:'Pythagorean Triple',perim:'Perimeter',all:'Solve All'}
     };
     var methods={
         scalene:{
@@ -775,6 +772,11 @@
             ],
             circles:[
                 {id:'sc_circ_sss',s:'Three sides',a:'Three sides',si:['Side a','Side b','Side c'],ai:['Side a','Side b','Side c'],toggle:false}
+            ],
+            all:[
+                {id:'sc_all_sss',s:'Three sides',a:'Three sides',si:['Side a','Side b','Side c'],ai:['Side a','Side b','Side c'],toggle:false},
+                {id:'sc_all_aas',s:'Two angles + a side',a:'Two angles + a side (AAS)',si:['Angle A (\u00b0)','Angle B (\u00b0)','Side a'],ai:['Angle A (\u00b0)','Angle B (\u00b0)','Side a'],toggle:false,angles:true},
+                {id:'sc_all_sas',s:'Side-Angle-Side',a:'Side-Angle-Side (SAS)',si:['Side a','Angle C (\u00b0)','Side b'],ai:['Side a','Angle C (\u00b0)','Side b'],toggle:false,angles:true}
             ]
         },
         isosceles:{
@@ -812,6 +814,12 @@
             circles:[
                 {id:'is_circ_lb',s:'Leg + base',a:'Leg + base',si:['Leg','Base'],ai:['Leg','Base'],toggle:false},
                 {id:'is_circ_la',s:'Leg + apex angle',a:'Leg + apex angle',si:['Leg','Apex Angle (°)'],ai:['Leg','Apex Angle (°)'],toggle:false,angles:true}
+            ],
+            all:[
+                {id:'is_all_lb',s:'Leg + base',a:'Leg + base',si:['Leg','Base'],ai:['Leg','Base'],toggle:false},
+                {id:'is_all_lh',s:'Leg + height',a:'Leg + height',si:['Leg','Height'],ai:['Leg','Height'],toggle:false},
+                {id:'is_all_la',s:'Leg + apex angle',a:'Leg + apex angle',si:['Leg','Apex Angle (\u00b0)'],ai:['Leg','Apex Angle (\u00b0)'],toggle:false,angles:true},
+                {id:'is_all_ba',s:'Base + base angle',a:'Base + base angle',si:['Base','Base Angle (\u00b0)'],ai:['Base','Base Angle (\u00b0)'],toggle:false,angles:true}
             ]
         },
         equilateral:{
@@ -827,6 +835,9 @@
             ],
             circles:[
                 {id:'eq_circ_s',s:'From side',a:'From side',si:['Side'],ai:['Side'],toggle:false}
+            ],
+            all:[
+                {id:'eq_all_s',s:'From side',a:'From side',si:['Side'],ai:['Side'],toggle:false}
             ]
         },
         right:{
@@ -866,6 +877,11 @@
             circles:[
                 {id:'rt_circ_ll',s:'Both legs',a:'Both legs',si:['Leg a','Leg b'],ai:['Leg a','Leg b'],toggle:false},
                 {id:'rt_circ_cl',s:'Hypotenuse + leg',a:'Hypotenuse + leg',si:['Hypotenuse','Leg a'],ai:['Hypotenuse','Leg a'],toggle:false}
+            ],
+            all:[
+                {id:'rt_all_ll',s:'Both legs',a:'Both legs',si:['Leg a','Leg b'],ai:['Leg a','Leg b'],toggle:false},
+                {id:'rt_all_cl',s:'Hypotenuse + leg',a:'Hypotenuse + leg',si:['Hypotenuse','Leg a'],ai:['Hypotenuse','Leg a'],toggle:false},
+                {id:'rt_all_la',s:'Leg + acute angle',a:'Leg + acute angle',si:['Leg a','Angle A (\u00b0)'],ai:['Leg a','Angle A (\u00b0)'],toggle:false,angles:true}
             ]
         }
     };
@@ -1165,6 +1181,8 @@
         // Build the three-angle display inside the result area
         var existingAngleDisp = get('angleResultDisp');
         if(existingAngleDisp) existingAngleDisp.remove();
+        var existingAllDisp2 = get('allResultDisp');
+        if(existingAllDisp2) existingAllDisp2.remove();
         var disp = document.createElement('div');
         disp.id = 'angleResultDisp';
         disp.style.cssText='display:flex;gap:6px;justify-content:center;margin:4px 0 6px;';
@@ -1366,6 +1384,144 @@
         var isExt=posEl?posEl.value==='ext':false;
         var type=cfg.id;
         var res,area,perim,formula,s1,h,b,s2;
+
+        // ── SOLVE ALL GOAL ─────────────────────────────────────────────────────
+        if(currentGoal==='all') {
+            var allA,allB,allC,allS1,allS2,allBase,allH,allArea,allPerim,allAngA,allAngB,allAngC,allErr='';
+            try {
+            if(currentTri==='right') {
+                // rt_all_ll: Leg a, Leg b
+                // rt_all_cl: Hypotenuse, Leg a
+                // rt_all_la: Leg a, Angle A
+                if(type==='rt_all_ll') { allS1=v0; allBase=v1; allS2=Math.sqrt(allS1*allS1+allBase*allBase); }
+                else if(type==='rt_all_cl') { allS2=v0; allS1=v1; if(allS1>=allS2){allErr='Leg must be less than hypotenuse.';} else{allBase=Math.sqrt(allS2*allS2-allS1*allS1);} }
+                else if(type==='rt_all_la') { allS1=v0; var allAngAr=toRad(v1); allBase=allS1/Math.tan(allAngAr); allS2=allS1/Math.sin(allAngAr); }
+                if(!allErr){
+                    allH=allS1*allBase/allS2;
+                    allArea=0.5*allS1*allBase;
+                    allPerim=allS1+allBase+allS2;
+                    allAngA=Math.atan2(allS1,allBase)*180/Math.PI;
+                    allAngB=90-allAngA;
+                    allAngC=90;
+                }
+            } else if(currentTri==='equilateral') {
+                allS1=v0; allS2=v0; allBase=v0;
+                allH=Math.sqrt(3)/2*v0;
+                allArea=Math.sqrt(3)/4*v0*v0;
+                allPerim=3*v0;
+                allAngA=60; allAngB=60; allAngC=60;
+            } else if(currentTri==='isosceles') {
+                if(type==='is_all_lb') { allS1=v0; allBase=v1; allH=Math.sqrt(allS1*allS1-(allBase/2)*(allBase/2)); }
+                else if(type==='is_all_lh') { allS1=v0; allH=v1; allBase=2*Math.sqrt(allS1*allS1-allH*allH); }
+                else if(type==='is_all_la') { allS1=v0; var apexR=toRad(v1); allBase=2*allS1*Math.sin(apexR/2); allH=allS1*Math.cos(apexR/2); }
+                else if(type==='is_all_ba') { allBase=v0; var baseAr=toRad(v1); allS1=allBase/(2*Math.cos(baseAr)); allH=allS1*Math.sin(baseAr); }
+                if(!allErr){
+                    allS2=allS1;
+                    allArea=0.5*allBase*allH;
+                    allPerim=2*allS1+allBase;
+                    var apexFull=2*Math.asin(allBase/(2*allS1))*180/Math.PI;
+                    allAngA=apexFull; allAngB=(180-apexFull)/2; allAngC=allAngB;
+                }
+            } else { // scalene
+                if(type==='sc_all_sss') { allS1=v0; allS2=v1; allBase=v2; if(allS1+allS2<=allBase||allS1+allBase<=allS2||allS2+allBase<=allS1){allErr='These sides don\'t form a valid triangle.';} }
+                else if(type==='sc_all_aas') { var aasA2=toRad(v0),aasB2=toRad(v1),aasC2=Math.PI-aasA2-aasB2; if(aasC2<=0){allErr='Angles must sum to < 180°.';} else{ allS1=v2; allS2=allS1*Math.sin(aasB2)/Math.sin(aasA2); allBase=allS1*Math.sin(aasC2)/Math.sin(aasA2); } }
+                else if(type==='sc_all_sas') { allS1=v0; var angC3=toRad(v1); allS2=v2; allBase=Math.sqrt(allS1*allS1+allS2*allS2-2*allS1*allS2*Math.cos(angC3)); }
+                if(!allErr){
+                    var sv3=(allS1+allS2+allBase)/2;
+                    allArea=Math.sqrt(sv3*(sv3-allS1)*(sv3-allS2)*(sv3-allBase));
+                    allH=(2*allArea)/allBase;
+                    allPerim=allS1+allS2+allBase;
+                    var cosA3=(allS2*allS2+allBase*allBase-allS1*allS1)/(2*allS2*allBase);
+                    var cosB3=(allS1*allS1+allBase*allBase-allS2*allS2)/(2*allS1*allBase);
+                    allAngA=Math.acos(Math.max(-1,Math.min(1,cosA3)))*180/Math.PI;
+                    allAngB=Math.acos(Math.max(-1,Math.min(1,cosB3)))*180/Math.PI;
+                    allAngC=180-allAngA-allAngB;
+                }
+            }
+            } catch(e2) { allErr='Calculation error.'; }
+            if(allErr){if(!silent)showError('Cannot solve',allErr);return;}
+            // Display full results panel
+            var d2a=getDark();
+            get('res').style.display='block';
+            get('final').style.display='none';
+            get('finalApprox').style.display='none';
+            var existingAllDisp=get('allResultDisp'); if(existingAllDisp) existingAllDisp.remove();
+            var existingAngleDisp=get('angleResultDisp'); if(existingAngleDisp) existingAngleDisp.remove();
+            var existingCircDisp=get('circleResultDisp'); if(existingCircDisp) existingCircDisp.remove();
+            var allDisp=document.createElement('div'); allDisp.id='allResultDisp';
+            var bdrC=d2a?'rgba(200,200,255,0.08)':'#e8effe';
+            function allRow(lbl,val,unit){return '<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid '+bdrC+'"><span style="font-size:12px;color:'+(d2a?'#9090b0':'#666')+';">'+lbl+'</span><span style="font-size:13px;font-weight:700;color:'+(d2a?'#e0e8ff':'#222')+';">'+val+(unit||'')+'</span></div>';}
+            var html2='';
+            var degSfx=getDeg()?'°':'\u02b3';
+            var pDeg=function(v){return getDeg()?v.toFixed(p):toRad(v).toFixed(p);};
+            if(currentTri==='right') {
+                html2+=allRow('Leg a', allS1.toFixed(p));
+                html2+=allRow('Leg b', allBase.toFixed(p));
+                html2+=allRow('Hypotenuse c', allS2.toFixed(p));
+                html2+=allRow('Height (altitude)', allH.toFixed(p));
+                html2+=allRow('Angle A', pDeg(allAngA), degSfx);
+                html2+=allRow('Angle B', pDeg(allAngB), degSfx);
+                html2+=allRow('Angle C', '90', degSfx);
+                html2+=allRow('Area', allArea.toFixed(p));
+                html2+=allRow('Perimeter', allPerim.toFixed(p));
+                var td2=checkTripleDetail(allS1,allBase,allS2);
+                var inR2=allArea/((allS1+allBase+allS2)/2);
+                html2+=allRow('Inradius', inR2.toFixed(p));
+                html2+=allRow('Circumradius', (allS2/2).toFixed(p));
+                if(td2.isTriple) html2+='<div style="margin-top:6px;padding:5px 9px;background:'+(d2a?'#1a2e1a':'#e8f8e8')+';border:1px solid '+(d2a?'#3a6e3a':'#a8d8a8')+';border-radius:6px;font-size:11px;font-weight:700;color:'+(d2a?'#6abf6a':'#2a7a2a')+';">&#9733; Pythagorean triple: '+td2.pa+'-'+td2.pb+'-'+td2.pc+(td2.isPrimitive?'':' \u00d7'+td2.scale)+'</div>';
+                else html2+='<div style="margin-top:6px;padding:4px 9px;background:'+(d2a?'#2a2a3e':'#f5f5f5')+';border-radius:6px;font-size:11px;color:'+(d2a?'#7070a0':'#888')+';">Not a Pythagorean triple</div>';
+            } else if(currentTri==='equilateral') {
+                var eInR=allS1/(2*Math.sqrt(3)), eCircR=allS1/Math.sqrt(3);
+                html2+=allRow('Side', allS1.toFixed(p));
+                html2+=allRow('Height', allH.toFixed(p));
+                html2+=allRow('All angles', pDeg(60), degSfx);
+                html2+=allRow('Area', allArea.toFixed(p));
+                html2+=allRow('Perimeter', allPerim.toFixed(p));
+                html2+=allRow('Inradius', eInR.toFixed(p));
+                html2+=allRow('Circumradius', eCircR.toFixed(p));
+            } else if(currentTri==='isosceles') {
+                var iInR2=allArea/((allS1*2+allBase)/2);
+                html2+=allRow('Leg (equal side)', allS1.toFixed(p));
+                html2+=allRow('Base', allBase.toFixed(p));
+                html2+=allRow('Height', allH.toFixed(p));
+                html2+=allRow('Apex angle', pDeg(allAngA), degSfx);
+                html2+=allRow('Base angle', pDeg(allAngB), degSfx);
+                html2+=allRow('Area', allArea.toFixed(p));
+                html2+=allRow('Perimeter', allPerim.toFixed(p));
+                html2+=allRow('Inradius', iInR2.toFixed(p));
+            } else {
+                html2+=allRow('Side a', allS1.toFixed(p));
+                html2+=allRow('Side b', allS2.toFixed(p));
+                html2+=allRow('Side c (base)', allBase.toFixed(p));
+                html2+=allRow('Height (to c)', allH.toFixed(p));
+                html2+=allRow('Angle A', pDeg(allAngA), degSfx);
+                html2+=allRow('Angle B', pDeg(allAngB), degSfx);
+                html2+=allRow('Angle C', pDeg(allAngC), degSfx);
+                html2+=allRow('Area', allArea.toFixed(p));
+                html2+=allRow('Perimeter', allPerim.toFixed(p));
+                var scInR=allArea/((allS1+allS2+allBase)/2);
+                var scD=2*(allS1*(allS2+(allBase-allS1))+(allS2-allS1)*(allBase));
+                html2+=allRow('Inradius', scInR.toFixed(p));
+                html2+=allRow('Type', classifyTriangle(allS1,allS2,allBase));
+            }
+            allDisp.style.cssText='margin:4px 0 0;';
+            allDisp.innerHTML=html2;
+            get('final').parentNode.insertBefore(allDisp, get('final').nextSibling);
+            get('classTag').style.display='none';
+            get('tripleBox').style.display='none';
+            get('anglesBox').style.display='none';
+            get('formulaText').innerText='';
+            var allS1d=currentTri==='right'?allS1:(currentTri==='isosceles'?allS1:allS1);
+            var allHd=currentTri==='right'?allS1:allH;
+            var allBd=allBase, allS2d=currentTri==='right'?allS2:allS2;
+            get('areaRes').innerText=allArea.toFixed(p);
+            get('perimRes').innerText=allPerim.toFixed(p);
+            var angFC2=[toRad(allAngC),toRad(allAngB),toRad(allAngA)];
+            lastCalcResult={res:allArea,s1:allS1d,h:allHd,b:allBd,s2:allS2d,area:allArea,perim:allPerim,anglesForCanvas:angFC2,isExt:false,goal:'all',workingUnit:workingUnit,resOut:allArea,effOutUnit:'none'};
+            drawTri(allS1d,allHd,allBd,allS2d,false,angFC2,'all');
+            applyDark(); applyDiagramVisibility(); applyResultVisibility();
+            return;
+        }
 
         // ── ANGLE GOALS ──────────────────────────────────────────────────────────
         if(type==='sc_ang_aa'||type==='is_ang_aa'||type==='eq_ang_s'||type==='rt_ang_aa'){
