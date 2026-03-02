@@ -2456,10 +2456,10 @@
             inputs.forEach(function(lbl,i){
                 var ll=lbl.toLowerCase();
                 var el=get('v'+i); if(!el) return;
-                if(ll.indexOf('side 1')>=0||ll.indexOf('leg a')>=0||ll.indexOf('leg')>=0&&i===0) el.value=newS1.toFixed(4);
-                else if((ll.indexOf('side 2')>=0||ll.indexOf('leg b')>=0)&&i>0) el.value=newS2.toFixed(4);
-                else if(ll.indexOf('base')>=0||ll.indexOf('hyp')>=0) el.value=newBase.toFixed(4);
-                else if(ll.indexOf('height')>=0||ll.indexOf('alt')>=0) el.value=newH.toFixed(4);
+                if(ll.indexOf('side 1')>=0||ll.indexOf('leg a')>=0||ll.indexOf('leg')>=0&&i===0) el.value=trimZ(newS1.toFixed(4));
+                else if((ll.indexOf('side 2')>=0||ll.indexOf('leg b')>=0)&&i>0) el.value=trimZ(newS2.toFixed(4));
+                else if(ll.indexOf('base')>=0||ll.indexOf('hyp')>=0) el.value=trimZ(newBase.toFixed(4));
+                else if(ll.indexOf('height')>=0||ll.indexOf('alt')>=0) el.value=trimZ(newH.toFixed(4));
             });
         }
         if(currentGoal==='all'){
@@ -2468,12 +2468,27 @@
             sf.forEach(function(f){
                 var el=get(f.id); if(!el) return;
                 var ll=f.lbl.toLowerCase();
-                if(ll.indexOf('leg a')>=0||ll.indexOf('side a')>=0||ll.indexOf('leg (equal')>=0) el.value=newS1.toFixed(4);
-                else if(ll.indexOf('leg b')>=0||ll.indexOf('side b')>=0) el.value=newS2.toFixed(4);
-                else if(ll.indexOf('hypo')>=0||ll.indexOf('side c')>=0||ll.indexOf('base')>=0) el.value=newBase.toFixed(4);
-                else if(ll.indexOf('height')>=0||ll.indexOf('alt')>=0) el.value=newH.toFixed(4);
-                else if(ll.indexOf('area')>=0) el.value=(0.5*newBase*newH).toFixed(4);
-                else if(ll.indexOf('angle')>=0) el.value=''; // let solver derive angles
+                if(currentTri==='right'){
+                    // Right triangle layout: pA=[0,h] pB=[0,0] pC=[b,h]
+                    // newS1=pA-pB=leg a (vertical), newS2=pB-pC=hypotenuse, newBase=pA-pC=leg b
+                    // Always assign the longest of the three as hypotenuse to stay valid
+                    var _legA=newS1, _legB=newBase, _hyp=newS2;
+                    // If dragging caused legs to exceed stored hyp, recompute to keep consistent
+                    _hyp=Math.sqrt(_legA*_legA+_legB*_legB);
+                    if(ll.indexOf('leg a')>=0) el.value=trimZ(_legA.toFixed(4));
+                    else if(ll.indexOf('leg b')>=0) el.value=trimZ(_legB.toFixed(4));
+                    else if(ll.indexOf('hypo')>=0) el.value=trimZ(_hyp.toFixed(4));
+                    else if(ll.indexOf('height')>=0||ll.indexOf('alt')>=0) el.value=trimZ(newH.toFixed(4));
+                    else if(ll.indexOf('area')>=0) el.value=trimZ((0.5*_legA*_legB).toFixed(4));
+                    else if(ll.indexOf('angle')>=0) el.value='';
+                } else {
+                    if(ll.indexOf('leg a')>=0||ll.indexOf('side a')>=0||ll.indexOf('leg (equal')>=0) el.value=trimZ(newS1.toFixed(4));
+                    else if(ll.indexOf('leg b')>=0||ll.indexOf('side b')>=0) el.value=trimZ(newS2.toFixed(4));
+                    else if(ll.indexOf('hypo')>=0||ll.indexOf('side c')>=0||ll.indexOf('base')>=0) el.value=trimZ(newBase.toFixed(4));
+                    else if(ll.indexOf('height')>=0||ll.indexOf('alt')>=0) el.value=trimZ(newH.toFixed(4));
+                    else if(ll.indexOf('area')>=0) el.value=trimZ((0.5*newBase*newH).toFixed(4));
+                    else if(ll.indexOf('angle')>=0) el.value='';
+                }
             });
         }
         var p=getPrec();
@@ -3345,10 +3360,10 @@
         if(cfg2b){
             cfg2b.inputs.forEach(function(lbl,i){
                 var ll=lbl.toLowerCase(), el=get('v'+i); if(!el) return;
-                if(ll.indexOf('side 1')>=0||ll.indexOf('leg a')>=0||(ll.indexOf('leg')>=0&&i===0)) el.value=newS1.toFixed(4);
-                else if((ll.indexOf('side 2')>=0||ll.indexOf('leg b')>=0)&&i>0) el.value=newS2.toFixed(4);
-                else if(ll.indexOf('base')>=0||ll.indexOf('hyp')>=0) el.value=newBase.toFixed(4);
-                else if(ll.indexOf('height')>=0||ll.indexOf('alt')>=0) el.value=newH.toFixed(4);
+                if(ll.indexOf('side 1')>=0||ll.indexOf('leg a')>=0||(ll.indexOf('leg')>=0&&i===0)) el.value=trimZ(newS1.toFixed(4));
+                else if((ll.indexOf('side 2')>=0||ll.indexOf('leg b')>=0)&&i>0) el.value=trimZ(newS2.toFixed(4));
+                else if(ll.indexOf('base')>=0||ll.indexOf('hyp')>=0) el.value=trimZ(newBase.toFixed(4));
+                else if(ll.indexOf('height')>=0||ll.indexOf('alt')>=0) el.value=trimZ(newH.toFixed(4));
             });
         }
         get('areaRes').innerText=trimZ((0.5*newBase*newH).toFixed(getPrec()));
@@ -3414,9 +3429,14 @@
             var knownSides=[!isNaN(a),!isNaN(b),!isNaN(c)].filter(Boolean).length;
             if(knownSides<2&&isNaN(angA)){warn='Enter at least 2 values (e.g. both legs, or a leg and an angle).';}
             else if(isNaN(a)||isNaN(b)||isNaN(c)){warn='Not enough information to solve — try a different combination.';}
-            else if(c<=a||c<=b){warn='Hypotenuse must be the longest side.';}
+            else {
+                // Auto-assign hypotenuse as the longest side (tolerant of drag imprecision)
+                var _sides=[a,b,c].sort(function(x,y){return x-y;});
+                a=_sides[0]; b=_sides[1]; c=_sides[2];
+                // Verify it actually satisfies Pythagoras (within 0.5% tolerance for drag)
+                if(Math.abs(a*a+b*b-c*c)>0.005*(c*c)){warn='These sides don\'t form a right triangle.';}
+            }
             if(!warn){
-                if(isNaN(h)) h=a*b/c;
                 if(isNaN(area)) area=0.5*a*b;
                 if(isNaN(angA)) angA=Math.atan2(a,b)*180/Math.PI;
                 if(isNaN(angB)) angB=90-angA;
