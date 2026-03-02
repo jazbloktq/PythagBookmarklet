@@ -8,10 +8,10 @@
     var currentGoal   = saved.goal   || 'base';
     var currentMethod = saved.method || 0;
     var currentTri    = saved.tri    || 'scalene';
-    var initSurd      = saved.surd      === true;
+    var initSurd      = saved.surd      === false;
     var initAdvanced  = saved.advanced  === true;
-    var initSimplify  = saved.simplify  === true;
-    var initDark      = saved.dark      === true;
+    var initSimplify  = saved.simplify  === false;
+    var initDark      = saved.dark      === false;
     var initDegrees   = saved.degrees   !== false;
     var initDiagram   = saved.diagram   !== false;
     var initAutoCalc      = saved.autoCalc      === true;
@@ -19,8 +19,8 @@
     var initShowArea      = saved.showArea      !== false;
     var initShowPerim     = saved.showPerim     !== false;
     var initShowUnits     = saved.showUnits     !== false;
-    var initInteractDiag  = saved.interactDiag  === true;
-    var initClickEdit     = saved.clickEdit     === true;
+    var initInteractDiag  = saved.interactDiag  === false;
+    var initClickEdit     = saved.clickEdit     === false;
     var initColorCode     = saved.colorCode     !== false;
     var initPrec          = saved.prec !== undefined ? String(saved.prec) : '2';
     var initUnit          = saved.unit          || 'none';
@@ -2241,11 +2241,39 @@
         diagVertices[diagDragIdx].x=mx; diagVertices[diagDragIdx].y=my;
         var pA=diagVertices[0], pB=diagVertices[1], pC=diagVertices[2];
         function dist2(a,b){return Math.sqrt(distSq(a.x,a.y,b.x,b.y));}
-        var newS1=dist2(pA,pB)/diagScale, newS2=dist2(pB,pC)/diagScale, newBase=dist2(pA,pC)/diagScale;
+        // Compute current scale dynamically from the reference measurement stored in diagLastParams.
+        // We use the longest side of the original triangle as the reference to avoid near-zero issues.
+        var _lp=diagLastParams;
+        var _refUnit=Math.max(_lp?_lp.s1:1, _lp?_lp.b:1, _lp?_lp.s2:1, 0.001);
+        // Find which side corresponds to the reference (longest) in original params
+        var _origS1px, _origS2px, _origBpx;
+        // Recompute original pixel positions from diagLastParams to get reference pixel length
+        (function(){
+            var raw;
+            var _s1=_lp.s1, _h2=_lp.h, _b2=_lp.b, _s2=_lp.s2;
+            if(currentTri==='equilateral'||currentTri==='isosceles') raw=[[0,_h2],[_b2/2,0],[_b2,_h2]];
+            else if(currentTri==='right') raw=[[0,_h2],[0,0],[_b2,_h2]];
+            else { var _ax=Math.sqrt(Math.max(0,_s1*_s1-_h2*_h2)); raw=[[0,_h2],[_ax,0],[_b2,_h2]]; }
+            function tr3(pt){return[pt[0]*diagScale+diagOffX,pt[1]*diagScale+diagOffY];}
+            var oA=tr3(raw[0]), oB=tr3(raw[1]), oC=tr3(raw[2]);
+            _origS1px=Math.sqrt(Math.pow(oA[0]-oB[0],2)+Math.pow(oA[1]-oB[1],2));
+            _origS2px=Math.sqrt(Math.pow(oB[0]-oC[0],2)+Math.pow(oB[1]-oC[1],2));
+            _origBpx=Math.sqrt(Math.pow(oA[0]-oC[0],2)+Math.pow(oA[1]-oC[1],2));
+        })();
+        // Pick the reference pair (largest original pixel length vs its unit value) for best precision
+        var _pairs=[[_origS1px,_lp?_lp.s1:1],[_origS2px,_lp?_lp.s2:1],[_origBpx,_lp?_lp.b:1]];
+        _pairs.sort(function(a,b){return b[0]-a[0];});
+        var _refPair=_pairs[0];
+        var _dynScale=(_refPair[0]>0.001 && _refPair[1]>0.001) ? (_refPair[0]/_refPair[1]) : diagScale;
+        var newS1=dist2(pA,pB)/_dynScale, newS2=dist2(pB,pC)/_dynScale, newBase=dist2(pA,pC)/_dynScale;
         var acLen=dist2(pA,pC)||1;
+        // Cross product gives twice the area in pixel^2; divide by base-in-pixels then by scale for height in units
         var cross=Math.abs((pC.x-pA.x)*(pA.y-pB.y)-(pA.x-pB.x)*(pC.y-pA.y));
-        var newH=cross/acLen/diagScale;
-        if(newS1+newS2<=newBase||newS1+newBase<=newS2||newS2+newBase<=newS1) return;
+        var newH=cross/acLen/_dynScale;
+        // Don't hard-return on degenerate triangle — just clamp and continue so labels still update
+        var _degenerate=(newS1+newS2<=newBase+0.0001||newS1+newBase<=newS2+0.0001||newS2+newBase<=newS1+0.0001||newH<0.0001);
+        if(_degenerate) { newH=Math.max(newH,0.0001); }
+        if(newS1<0.0001||newS2<0.0001||newBase<0.0001) return;
         var cfg2=(getMethodList())[Math.min(currentMethod,(getMethodList()).length-1)];
         if(cfg2 && currentGoal!=='all'){
             var inputs=cfg2.inputs;
@@ -3089,10 +3117,29 @@
         }
         // Redraw with corrected vertices
         var pA2 = diagVertices[0], pB2 = diagVertices[1], pC2 = diagVertices[2];
-        var newS1=dist2v(pA2,pB2)/diagScale, newS2=dist2v(pB2,pC2)/diagScale, newBase=dist2v(pA2,pC2)/diagScale;
+        // Compute dynamic scale same way as primary drag handler
+        var _lp2=diagLastParams;
+        var _origS1px2=0,_origS2px2=0,_origBpx2=0;
+        (function(){
+            var raw2;
+            var _s1=_lp2?_lp2.s1:1, _h2=_lp2?_lp2.h:1, _b2=_lp2?_lp2.b:1, _s2=_lp2?_lp2.s2:1;
+            if(currentTri==='equilateral'||currentTri==='isosceles') raw2=[[0,_h2],[_b2/2,0],[_b2,_h2]];
+            else if(currentTri==='right') raw2=[[0,_h2],[0,0],[_b2,_h2]];
+            else { var _ax2=Math.sqrt(Math.max(0,_s1*_s1-_h2*_h2)); raw2=[[0,_h2],[_ax2,0],[_b2,_h2]]; }
+            function tr4(pt){return[pt[0]*diagScale+diagOffX,pt[1]*diagScale+diagOffY];}
+            var oA2=tr4(raw2[0]),oB2=tr4(raw2[1]),oC2=tr4(raw2[2]);
+            _origS1px2=Math.sqrt(Math.pow(oA2[0]-oB2[0],2)+Math.pow(oA2[1]-oB2[1],2));
+            _origS2px2=Math.sqrt(Math.pow(oB2[0]-oC2[0],2)+Math.pow(oB2[1]-oC2[1],2));
+            _origBpx2=Math.sqrt(Math.pow(oA2[0]-oC2[0],2)+Math.pow(oA2[1]-oC2[1],2));
+        })();
+        var _pairs2=[[_origS1px2,_lp2?_lp2.s1:1],[_origS2px2,_lp2?_lp2.s2:1],[_origBpx2,_lp2?_lp2.b:1]];
+        _pairs2.sort(function(a,b){return b[0]-a[0];});
+        var _refPair2=_pairs2[0];
+        var _dynScale2=(_refPair2[0]>0.001&&_refPair2[1]>0.001)?(_refPair2[0]/_refPair2[1]):diagScale;
+        var newS1=dist2v(pA2,pB2)/_dynScale2, newS2=dist2v(pB2,pC2)/_dynScale2, newBase=dist2v(pA2,pC2)/_dynScale2;
         var acLen=dist2v(pA2,pC2)||1;
         var cross=Math.abs((pC2.x-pA2.x)*(pA2.y-pB2.y)-(pA2.x-pB2.x)*(pC2.y-pA2.y));
-        var newH=cross/acLen/diagScale;
+        var newH=cross/acLen/_dynScale2;
         var W2=canvas.width, H2=canvas.height;
         var dc=getDark(), tc=dc?'#4a9eff':'#1a73e8';
         ctx.clearRect(0,0,W2,H2);
