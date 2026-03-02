@@ -811,13 +811,16 @@
         if(!getSimplify()) return '\u221a'+sqR;
         return (s.coeff===1?'':s.coeff)+'\u221a'+s.rad;
     }
+    // Trim trailing zeros: "3.50"→"3.5", "3.0"→"3", "3.05"→"3.05"
+    function trimZ(s) { var t=String(s); return t.indexOf('.')>=0?t.replace(/\.?0+$/,''):t; }
+
     function fmt(value) {
         if(getSurd()){
             var ss=toSurdStr(value); if(ss) return ss;
             var sqR=Math.round(value*value);
             if(Math.abs(value*value-sqR)<1e-7&&Math.abs(value-Math.round(value))<1e-9) return String(Math.round(value));
         }
-        return value.toFixed(getPrec());
+        return trimZ(value.toFixed(getPrec()));
     }
     function fmtS(value) {
         if(getSurd()){
@@ -828,13 +831,13 @@
                 if(Math.abs(value-Math.round(value))<1e-9) return String(Math.round(value));
             }
         }
-        return value.toFixed(getPrec());
+        return trimZ(value.toFixed(getPrec()));
     }
 
     function fmtAngle(rad) {
         var p=getPrec();
-        if(getDeg()) return (rad*180/Math.PI).toFixed(p)+'\u00b0';
-        return rad.toFixed(p)+'\u02b3';
+        if(getDeg()) return trimZ((rad*180/Math.PI).toFixed(p))+'\u00b0';
+        return trimZ(rad.toFixed(p))+'\u02b3';
     }
     function computeAngles(a, b, c) {
         function ac(opp, adj1, adj2) {
@@ -1425,8 +1428,8 @@
             return isAr?v*(tF*tF)/(fF*fF):v*tF/fF;
         }
         var uSfx=effOU!=='none'?' '+effOU:'';
-        get('areaRes').innerText=toOU(area,true).toFixed(getPrec())+(effOU!=='none'?' '+effOU+'\u00b2':'');
-        get('perimRes').innerText=toOU(perim,false).toFixed(getPrec())+uSfx;
+        get('areaRes').innerText=trimZ(toOU(area,true).toFixed(getPrec()))+(effOU!=='none'?' '+effOU+'\u00b2':'');
+        get('perimRes').innerText=trimZ(toOU(perim,false).toFixed(getPrec()))+uSfx;
 
         var angFC=[angles[2],angles[1],angles[0]];
         var drawS1=s1,drawH=h,drawB=b,drawS2=s2;
@@ -1469,7 +1472,7 @@
             var box=document.createElement('div');
             box.style.cssText='flex:1;background:'+bx.bg+';border:1.5px solid '+bx.bdr+';border-radius:8px;padding:10px 6px;text-align:center;';
             box.innerHTML='<div style="font-size:10px;font-weight:700;color:'+bx.col+';letter-spacing:0.5px;margin-bottom:4px;">'+bx.label+'</div>'
-                +'<div style="font-size:18px;font-weight:700;color:'+(d2?'#e0e8ff':'#222')+';">'+bx.val.toFixed(getPrec())+uSfx+'</div>';
+                +'<div style="font-size:18px;font-weight:700;color:'+(d2?'#e0e8ff':'#222')+';">'+trimZ(bx.val.toFixed(getPrec()))+uSfx+'</div>';
             disp.appendChild(box);
         });
         var finalEl = get('final');
@@ -1479,8 +1482,8 @@
         classTag.innerText=classifyTriangle(s1,s2,b); classTag.style.display='inline-block';
         get('tripleBox').style.display='none';
         get('formulaText').innerText=formula||'';
-        get('areaRes').innerText=toOU(area,true).toFixed(getPrec())+(effOU!=='none'?' '+effOU+'\u00b2':'');
-        get('perimRes').innerText=toOU(perim,false).toFixed(getPrec())+uSfx;
+        get('areaRes').innerText=trimZ(toOU(area,true).toFixed(getPrec()))+(effOU!=='none'?' '+effOU+'\u00b2':'');
+        get('perimRes').innerText=trimZ(toOU(perim,false).toFixed(getPrec()))+uSfx;
 
         var angFC=computeAngles(s1,b,s2); angFC=[angFC[2],angFC[1],angFC[0]];
         var drawS1=s1,drawH=h,drawB=b,drawS2=s2;
@@ -1539,7 +1542,7 @@
         ctx.font='bold 9px system-ui';
         ctx.fillStyle=d?'#c084fc':'#9333ea';
         ctx.textAlign='left';
-        ctx.fillText('R='+circumR.toFixed(2),ux+circumRpx*0.7,uy-circumRpx*0.7);
+        ctx.fillText('R='+trimZ(circumR.toFixed(2)),ux+circumRpx*0.7,uy-circumRpx*0.7);
 
         // Draw incircle (green, dashed)
         ctx.beginPath();
@@ -1550,7 +1553,7 @@
         // Label r
         ctx.fillStyle=d?'#4ade80':'#16a34a';
         ctx.textAlign='center';
-        ctx.fillText('r='+inR.toFixed(2),ix,iy);
+        ctx.fillText('r='+trimZ(inR.toFixed(2)),ix,iy);
         ctx.setLineDash([]);
         ctx.restore();
     }
@@ -1649,7 +1652,7 @@
             var angBi=Math.acos(Math.max(-1,Math.min(1,cosBi)));
             var ari=0.5*sa*sb*Math.sin(angCi);
             var hi=2*ari/sc;
-            formula='c = \u221a(a\u00b2+b\u00b2\u22122ab\u00b7cos C) = '+sc.toFixed(getPrec())+'\nA='+fmtAngle(angAi)+', B='+fmtAngle(angBi)+', C='+fmtAngle(angCi);
+            formula='c = \u221a(a\u00b2+b\u00b2\u22122ab\u00b7cos C) = '+trimZ(sc.toFixed(getPrec()))+'\nA='+fmtAngle(angAi)+', B='+fmtAngle(angBi)+', C='+fmtAngle(angCi);
             doShowAngles([angAi,angBi,angCi], formula, sa, hi, sc, sb, ari, sa+sb+sc);
             return;
         }
@@ -1690,7 +1693,7 @@
             var hA=legA2*Math.cos(apexA/2);
             var angBaseA=( Math.PI-apexA)/2;
             var arA=0.5*baseA*hA;
-            formula='Base = 2\u00d7leg\u00d7sin(apex/2) = '+baseA.toFixed(getPrec())+'\nApex='+fmtAngle(apexA)+', Base angles='+fmtAngle(angBaseA);
+            formula='Base = 2\u00d7leg\u00d7sin(apex/2) = '+trimZ(baseA.toFixed(getPrec()))+'\nApex='+fmtAngle(apexA)+', Base angles='+fmtAngle(angBaseA);
             doShowAngles([apexA,angBaseA,angBaseA], formula, legA2, hA, baseA, legA2, arA, 2*legA2+baseA);
             return;
         }
@@ -1728,7 +1731,7 @@
             var cd=circlesFromSides(aa,bb,cc);
             var hh=cd.area/(0.5*(aa+bb+cc)/((aa+bb+cc)/2));
             var sv2=(aa+bb+cc)/2; hh=cd.area/sv2;
-            formula='s = (a+b+c)/2 = '+sv2.toFixed(getPrec())+'\nr = Area/s = '+cd.inR.toFixed(getPrec())+'\nR = abc/(4\u00d7Area) = '+cd.circumR.toFixed(getPrec());
+            formula='s = (a+b+c)/2 = '+trimZ(sv2.toFixed(getPrec()))+'\nr = Area/s = '+trimZ(cd.inR.toFixed(getPrec()))+'\nR = abc/(4\u00d7Area) = '+trimZ(cd.circumR.toFixed(getPrec()));
             doShowCircles(cd.inR, cd.circumR, formula, aa, hh, bb, cc, cd.area, cd.perim);
             return;
         }
@@ -1737,7 +1740,7 @@
             if(2*leg<=base){if(!silent)showError('Impossible','Base too wide for that leg.');return;}
             var cd=circlesFromSides(leg,leg,base);
             var hh=Math.sqrt(leg*leg-(base/2)*(base/2));
-            formula='r = Area/s = '+cd.inR.toFixed(getPrec())+'\nR = abc/(4\u00d7Area) = '+cd.circumR.toFixed(getPrec());
+            formula='r = Area/s = '+trimZ(cd.inR.toFixed(getPrec()))+'\nR = abc/(4\u00d7Area) = '+trimZ(cd.circumR.toFixed(getPrec()));
             doShowCircles(cd.inR, cd.circumR, formula, leg, hh, base, leg, cd.area, cd.perim);
             return;
         }
@@ -1746,7 +1749,7 @@
             var base2=2*leg2*Math.sin(apex/2);
             var hh=leg2*Math.cos(apex/2);
             var cd=circlesFromSides(leg2,leg2,base2);
-            formula='Base = '+base2.toFixed(getPrec())+'\nr = '+cd.inR.toFixed(getPrec())+'\nR = '+cd.circumR.toFixed(getPrec());
+            formula='Base = '+trimZ(base2.toFixed(getPrec()))+'\nr = '+trimZ(cd.inR.toFixed(getPrec()))+'\nR = '+trimZ(cd.circumR.toFixed(getPrec()));
             doShowCircles(cd.inR, cd.circumR, formula, leg2, hh, base2, leg2, cd.area, cd.perim);
             return;
         }
@@ -1754,7 +1757,7 @@
             var side=v0;
             var hh=Math.sqrt(3)/2*side; var ar=Math.sqrt(3)/4*side*side;
             var inR=side/(2*Math.sqrt(3)); var circumR=side/Math.sqrt(3);
-            formula='r = s/(2\u221a3) = '+inR.toFixed(getPrec())+'\nR = s/\u221a3 = '+circumR.toFixed(getPrec());
+            formula='r = s/(2\u221a3) = '+trimZ(inR.toFixed(getPrec()))+'\nR = s/\u221a3 = '+trimZ(circumR.toFixed(getPrec()));
             doShowCircles(inR, circumR, formula, side, hh, side, side, ar, 3*side);
             return;
         }
@@ -1763,7 +1766,7 @@
             var hyp=Math.sqrt(la*la+lb*lb);
             var ar=0.5*la*lb;
             var inR=(la+lb-hyp)/2; var circumR=hyp/2;
-            formula='R = c/2 = '+circumR.toFixed(getPrec())+' (hypotenuse/2)\nr = (a+b\u2212c)/2 = '+inR.toFixed(getPrec());
+            formula='R = c/2 = '+trimZ(circumR.toFixed(getPrec()))+' (hypotenuse/2)\nr = (a+b\u2212c)/2 = '+trimZ(inR.toFixed(getPrec()));
             doShowCircles(inR, circumR, formula, la, la, lb, hyp, ar, la+lb+hyp);
             return;
         }
@@ -1773,7 +1776,7 @@
             var lb=Math.sqrt(hyp*hyp-la*la);
             var ar=0.5*la*lb;
             var inR=(la+lb-hyp)/2; var circumR=hyp/2;
-            formula='R = c/2 = '+circumR.toFixed(getPrec())+'\nr = (a+b\u2212c)/2 = '+inR.toFixed(getPrec());
+            formula='R = c/2 = '+trimZ(circumR.toFixed(getPrec()))+'\nr = (a+b\u2212c)/2 = '+trimZ(inR.toFixed(getPrec()));
             doShowCircles(inR, circumR, formula, la, la, lb, hyp, ar, la+lb+hyp);
             return;
         }
@@ -1784,13 +1787,13 @@
             if(s1+s2<=b||s1+b<=s2||s2+b<=s1){if(!silent)showError('Impossible','These sides don\'t form a valid triangle.');return;}
             res=s1+s2+b; perim=res; h=0;
             var sv3=(s1+s2+b)/2; area=Math.sqrt(sv3*(sv3-s1)*(sv3-s2)*(sv3-b));
-            formula='Perimeter = a + b + c\n= '+s1+' + '+s2+' + '+b+' = '+res.toFixed(getPrec());
+            formula='Perimeter = a + b + c\n= '+s1+' + '+s2+' + '+b+' = '+trimZ(res.toFixed(getPrec()));
         }else if(type==='sc_p_sas'){
             s1=v0; var angCP=toRad(v1); s2=v2;
             b=Math.sqrt(s1*s1+s2*s2-2*s1*s2*Math.cos(angCP));
             area=0.5*s1*s2*Math.sin(angCP); h=(2*area)/b;
             res=s1+s2+b; perim=res;
-            formula='c = \u221a(a\u00b2+b\u00b2\u22122ab\u00b7cos(C)) = '+b.toFixed(getPrec())+'\nPerimeter = '+s1+' + '+s2+' + '+b.toFixed(getPrec())+' = '+res.toFixed(getPrec());
+            formula='c = \u221a(a\u00b2+b\u00b2\u22122ab\u00b7cos(C)) = '+trimZ(b.toFixed(getPrec()))+'\nPerimeter = '+s1+' + '+s2+' + '+trimZ(b.toFixed(getPrec()))+' = '+trimZ(res.toFixed(getPrec()));
         }else if(type==='sc_p_asa'){
             var angAP=toRad(v0), sidCP=v1, angBP=toRad(v2);
             var angCP2=Math.PI-angAP-angBP;
@@ -1800,41 +1803,41 @@
             b=sidCP; h=(2*(0.5*b*b*Math.sin(angAP)*Math.sin(angBP)/Math.sin(angCP2)))/b;
             area=0.5*b*b*Math.sin(angAP)*Math.sin(angBP)/Math.sin(angCP2);
             res=s1+s2+b; perim=res;
-            formula='Law of Sines to find all sides\na = '+s1.toFixed(getPrec())+', b = '+s2.toFixed(getPrec())+', c = '+b+'\nPerimeter = '+res.toFixed(getPrec());
+            formula='Law of Sines to find all sides\na = '+trimZ(s1.toFixed(getPrec()))+', b = '+trimZ(s2.toFixed(getPrec()))+', c = '+b+'\nPerimeter = '+trimZ(res.toFixed(getPrec()));
         }else if(type==='is_p_lls'){
             s1=v0;s2=v0;b=v1;
             if(2*s1<=b){if(!silent)showError('Impossible','Base too wide for that leg.');return;}
             h=Math.sqrt(s1*s1-(b/2)*(b/2)); area=0.5*b*h;
             res=2*s1+b; perim=res;
-            formula='Perimeter = 2 \u00d7 Leg + Base\n= 2 \u00d7 '+s1+' + '+b+' = '+res.toFixed(getPrec());
+            formula='Perimeter = 2 \u00d7 Leg + Base\n= 2 \u00d7 '+s1+' + '+b+' = '+trimZ(res.toFixed(getPrec()));
         }else if(type==='is_p_la'){
             var legP=v0, apexP=toRad(v1);
             b=2*legP*Math.sin(apexP/2); s1=legP; s2=legP;
             h=legP*Math.cos(apexP/2); area=0.5*b*h;
             res=2*legP+b; perim=res;
-            formula='Base = 2 \u00d7 Leg \u00d7 sin(Apex/2) = '+b.toFixed(getPrec())+'\nPerimeter = 2 \u00d7 '+legP+' + '+b.toFixed(getPrec())+' = '+res.toFixed(getPrec());
+            formula='Base = 2 \u00d7 Leg \u00d7 sin(Apex/2) = '+trimZ(b.toFixed(getPrec()))+'\nPerimeter = 2 \u00d7 '+legP+' + '+trimZ(b.toFixed(getPrec()))+' = '+trimZ(res.toFixed(getPrec()));
         }else if(type==='eq_p_s'){
             s1=v0;s2=v0;b=v0; h=Math.sqrt(3)/2*v0; area=Math.sqrt(3)/4*v0*v0;
             res=3*v0; perim=res;
-            formula='Perimeter = 3 \u00d7 side\n= 3 \u00d7 '+v0+' = '+res.toFixed(getPrec());
+            formula='Perimeter = 3 \u00d7 side\n= 3 \u00d7 '+v0+' = '+trimZ(res.toFixed(getPrec()));
         }else if(type==='rt_p_ll'){
             s1=v0;b=v1; s2=Math.sqrt(s1*s1+b*b); h=s1;
             area=0.5*s1*b; res=s1+b+s2; perim=res;
-            formula='Hypotenuse = \u221a('+s1+'\u00b2+'+b+'\u00b2) = '+s2.toFixed(getPrec())+'\nPerimeter = '+s1+' + '+b+' + '+s2.toFixed(getPrec())+' = '+res.toFixed(getPrec());
+            formula='Hypotenuse = \u221a('+s1+'\u00b2+'+b+'\u00b2) = '+trimZ(s2.toFixed(getPrec()))+'\nPerimeter = '+s1+' + '+b+' + '+trimZ(s2.toFixed(getPrec()))+' = '+trimZ(res.toFixed(getPrec()));
         }else if(type==='rt_p_cl'){
             var hypP=v0, legP2=v1;
             if(legP2>=hypP){if(!silent)showError('Impossible','Leg must be shorter than hypotenuse.');return;}
             var leg2P=Math.sqrt(hypP*hypP-legP2*legP2);
             s1=legP2; b=leg2P; s2=hypP; h=s1;
             area=0.5*s1*b; res=s1+b+s2; perim=res;
-            formula='Other leg = \u221a(c\u00b2\u2212a\u00b2) = '+leg2P.toFixed(getPrec())+'\nPerimeter = '+legP2+' + '+leg2P.toFixed(getPrec())+' + '+hypP+' = '+res.toFixed(getPrec());
+            formula='Other leg = \u221a(c\u00b2\u2212a\u00b2) = '+trimZ(leg2P.toFixed(getPrec()))+'\nPerimeter = '+legP2+' + '+trimZ(leg2P.toFixed(getPrec()))+' + '+hypP+' = '+trimZ(res.toFixed(getPrec()));
         }else if(type==='rt_p_la'){
             var legRP=v0, angRP=toRad(v1);
             if(angRP>=Math.PI/2){if(!silent)showError('Impossible','Acute angle must be less than 90\u00b0.');return;}
             var hypRP=legRP/Math.sin(angRP), leg2RP=hypRP*Math.cos(angRP);
             s1=legRP; b=leg2RP; s2=hypRP; h=s1;
             area=0.5*s1*b; res=s1+b+s2; perim=res;
-            formula='Hyp = Leg/sin(A) = '+hypRP.toFixed(getPrec())+'\nOther leg = Hyp\u00d7cos(A) = '+leg2RP.toFixed(getPrec())+'\nPerimeter = '+legRP+' + '+leg2RP.toFixed(getPrec())+' + '+hypRP.toFixed(getPrec())+' = '+res.toFixed(getPrec());
+            formula='Hyp = Leg/sin(A) = '+trimZ(hypRP.toFixed(getPrec()))+'\nOther leg = Hyp\u00d7cos(A) = '+trimZ(leg2RP.toFixed(getPrec()))+'\nPerimeter = '+legRP+' + '+trimZ(leg2RP.toFixed(getPrec()))+' + '+trimZ(hypRP.toFixed(getPrec()))+' = '+trimZ(res.toFixed(getPrec()));
         }
 
         if(currentGoal==='perim'&&!isNaN(res)&&res>0){
@@ -1854,10 +1857,10 @@
             }
             var resOutP=toOutUnitP(res,false);
             var unitSfx = effOutUnitP!=='none' ? ' '+effOutUnitP : '';
-            get('final').innerText = resOutP.toFixed(getPrec())+unitSfx;
+            get('final').innerText = trimZ(resOutP.toFixed(getPrec()))+unitSfx;
             approxElP.style.display='none';
             get('formulaText').innerText=formula||'';
-            get('areaRes').innerText=toOutUnitP(area,true).toFixed(getPrec())+(effOutUnitP!=='none'?' '+effOutUnitP+'\u00b2':'');
+            get('areaRes').innerText=trimZ(toOutUnitP(area,true).toFixed(getPrec()))+(effOutUnitP!=='none'?' '+effOutUnitP+'\u00b2':'');
             // perimBox is hidden when goal=perim (it IS the main result), so no need to set it
             var classTagP=get('classTag');
             classTagP.innerText=classifyTriangle(s1,s2,b); classTagP.style.display='inline-block';
@@ -1883,7 +1886,7 @@
                 var adv2P=getAdv();
                 var gLblP=((adv2P?goalLabel.a:goalLabel.s)['perim'])||'Perimeter';
                 var inputValsP=[]; cfg.inputs.forEach(function(_,i){var el=get('v'+i);inputValsP.push(el?el.value:'');});
-                history.unshift({label:gLblP+': '+get('final').innerText,tri:currentTri,goal:currentGoal,method:currentMethod,inputs:inputValsP,isExt:false,finalText:get('final').innerText,approxText:'',approxVis:'none',formula:formula||'',area:toOutUnitP(area,true).toFixed(getPrec()),perim:resOutP.toFixed(getPrec()),ds1:drawS1P,dh:drawHP,db:drawBP,ds2:drawS2P,anglesForCanvas:afP});
+                history.unshift({label:gLblP+': '+get('final').innerText,tri:currentTri,goal:currentGoal,method:currentMethod,inputs:inputValsP,isExt:false,finalText:get('final').innerText,approxText:'',approxVis:'none',formula:formula||'',area:trimZ(toOutUnitP(area,true).toFixed(getPrec())),perim:trimZ(resOutP.toFixed(getPrec())),ds1:drawS1P,dh:drawHP,db:drawBP,ds2:drawS2P,anglesForCanvas:afP});
                 if(history.length>10)history.pop();
                 get('histList').innerHTML=history.map(function(hh){return'<span style="display:block;padding:3px 0;border-bottom:1px solid #f0f0f0;">'+(hh.label||hh)+'</span>';}).join('');
                 saveSettings();
@@ -1958,8 +1961,8 @@
             if(!td.allIntegers || !td.isTriple) get('final').innerText='Not a triple';
             get('finalApprox').style.display='none';
             get('formulaText').innerText=formula;
-            get('areaRes').innerText=area.toFixed(p);
-            get('perimRes').innerText=perim.toFixed(p);
+            get('areaRes').innerText=trimZ(area.toFixed(p));
+            get('perimRes').innerText=trimZ(perim.toFixed(p));
             var classTag=get('classTag');
             classTag.innerText='Right'; classTag.style.display='inline-block';
             var anglesContent=get('anglesContent'); anglesContent.innerHTML='';
@@ -1979,7 +1982,7 @@
             applyResultVisibility();
             if(!silent){
                 var finalLabel=get('final').innerText;
-                history.unshift({label:'Py. Triple: '+finalLabel,tri:currentTri,goal:currentGoal,method:currentMethod,inputs:vals.map(String),isExt:false,finalText:finalLabel,approxText:'',approxVis:'none',formula:formula,area:area.toFixed(p),perim:perim.toFixed(p),ds1:s1,dh:h,db:b,ds2:s2,anglesForCanvas:anglesForCanvas});
+                history.unshift({label:'Py. Triple: '+finalLabel,tri:currentTri,goal:currentGoal,method:currentMethod,inputs:vals.map(String),isExt:false,finalText:finalLabel,approxText:'',approxVis:'none',formula:formula,area:trimZ(area.toFixed(p)),perim:trimZ(perim.toFixed(p)),ds1:s1,dh:h,db:b,ds2:s2,anglesForCanvas:anglesForCanvas});
                 if(history.length>10)history.pop();
                 get('histList').innerHTML=history.map(function(hh){return'<span style="display:block;padding:3px 0;border-bottom:1px solid #f0f0f0;">'+(hh.label||hh)+'</span>';}).join('');
                 saveSettings();
@@ -2027,7 +2030,7 @@
             var areaH=Math.sqrt(sv*(sv-s1)*(sv-s2)*(sv-b));
             if(isNaN(areaH)||areaH<=0){if(!silent)showError('Impossible','These sides don\'t form a valid triangle.');return;}
             res=areaH;area=areaH;h=(2*areaH)/b;perim=s1+s2+b;
-            formula="Heron's: s = ("+s1+'+'+s2+'+'+b+') / 2 = '+sv.toFixed(p)+'\nArea = \u221a(s(s\u2212a)(s\u2212b)(s\u2212c))\n= \u221a('+sv.toFixed(p)+'\u00d7'+(sv-s1).toFixed(p)+'\u00d7'+(sv-s2).toFixed(p)+'\u00d7'+(sv-b).toFixed(p)+')\n= '+fmtS(res);
+            formula="Heron's: s = ("+s1+'+'+s2+'+'+b+') / 2 = '+trimZ(sv.toFixed(p))+'\nArea = \u221a(s(s\u2212a)(s\u2212b)(s\u2212c))\n= \u221a('+trimZ(sv.toFixed(p))+'\u00d7'+trimZ((sv-s1).toFixed(p))+'\u00d7'+trimZ((sv-s2).toFixed(p))+'\u00d7'+trimZ((sv-b).toFixed(p))+')\n= '+fmtS(res);
         }else if(type==='is_b_sh'){
             s1=v0;h=v1;s2=v0;
             if(h>=s1){if(!silent)showError('Impossible','Height must be less than Leg.');return;}
@@ -2060,11 +2063,11 @@
         }else if(type==='eq_h_s'){
             var side=v0;b=side;s1=side;s2=side;h=Math.sqrt(3)/2*side;
             res=currentGoal==='height'?h:side;
-            formula='Height = (\u221a3 / 2) \u00d7 '+side+(useSurd?' = '+fmtS(h):' \u2248 '+h.toFixed(p));
+            formula='Height = (\u221a3 / 2) \u00d7 '+side+(useSurd?' = '+fmtS(h):' \u2248 '+trimZ(h.toFixed(p)));
         }else if(type==='eq_b_ah'){
             var hConsistent=Math.sqrt(v0*Math.sqrt(3));
             if(Math.abs(hConsistent-v1)>0.001*v1){
-                if(!silent)showError('Impossible combination','For an equilateral triangle, Area and Height are not independent. With Area = '+v0+', the height must be \u2248 '+hConsistent.toFixed(getPrec())+', not '+v1+'.');
+                if(!silent)showError('Impossible combination','For an equilateral triangle, Area and Height are not independent. With Area = '+v0+', the height must be \u2248 '+trimZ(hConsistent.toFixed(getPrec()))+', not '+v1+'.');
                 return;
             }
             var beq=(2*v0)/v1;
@@ -2075,7 +2078,7 @@
             var svEq=3*seq/2;
             res=Math.sqrt(svEq*(svEq-seq)*(svEq-seq)*(svEq-seq));
             area=res;h=Math.sqrt(3)/2*seq;
-            formula="Heron's (equilateral): s = 3a/2 = "+svEq.toFixed(p)+'\nArea = \u221a(s(s\u2212a)\u00b3) = '+fmtS(res);
+            formula="Heron's (equilateral): s = 3a/2 = "+trimZ(svEq.toFixed(p))+'\nArea = \u221a(s(s\u2212a)\u00b3) = '+fmtS(res);
         }else if(type==='rt_c_ll'){
             s1=v0;b=v1;res=Math.sqrt(s1*s1+b*b);s2=res;h=s1;
             formula='c = \u221a(a\u00b2 + b\u00b2)\n= \u221a('+s1+'\u00b2 + '+b+'\u00b2)\n= \u221a'+(s1*s1+b*b)+' = '+fmtS(res);
@@ -2095,7 +2098,7 @@
             s1=res;h=res;
             b=(Math.sqrt(hypR*hypR+4*v0)-Math.sqrt(inner3))/2;
             s2=hypR;
-            formula='Leg = (\u221a(c\u00b2+4A) + \u221a(c\u00b2\u22124A)) / 2\n= (\u221a'+(hypR*hypR+4*v0).toFixed(getPrec())+' + \u221a'+inner3.toFixed(getPrec())+') / 2\n= '+fmtS(res);
+            formula='Leg = (\u221a(c\u00b2+4A) + \u221a(c\u00b2\u22124A)) / 2\n= (\u221a'+trimZ((hypR*hypR+4*v0).toFixed(getPrec()))+' + \u221a'+trimZ(inner3.toFixed(getPrec()))+') / 2\n= '+fmtS(res);
         }else if(type==='rt_h_ll'){
             s1=v0;b=v1;var hyp2=Math.sqrt(s1*s1+b*b);
             res=(s1*b)/hyp2;h=res;s2=hyp2;
@@ -2235,7 +2238,7 @@
             res=Math.sqrt(isAH_h*isAH_h+(isAH_base/2)*(isAH_base/2));
             s1=res; s2=res; b=isAH_base; h=isAH_h; area=isAH_area;
             perim=2*res+b;
-            formula='Base = 2\u00d7Area/h = '+isAH_base.toFixed(getPrec())+'\nLeg = \u221a(h\u00b2+(Base/2)\u00b2) = '+fmtS(res);
+            formula='Base = 2\u00d7Area/h = '+trimZ(isAH_base.toFixed(getPrec()))+'\nLeg = \u221a(h\u00b2+(Base/2)\u00b2) = '+fmtS(res);
 
         }else if(type==='rt_l_la'){
             var rlla_leg=v0, rlla_ang=toRad(v1);
@@ -2299,14 +2302,14 @@
         var approxEl = get('finalApprox');
         if(useSurd){
             var ss=toSurdStr(resOut);
-            if(ss){get('final').innerText=ss+unitSuffix;approxEl.innerText='\u2248 '+resOut.toFixed(p)+unitSuffix;approxEl.style.display='block';}
+            if(ss){get('final').innerText=ss+unitSuffix;approxEl.innerText='\u2248 '+trimZ(resOut.toFixed(p))+unitSuffix;approxEl.style.display='block';}
             else{get('final').innerText=fmt(resOut)+unitSuffix;approxEl.style.display='none';}
         }else{
-            get('final').innerText=resOut.toFixed(p)+unitSuffix;approxEl.style.display='none';
+            get('final').innerText=trimZ(resOut.toFixed(p))+unitSuffix;approxEl.style.display='none';
         }
         get('formulaText').innerText=formula||'';
-        get('areaRes').innerText=areaOut.toFixed(p)+unitSuffix2;
-        get('perimRes').innerText=perimOut.toFixed(p)+unitSuffix;
+        get('areaRes').innerText=trimZ(areaOut.toFixed(p))+unitSuffix2;
+        get('perimRes').innerText=trimZ(perimOut.toFixed(p))+unitSuffix;
 
         var classTag=get('classTag');
         var classification=classifyTriangle(s1,s2,b);
@@ -2367,7 +2370,7 @@
                 inputs:inputVals,isExt:isExt,
                 finalText:get('final').innerText,
                 approxText:approxEl.innerText,approxVis:approxEl.style.display,
-                formula:formula||'',area:area.toFixed(p),perim:perim.toFixed(p),
+                formula:formula||'',area:trimZ(area.toFixed(p)),perim:trimZ(perim.toFixed(p)),
                 ds1:drawS1,dh:drawH,db:drawB,ds2:drawS2,
                 anglesForCanvas:anglesForCanvas
             });
@@ -2474,8 +2477,8 @@
             });
         }
         var p=getPrec();
-        get('areaRes').innerText=(0.5*newBase*newH).toFixed(p);
-        get('perimRes').innerText=(newS1+newS2+newBase).toFixed(p);
+        get('areaRes').innerText=trimZ((0.5*newBase*newH).toFixed(p));
+        get('perimRes').innerText=trimZ((newS1+newS2+newBase).toFixed(p));
 
         (function(){
             var _r;
@@ -2489,7 +2492,7 @@
                 var _f = get('final');
                 var _dUnitS = (lastCalcResult && lastCalcResult.effOutUnit && lastCalcResult.effOutUnit !== 'none') ? ' '+lastCalcResult.effOutUnit : (currentUnit !== 'none' ? ' '+currentUnit : '');
                 if(currentGoal==='area' && _dUnitS) _dUnitS += '\u00b2';
-                if(_f) _f.innerText = _r.toFixed(p) + _dUnitS;
+                if(_f) _f.innerText = trimZ(_r.toFixed(p)) + _dUnitS;
                 var _a = get('finalApprox');
                 if(_a) _a.style.display = 'none';
             }
@@ -2525,9 +2528,9 @@
             if((mx+nx-cxD)*nx+(my+ny-cyD)*ny<0){nx=-nx;ny=-ny;}
             ctx.fillText(lbl,mx+nx*OUTD,my+ny*OUTD);
         }
-        lbD(pA.x,pA.y,pB.x,pB.y,newS1.toFixed(2));
-        lbD(pB.x,pB.y,pC.x,pC.y,newS2.toFixed(2));
-        lbD(pA.x,pA.y,pC.x,pC.y,newBase.toFixed(2));
+        lbD(pA.x,pA.y,pB.x,pB.y,trimZ(newS1.toFixed(2)));
+        lbD(pB.x,pB.y,pC.x,pC.y,trimZ(newS2.toFixed(2)));
+        lbD(pA.x,pA.y,pC.x,pC.y,trimZ(newBase.toFixed(2)));
         if(currentGoal==='all') doSolveAll(true);
     });
     canvas.addEventListener('mouseup', function() { diagDragIdx=-1; canvas.style.cursor='default'; });
@@ -3334,9 +3337,9 @@
             if((mx+nx-cxD)*nx+(my+ny-cyD)*ny<0){nx=-nx;ny=-ny;}
             ctx.fillText(lbl,mx+nx*16,my+ny*16);
         }
-        lbD2(pA2.x,pA2.y,pB2.x,pB2.y,newS1.toFixed(2));
-        lbD2(pB2.x,pB2.y,pC2.x,pC2.y,newS2.toFixed(2));
-        lbD2(pA2.x,pA2.y,pC2.x,pC2.y,newBase.toFixed(2));
+        lbD2(pA2.x,pA2.y,pB2.x,pB2.y,trimZ(newS1.toFixed(2)));
+        lbD2(pB2.x,pB2.y,pC2.x,pC2.y,trimZ(newS2.toFixed(2)));
+        lbD2(pA2.x,pA2.y,pC2.x,pC2.y,trimZ(newBase.toFixed(2)));
         // Update inputs
         var cfg2b=(getMethodList())[Math.min(currentMethod,(getMethodList()).length-1)];
         if(cfg2b){
@@ -3348,8 +3351,8 @@
                 else if(ll.indexOf('height')>=0||ll.indexOf('alt')>=0) el.value=newH.toFixed(4);
             });
         }
-        get('areaRes').innerText=(0.5*newBase*newH).toFixed(getPrec());
-        get('perimRes').innerText=(newS1+newS2+newBase).toFixed(getPrec());
+        get('areaRes').innerText=trimZ((0.5*newBase*newH).toFixed(getPrec()));
+        get('perimRes').innerText=trimZ((newS1+newS2+newBase).toFixed(getPrec()));
     });
 
     function doSolveAll(silent) {
@@ -3359,7 +3362,7 @@
         var diagS1=NaN, diagH=NaN, diagB=NaN, diagS2=NaN, diagAngles=null;
         var bdr=d?'rgba(200,200,255,0.08)':'#e8effe';
         function saRow(lbl,val,sfx){
-            var vStr=isNaN(val)?null:(typeof val==='string'?val:val.toFixed(p));
+            var vStr=isNaN(val)?null:(typeof val==='string'?val:trimZ(val.toFixed(p)));
             if(vStr===null) return ''; // skip unknowable values entirely
             return '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid '+bdr+';">'+
                 '<span style="font-size:12px;color:'+(d?'#9090b0':'#666')+';">'+lbl+'</span>'+
@@ -3534,8 +3537,8 @@
         get('formulaText').innerText='';
         // Update the area/perimeter boxes in the result panel
         var areaEl=get('areaRes'), perimEl=get('perimRes');
-        if(areaEl) areaEl.innerText=(!warn&&!isNaN(saArea))?saArea.toFixed(p):'';
-        if(perimEl) perimEl.innerText=(!warn&&!isNaN(saPerim))?saPerim.toFixed(p):'';
+        if(areaEl) areaEl.innerText=(!warn&&!isNaN(saArea))?trimZ(saArea.toFixed(p)):'';
+        if(perimEl) perimEl.innerText=(!warn&&!isNaN(saPerim))?trimZ(saPerim.toFixed(p)):'';
         // Show area/perimeter boxes regardless of goal setting since we computed them
         var areaBox=get('areaBox'), perimBox=get('perimBox');
         if(!warn){
