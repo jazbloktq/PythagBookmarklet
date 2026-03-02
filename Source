@@ -3,18 +3,122 @@
 
     var LS_KEY = 'geoPro_settings';
     var saved = {};
+
+    // ── Persistent cross-origin settings via IndexedDB + BroadcastChannel sync ─
+    // localStorage is per-origin so settings are lost across different-domain tabs.
+    // IndexedDB is also per-origin, BUT we open our own dedicated DB on EVERY origin
+    // the bookmarklet runs on, always using the same DB+store name. On first load we
+    // ask peer tabs (via BroadcastChannel, which IS cross-origin) for the latest
+    // settings, apply them, and write them into THIS origin's IndexedDB so future
+    // loads on the same site are instant. Any settings change is broadcast live to
+    // all open tabs AND written to the current origin's IndexedDB.
+
+    var _IDB_NAME  = 'geoProDB';
+    var _IDB_STORE = 'settings';
+    var _IDB_KEY   = 'main';
+    var _idb = null;  // will hold the open DB connection
+
+    // BroadcastChannel — works cross-origin in the same browser session
+    var _geoChannel = null;
+    try { _geoChannel = new BroadcastChannel('geoPro_sync'); } catch(e) {}
+
+    // Try reading from localStorage immediately (fast, works when same origin)
     try { saved = JSON.parse(localStorage.getItem(LS_KEY) || '{}'); } catch(e) {}
+
+    // _applySettingsObj is defined after UI is built; placeholder until then
+    var _applySettingsObj = null;
+    var _settingsFromPeer = false;
+
+    // Open (or create) our IndexedDB on this origin
+    function _openIDB(cb) {
+        try {
+            var req = indexedDB.open(_IDB_NAME, 1);
+            req.onupgradeneeded = function(e) {
+                e.target.result.createObjectStore(_IDB_STORE);
+            };
+            req.onsuccess = function(e) { _idb = e.target.result; if(cb) cb(_idb); };
+            req.onerror   = function()  { if(cb) cb(null); };
+        } catch(e) { if(cb) cb(null); }
+    }
+
+    function _idbGet(cb) {
+        if(!_idb) { _openIDB(function(db){ if(db) _idbGet(cb); else cb(null); }); return; }
+        try {
+            var tx = _idb.transaction(_IDB_STORE, 'readonly');
+            var req = tx.objectStore(_IDB_STORE).get(_IDB_KEY);
+            req.onsuccess = function() { cb(req.result || null); };
+            req.onerror   = function() { cb(null); };
+        } catch(e) { cb(null); }
+    }
+
+    function _idbPut(obj) {
+        if(!_idb) { _openIDB(function(db){ if(db) _idbPut(obj); }); return; }
+        try {
+            var tx = _idb.transaction(_IDB_STORE, 'readwrite');
+            tx.objectStore(_IDB_STORE).put(obj, _IDB_KEY);
+        } catch(e) {}
+    }
+
+    // BroadcastChannel message handler
+    if(_geoChannel) {
+        _geoChannel.onmessage = function(ev) {
+            var msg = ev.data;
+            if(!msg) return;
+            if(msg.type === 'geoProReqSettings') {
+                // Another tab is asking — send them our latest settings
+                try {
+                    var myS = localStorage.getItem(LS_KEY);
+                    if(myS) _geoChannel.postMessage({type:'geoProSettings', data: myS});
+                } catch(e) {}
+            } else if(msg.type === 'geoProSettings') {
+                // Received settings from a peer (response to our request on load)
+                if(_settingsFromPeer) return;
+                try {
+                    var incoming = JSON.parse(msg.data || '{}');
+                    _settingsFromPeer = true;
+                    // Persist locally so next load on this origin is instant
+                    try { localStorage.setItem(LS_KEY, msg.data); } catch(e) {}
+                    _idbPut(incoming);
+                    if(typeof _applySettingsObj === 'function') _applySettingsObj(incoming);
+                } catch(e) {}
+            } else if(msg.type === 'geoProUpdate') {
+                // Another tab saved settings — mirror here
+                try {
+                    try { localStorage.setItem(LS_KEY, msg.data); } catch(e) {}
+                    var upd = JSON.parse(msg.data || '{}');
+                    _idbPut(upd);
+                    if(typeof _applySettingsObj === 'function') _applySettingsObj(upd);
+                } catch(e) {}
+            }
+        };
+    }
+
+    // On load: open IDB and read saved settings; if empty ask peers via BroadcastChannel
+    _openIDB(function(db) {
+        _idbGet(function(idbSaved) {
+            if(idbSaved && idbSaved.tri) {
+                // IDB has settings — merge with what localStorage gave us, prefer IDB
+                saved = idbSaved;
+                // Also mirror to localStorage for fast access next time
+                try { localStorage.setItem(LS_KEY, JSON.stringify(idbSaved)); } catch(e) {}
+                if(typeof _applySettingsObj === 'function') _applySettingsObj(saved);
+            } else if(!saved || !saved.tri) {
+                // Neither IDB nor localStorage has settings — ask other tabs
+                if(_geoChannel) _geoChannel.postMessage({type:'geoProReqSettings'});
+            }
+        });
+    });
 
     var currentGoal   = saved.goal   || 'base';
     var currentMethod = saved.method || 0;
     var currentTri    = saved.tri    || 'scalene';
     var initSurd      = saved.surd      === false;
-    var initAdvanced  = saved.advanced  === true;
+    var initAdvanced  = saved.advanced  === false;
     var initSimplify  = saved.simplify  === false;
     var initDark      = saved.dark      === false;
     var initDegrees   = saved.degrees   !== false;
     var initDiagram   = saved.diagram   !== false;
-    var initAutoCalc      = saved.autoCalc      === true;
+    var initAutoCalc      = saved.autoCalc      === false;
     var initShowSteps     = saved.showSteps     !== false;
     var initShowArea      = saved.showArea      !== false;
     var initShowPerim     = saved.showPerim     !== false;
@@ -38,6 +142,32 @@
         '  -webkit-appearance: none; margin: 0;',
         '}',
         '#geo-ultimate-vscroll input[type=number] { -moz-appearance: textfield; }',
+        /* Dark mode scrollbars for the main panel body and any inner scrollable divs */
+        '#geo-ultimate-vscroll.geo-dark #uiBody::-webkit-scrollbar,',
+        '#geo-ultimate-vscroll.geo-dark #setMenu ::-webkit-scrollbar,',
+        '#geo-ultimate-vscroll.geo-dark #miniCalc ::-webkit-scrollbar {',
+        '  width: 6px; height: 6px;',
+        '}',
+        '#geo-ultimate-vscroll.geo-dark #uiBody::-webkit-scrollbar-track,',
+        '#geo-ultimate-vscroll.geo-dark #setMenu ::-webkit-scrollbar-track,',
+        '#geo-ultimate-vscroll.geo-dark #miniCalc ::-webkit-scrollbar-track {',
+        '  background: #1e1e2e;',
+        '}',
+        '#geo-ultimate-vscroll.geo-dark #uiBody::-webkit-scrollbar-thumb,',
+        '#geo-ultimate-vscroll.geo-dark #setMenu ::-webkit-scrollbar-thumb,',
+        '#geo-ultimate-vscroll.geo-dark #miniCalc ::-webkit-scrollbar-thumb {',
+        '  background: #444466; border-radius: 3px;',
+        '}',
+        '#geo-ultimate-vscroll.geo-dark #uiBody::-webkit-scrollbar-thumb:hover,',
+        '#geo-ultimate-vscroll.geo-dark #setMenu ::-webkit-scrollbar-thumb:hover,',
+        '#geo-ultimate-vscroll.geo-dark #miniCalc ::-webkit-scrollbar-thumb:hover {',
+        '  background: #6666aa;',
+        '}',
+        /* Firefox dark scrollbars */
+        '#geo-ultimate-vscroll.geo-dark #uiBody,',
+        '#geo-ultimate-vscroll.geo-dark #setMenu div[style*="overflow-y"] {',
+        '  scrollbar-color: #444466 #1e1e2e; scrollbar-width: thin;',
+        '}',
     ].join('\n');
     document.head.appendChild(styleEl);
 
@@ -299,7 +429,7 @@
 
     function saveSettings() {
         try {
-            localStorage.setItem(LS_KEY, JSON.stringify({
+            var _sObj = {
                 goal: currentGoal, method: currentMethod, tri: currentTri,
                 prec: get('prec').value,
                 surd: get('optSurd').checked,
@@ -320,9 +450,52 @@
                 outputUnit: currentOutputUnit,
                 calcPin:    get('calcPinOpen') ? get('calcPinOpen').checked : true,
                 calcInfer:  get('calcInferBrackets') ? get('calcInferBrackets').checked : true
-            }));
+            };
+            var _sStr = JSON.stringify(_sObj);
+            // Write to localStorage (fast, same-origin)
+            try { localStorage.setItem(LS_KEY, _sStr); } catch(e) {}
+            // Write to IndexedDB (persists on this origin across sessions)
+            _idbPut(_sObj);
+            // Broadcast to all other open tabs (cross-origin live sync)
+            if(_geoChannel) _geoChannel.postMessage({type:'geoProUpdate', data: _sStr});
         } catch(e) {}
     }
+
+    // Apply a settings object to the live UI (used when receiving from another tab)
+    _applySettingsObj = function(s) {
+        if(!s) return;
+        if(s.tri) { currentTri = s.tri; }
+        if(s.goal !== undefined) { currentGoal = s.goal; }
+        if(s.method !== undefined) { currentMethod = s.method; }
+        if(s.unit !== undefined) { currentUnit = s.unit; }
+        if(s.outputUnit !== undefined) { currentOutputUnit = s.outputUnit; }
+        var _set = function(id, val) { var el = get(id); if(el) el.value = val; };
+        var _chk = function(id, val) { var el = get(id); if(el) el.checked = !!val; };
+        if(s.prec !== undefined) _set('prec', String(s.prec));
+        _chk('optSurd',        s.surd);
+        _chk('optSimplify',    s.simplify);
+        _chk('optAdvanced',    s.advanced);
+        _chk('optDark',        s.dark);
+        _chk('optDegrees',     s.degrees !== false);
+        _chk('optDiagram',     s.diagram !== false);
+        _chk('optAutoCalc',    s.autoCalc);
+        _chk('optShowSteps',   s.showSteps !== false);
+        _chk('optShowArea',    s.showArea  !== false);
+        _chk('optShowPerim',   s.showPerim !== false);
+        _chk('optShowUnits',   s.showUnits !== false);
+        _chk('optInteractDiag',s.interactDiag);
+        _chk('optClickEdit',   s.clickEdit);
+        _chk('optColorCode',   s.colorCode !== false);
+        if(get('calcPinOpen') && s.calcPin !== undefined)        get('calcPinOpen').checked        = s.calcPin !== false;
+        if(get('calcInferBrackets') && s.calcInfer !== undefined) get('calcInferBrackets').checked  = s.calcInfer !== false;
+        rebuildAll();
+        applyDark();
+        updateUnitBtns();
+        updateOutUnitBtns();
+        updateUnitContextBar();
+        applyDiagramVisibility();
+        applyResultVisibility();
+    };
 
     function applyDiagramVisibility() {
         var show = getDiagram();
