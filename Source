@@ -2247,7 +2247,7 @@
         var newH=cross/acLen/diagScale;
         if(newS1+newS2<=newBase||newS1+newBase<=newS2||newS2+newBase<=newS1) return;
         var cfg2=(getMethodList())[Math.min(currentMethod,(getMethodList()).length-1)];
-        if(cfg2){
+        if(cfg2 && currentGoal!=='all'){
             var inputs=cfg2.inputs;
             inputs.forEach(function(lbl,i){
                 var ll=lbl.toLowerCase();
@@ -2256,6 +2256,20 @@
                 else if((ll.indexOf('side 2')>=0||ll.indexOf('leg b')>=0)&&i>0) el.value=newS2.toFixed(4);
                 else if(ll.indexOf('base')>=0||ll.indexOf('hyp')>=0) el.value=newBase.toFixed(4);
                 else if(ll.indexOf('height')>=0||ll.indexOf('alt')>=0) el.value=newH.toFixed(4);
+            });
+        }
+        if(currentGoal==='all'){
+            // Update the free-form Solve All fields with the new dragged values
+            var sf=solveAllFields[currentTri]||[];
+            sf.forEach(function(f){
+                var el=get(f.id); if(!el) return;
+                var ll=f.lbl.toLowerCase();
+                if(ll.indexOf('leg a')>=0||ll.indexOf('side a')>=0||ll.indexOf('leg (equal')>=0) el.value=newS1.toFixed(4);
+                else if(ll.indexOf('leg b')>=0||ll.indexOf('side b')>=0) el.value=newS2.toFixed(4);
+                else if(ll.indexOf('hypo')>=0||ll.indexOf('side c')>=0||ll.indexOf('base')>=0) el.value=newBase.toFixed(4);
+                else if(ll.indexOf('height')>=0||ll.indexOf('alt')>=0) el.value=newH.toFixed(4);
+                else if(ll.indexOf('area')>=0) el.value=(0.5*newBase*newH).toFixed(4);
+                else if(ll.indexOf('angle')>=0) el.value=''; // let solver derive angles
             });
         }
         var p=getPrec();
@@ -2313,6 +2327,7 @@
         lbD(pA.x,pA.y,pB.x,pB.y,newS1.toFixed(2));
         lbD(pB.x,pB.y,pC.x,pC.y,newS2.toFixed(2));
         lbD(pA.x,pA.y,pC.x,pC.y,newBase.toFixed(2));
+        if(currentGoal==='all') doSolveAll(true);
     });
     canvas.addEventListener('mouseup', function() { diagDragIdx=-1; canvas.style.cursor='default'; });
     canvas.addEventListener('mouseleave', function() { diagDragIdx=-1; });
@@ -3307,9 +3322,10 @@
             if(areaBox) areaBox.style.display='flex';
             if(perimBox) perimBox.style.display='flex';
         }
-        // Draw the triangle diagram
+        // Draw the triangle diagram and set lastCalcResult so dragging works
         if(!warn && !isNaN(diagS1) && !isNaN(diagH) && !isNaN(diagB)){
-            drawTri(diagS1, diagH, diagB, diagS2, false, diagAngles, 'all');
+            drawTri(diagS1, diagH, diagB, isNaN(diagS2)?diagS1:diagS2, false, diagAngles, 'all');
+            lastCalcResult={res:saArea,s1:diagS1,h:diagH,b:diagB,s2:isNaN(diagS2)?diagS1:diagS2,area:saArea,perim:saPerim,anglesForCanvas:diagAngles,isExt:false,goal:'all',workingUnit:'none',resOut:saArea,effOutUnit:'none'};
         }
         applyDark(); applyDiagramVisibility(); applyResultVisibility();
     }
