@@ -20,6 +20,7 @@
 
     // BroadcastChannel — works cross-origin in the same browser session
     var _geoChannel = null;
+    var _geoInstanceId = Math.random().toString(36).slice(2); // unique per tab
     try { _geoChannel = new BroadcastChannel('geoPro_sync'); } catch(e) {}
 
     // Try reading from localStorage immediately (fast, works when same origin)
@@ -64,6 +65,7 @@
         _geoChannel.onmessage = function(ev) {
             var msg = ev.data;
             if(!msg) return;
+            if(msg._src === _geoInstanceId) return; // ignore own messages
             if(msg.type === 'geoProReqSettings') {
                 // Another tab is asking — send them our latest settings
                 try {
@@ -657,7 +659,7 @@
             // Write to IndexedDB (persists on this origin across sessions)
             _idbPut(_sObj);
             // Broadcast to all other open tabs (cross-origin live sync)
-            if(_geoChannel) _geoChannel.postMessage({type:'geoProUpdate', data: _sStr});
+            if(_geoChannel) _geoChannel.postMessage({type:'geoProUpdate', data: _sStr, _src: _geoInstanceId});
         } catch(e) {}
     }
 
@@ -1402,9 +1404,8 @@
             get('posExt').innerText=adv?'Exterior foot':'External';
             tog.style.display='block';
         } else { tog.style.display='none'; }
-        get('res').style.display='none';
-        var _ub=get('unitBox');if(_ub)_ub.style.display='none';
-        ctx.clearRect(0,0,canvas.width,canvas.height);
+        // Only reset result panel if there's nothing currently shown — don't wipe a live result
+        if(!lastCalcResult) { get('res').style.display='none'; var _ub=get('unitBox');if(_ub)_ub.style.display='none'; ctx.clearRect(0,0,canvas.width,canvas.height); }
     }
     function rebuildAll(){buildTriBtns();buildGoalBtns();buildMethodBtns();renderInputs();}
 
@@ -3257,7 +3258,6 @@
     document.addEventListener('keydown', function(e) {
         if(get('miniCalc').style.display === 'none') return;
         var active = document.activeElement;
-        // If the user is focused in ANY input/textarea, let them type normally
         if(active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable)) return;
 
         var k = e.key;
@@ -4760,7 +4760,6 @@
         var nb=document.getElementById('quizNext');
         var hb=document.getElementById('quizHintBtn');
 
-        // Update the Skip button label based on whether there's a value typed
         function _updateNextLabel() {
             if(!nb) return;
             if(_quizState.answered) { nb.innerText='Next \u25b6'; return; }
@@ -4774,7 +4773,6 @@
             var hbox=document.getElementById('quizHintBox');
             if(hbox) hbox.style.display=hbox.style.display==='none'?'block':'none';
         });
-        // Dedicated Check button (always checks, never skips)
         if(sb) sb.addEventListener('click',function(){
             if(_quizState.answered) return;
             var v=parseFloat(document.getElementById('quizAnswer').value);
@@ -4790,19 +4788,15 @@
             if(document.getElementById('quizScore')) document.getElementById('quizScore').innerText=_quizState.correct+'/'+_quizState.total;
             _updateNextLabel();
         });
-        // Skip/Check/Next combined button
         if(nb) nb.addEventListener('click',function(){
             if(_quizState.answered) {
-                // Move to next question
                 _quizState.q=_quizGenQuestion(); _quizState.answered=false; _quizRenderQuestion();
                 return;
             }
             var hasVal = ai && ai.value.trim()!=='';
             if(hasVal) {
-                // Act as Check
                 if(sb) sb.click();
             } else {
-                // Act as Skip
                 _quizState.answered=true; _quizState.total++; _quizState.streak=0;
                 var fb=document.getElementById('quizFeedback');
                 if(fb) fb.innerHTML='<span style="color:#c0392b;font-weight:700;">Skipped. x = '+parseFloat(q.answer.toPrecision(6))+'</span>';
