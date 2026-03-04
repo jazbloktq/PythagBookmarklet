@@ -4581,44 +4581,55 @@
     // ── Quiz Mode ─────────────────────────────────────────────────────────────
     var _quizPanel = null;
     var _quizState = { q:null, answered:false, streak:0, total:0, correct:0 };
+    var _quizCats = { pythag2d:true, trig:true, vol3d:true, sa3d:true };
 
     function _quizRandInt(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
 
+    function _quizEnabledTypes() {
+        var t=[];
+        if(_quizCats.pythag2d){ t.push(0); t.push(1); }
+        if(_quizCats.trig)    { t.push(2); }
+        if(_quizCats.vol3d)   { t.push(3); t.push(5); }
+        if(_quizCats.sa3d)    { t.push(4); }
+        return t.length ? t : [0,1,2,3,4,5];
+    }
+
     function _quizGenQuestion() {
-        var type = _quizRandInt(0,5); // 0-2 = pythag/trig, 3-5 = 3D
+        var types=_quizEnabledTypes();
+        var type=types[_quizRandInt(0,types.length-1)];
         var a,b,c,question,answer,hint,given,qtype;
         if(type===0) {
             a=_quizRandInt(3,15); b=_quizRandInt(3,15); c=Math.sqrt(a*a+b*b);
-            question='Find the hypotenuse c.';
-            answer=parseFloat(c.toPrecision(6)); hint='c = √(a² + b²)';
+            question='Find x, the length of the hypotenuse.';
+            answer=parseFloat(c.toPrecision(6)); hint='x = √(a² + b²)';
             given='a = '+a+', b = '+b; qtype='pythag_c';
         } else if(type===1) {
             a=_quizRandInt(3,12); b=_quizRandInt(3,12); c=Math.sqrt(a*a+b*b);
-            question='Find the missing leg a, given hypotenuse c and leg b.';
-            answer=parseFloat(a.toPrecision(6)); hint='a = √(c² − b²)';
+            question='Find x, the missing leg, given the hypotenuse and the other leg.';
+            answer=parseFloat(a.toPrecision(6)); hint='x = √(c² − b²)';
             given='b = '+b+', c = '+parseFloat(c.toPrecision(4)); qtype='pythag_a';
         } else if(type===2) {
             a=_quizRandInt(2,10); b=_quizRandInt(2,10); c=Math.sqrt(a*a+b*b);
             var angA=Math.atan(a/b)*180/Math.PI;
-            question='Find angle A (degrees) opposite leg a. Round to 2 dp.';
-            answer=parseFloat(angA.toPrecision(5)); hint='A = arctan(a / b)';
+            question='Find x°, the angle opposite the vertical leg. Give your answer in degrees to 2 dp.';
+            answer=parseFloat(angA.toPrecision(5)); hint='x = arctan(opposite / adjacent)';
             given='a = '+a+', b = '+b; qtype='pythag_ang';
         } else if(type===3) {
             var l=_quizRandInt(2,12),w=_quizRandInt(2,12),h=_quizRandInt(2,12);
-            question='Find the volume of a rectangular prism.';
-            answer=l*w*h; hint='V = l × w × h';
+            question='Find x, the volume of this rectangular prism.';
+            answer=l*w*h; hint='x = l × w × h';
             given='l = '+l+', w = '+w+', h = '+h; qtype='3d_vol_rect';
             a=l; b=w; c=h;
         } else if(type===4) {
             var r=_quizRandInt(2,10);
-            question='Find the surface area of a sphere. Round to 2 dp.';
-            answer=parseFloat((4*Math.PI*r*r).toFixed(2)); hint='SA = 4πr²';
+            question='Find x, the surface area of this sphere. Round to 2 dp.';
+            answer=parseFloat((4*Math.PI*r*r).toFixed(2)); hint='x = 4πr²';
             given='radius r = '+r; qtype='3d_sa_sphere';
             a=r; b=0; c=0;
         } else {
             var r2=_quizRandInt(2,8),h2=_quizRandInt(3,12);
-            question='Find the volume of a cylinder. Round to 2 dp.';
-            answer=parseFloat((Math.PI*r2*r2*h2).toFixed(2)); hint='V = πr²h';
+            question='Find x, the volume of this cylinder. Round to 2 dp.';
+            answer=parseFloat((Math.PI*r2*r2*h2).toFixed(2)); hint='x = πr²h';
             given='radius r = '+r2+', height h = '+h2; qtype='3d_vol_cyl';
             a=r2; b=h2; c=0;
         }
@@ -4635,87 +4646,102 @@
         var d=getDark(),bw=getBW();
         cx2.fillStyle=bw?'#fff':(d?'#181828':'#f8faff'); cx2.fillRect(0,0,W,H);
         var col=bw?'#000':(d?'#4a9eff':'#1a73e8');
-        var lc=bw?'#000':(d?'#a0c0ff':'#1a4080');
+        var lc=bw?'#444':(d?'#a0c0ff':'#1a4080');
         var unk=bw?'#000':'#e05010';
-        cx2.font='bold 11px system-ui,sans-serif';
 
         if(q.qtype==='pythag_c'||q.qtype==='pythag_a'||q.qtype==='pythag_ang') {
             var a=q.a,b=q.b;
-            var pad=36,ow=W-2*pad,oh=H-2*pad;
+            var pad=44,ow=W-2*pad,oh=H-2*pad;
             var sc=Math.min(ow/Math.max(b,1),oh/Math.max(a,1));
             var bx=pad,by=H-pad,ax2=pad,ay=H-pad-a*sc,ccx=pad+b*sc,ccy=H-pad;
             cx2.strokeStyle=col; cx2.lineWidth=2;
             cx2.beginPath(); cx2.moveTo(ax2,ay); cx2.lineTo(bx,by); cx2.lineTo(ccx,ccy); cx2.closePath(); cx2.stroke();
-            var sq=9; cx2.strokeStyle=bw?'#000':(d?'#7090b0':'#aabbd0'); cx2.lineWidth=1;
+            var sq=9; cx2.strokeStyle=bw?'#888':(d?'#5070a0':'#aabbd0'); cx2.lineWidth=1;
             cx2.strokeRect(bx,by-sq,sq,sq);
             cx2.textAlign='center';
+            cx2.font='bold 11px system-ui,sans-serif';
             if(q.qtype==='pythag_c'){
-                cx2.fillStyle=lc; cx2.fillText('a='+a,(ax2+bx)/2-12,(ay+by)/2);
-                cx2.fillText('b='+b,(bx+ccx)/2,by+14);
-                cx2.fillStyle=unk; cx2.fillText('c=?',(ax2+ccx)/2+8,(ay+ccy)/2-8);
+                cx2.fillStyle=lc; cx2.fillText('a='+a,(ax2+bx)/2-14,(ay+by)/2);
+                cx2.fillText('b='+b,(bx+ccx)/2,by+16);
+                cx2.fillStyle=unk; cx2.font='bold 13px system-ui,sans-serif';
+                cx2.fillText('x=?',(ax2+ccx)/2+12,(ay+ccy)/2-8);
             } else if(q.qtype==='pythag_a'){
-                cx2.fillStyle=unk; cx2.fillText('a=?',(ax2+bx)/2-12,(ay+by)/2);
-                cx2.fillStyle=lc; cx2.fillText('b='+b,(bx+ccx)/2,by+14);
-                cx2.fillText('c='+parseFloat(q.c.toPrecision(4)),(ax2+ccx)/2+8,(ay+ccy)/2-8);
+                cx2.fillStyle=unk; cx2.font='bold 13px system-ui,sans-serif';
+                cx2.fillText('x=?',(ax2+bx)/2-14,(ay+by)/2);
+                cx2.font='bold 11px system-ui,sans-serif';
+                cx2.fillStyle=lc; cx2.fillText('b='+b,(bx+ccx)/2,by+16);
+                cx2.fillText('c='+parseFloat(q.c.toPrecision(4)),(ax2+ccx)/2+12,(ay+ccy)/2-8);
             } else {
-                cx2.fillStyle=lc; cx2.fillText('a='+a,(ax2+bx)/2-12,(ay+by)/2);
-                cx2.fillText('b='+b,(bx+ccx)/2,by+14);
-                cx2.fillText('c='+parseFloat(q.c.toPrecision(4)),(ax2+ccx)/2+8,(ay+ccy)/2-8);
-                cx2.fillStyle=unk; cx2.fillText('A=?',ax2-18,ay+14);
+                cx2.fillStyle=lc; cx2.fillText('a='+a,(ax2+bx)/2-14,(ay+by)/2);
+                cx2.fillText('b='+b,(bx+ccx)/2,by+16);
+                cx2.fillText('c='+parseFloat(q.c.toPrecision(4)),(ax2+ccx)/2+12,(ay+ccy)/2-8);
+                cx2.fillStyle=unk; cx2.font='bold 13px system-ui,sans-serif';
+                cx2.fillText('x°',ax2-22,ay+18);
+                cx2.strokeStyle=unk; cx2.lineWidth=1.5;
+                cx2.beginPath(); cx2.arc(ax2,ay,15,Math.PI/2,Math.PI/2+Math.atan2(b*sc,a*sc)); cx2.stroke();
             }
         } else if(q.qtype==='3d_vol_rect') {
             var l=q.a,w=q.b,hv=q.c;
-            var sc2=Math.min(14,(W-80)/Math.max(l+w*0.5,1),(H-50)/Math.max(hv+w*0.25,1));
-            var ox=W/2-(l+w*0.5)*sc2/2+w*0.25*sc2, oy=H-20-hv*sc2;
-            var ix=0.5*sc2,iy=-0.25*sc2;
-            function iX(lv,wv){return ox+lv*sc2+wv*ix;}
-            function iY(lv,wv,hh){return oy+wv*iy-hh*sc2;}
+            var sc2=Math.min(13,(W-90)/Math.max(l+w*0.45,1),(H-55)/Math.max(hv+w*0.25,1));
+            var ox=W/2-(l+w*0.4)*sc2/2,oy=H-26-hv*sc2;
+            function iX(lv,wv){return ox+lv*sc2+wv*0.44*sc2;}
+            function iY(lv,wv,hh){return oy+wv*(-0.22)*sc2-hh*sc2;}
             cx2.strokeStyle=col; cx2.lineWidth=1.5;
-            [[0,0,0],[l,0,0],[l,w,0],[0,w,0]].reduce(function(prev,v,i,arr){
-                if(i===0){cx2.beginPath();cx2.moveTo(iX(v[0],v[1]),iY(0,0,0));}
-                else cx2.lineTo(iX(v[0],v[1]),iY(0,0,0));
-                if(i===arr.length-1)cx2.closePath(),cx2.stroke(); return null;
-            },null);
-            [[0,0,hv],[l,0,hv],[l,w,hv],[0,w,hv]].reduce(function(prev,v,i,arr){
-                if(i===0){cx2.beginPath();cx2.moveTo(iX(v[0],v[1]),iY(0,0,hv));}
-                else cx2.lineTo(iX(v[0],v[1]),iY(0,0,hv));
-                if(i===arr.length-1)cx2.closePath(),cx2.stroke(); return null;
-            },null);
-            [[0,0],[l,0],[l,w],[0,w]].forEach(function(v){
-                cx2.beginPath();cx2.moveTo(iX(v[0],v[1]),iY(v[0],v[1],0));cx2.lineTo(iX(v[0],v[1]),iY(v[0],v[1],hv));cx2.stroke();
-            });
-            cx2.fillStyle=lc; cx2.textAlign='center';
-            cx2.fillText('l='+l,iX(l/2,0),iY(l/2,0,0)+13);
-            cx2.fillText('w='+w,iX(l,w/2)+20,iY(l,w/2,0));
-            cx2.fillText('h='+hv,iX(0,0)-16,iY(0,0,hv/2));
-            cx2.fillStyle=unk; cx2.fillText('V=?',iX(l/2,w/2),iY(l/2,w/2,hv/2));
+            var bf=[[0,0],[l,0],[l,w],[0,w]];
+            cx2.beginPath(); cx2.moveTo(iX(bf[0][0],bf[0][1]),iY(0,0,0));
+            for(var pi=1;pi<bf.length;pi++) cx2.lineTo(iX(bf[pi][0],bf[pi][1]),iY(0,0,0));
+            cx2.closePath(); cx2.stroke();
+            cx2.beginPath(); cx2.moveTo(iX(bf[0][0],bf[0][1]),iY(0,0,hv));
+            for(var pi2=1;pi2<bf.length;pi2++) cx2.lineTo(iX(bf[pi2][0],bf[pi2][1]),iY(0,0,hv));
+            cx2.closePath(); cx2.stroke();
+            bf.forEach(function(v){cx2.beginPath();cx2.moveTo(iX(v[0],v[1]),iY(v[0],v[1],0));cx2.lineTo(iX(v[0],v[1]),iY(v[0],v[1],hv));cx2.stroke();});
+            cx2.font='bold 11px system-ui,sans-serif'; cx2.textAlign='center';
+            cx2.fillStyle=lc;
+            cx2.fillText('l='+l,iX(l/2,0),iY(l/2,0,0)+15);
+            cx2.fillText('w='+w,iX(l,w/2)+22,iY(l,w/2,0)+2);
+            cx2.fillText('h='+hv,iX(0,0)-20,iY(0,0,hv/2)+2);
+            cx2.fillStyle=unk; cx2.font='bold 13px system-ui,sans-serif';
+            cx2.fillText('x=?',iX(l/2,w/2),iY(l/2,w/2,hv/2)+2);
         } else if(q.qtype==='3d_sa_sphere') {
-            var r=q.a,rs=Math.min(W,H)/2-22;
+            var r=q.a,rs=Math.min(W,H)/2-24;
             cx2.strokeStyle=col; cx2.lineWidth=2;
             cx2.beginPath(); cx2.arc(W/2,H/2,rs,0,2*Math.PI); cx2.stroke();
-            cx2.strokeStyle=bw?'#999':(d?'#334466':'#cce'); cx2.lineWidth=1;
-            cx2.beginPath(); cx2.ellipse(W/2,H/2,rs,rs*0.3,0,0,2*Math.PI); cx2.stroke();
-            cx2.fillStyle=lc; cx2.textAlign='center';
-            cx2.fillText('r='+r,W/2+rs*0.55,H/2-rs*0.55);
-            cx2.fillStyle=unk; cx2.fillText('SA=?',W/2,H/2+16);
+            cx2.strokeStyle=bw?'#aaa':(d?'#334466':'#bad'); cx2.lineWidth=1;
+            cx2.beginPath(); cx2.ellipse(W/2,H/2,rs,rs*0.28,0,0,2*Math.PI); cx2.stroke();
+            cx2.strokeStyle=lc; cx2.lineWidth=1.5; cx2.setLineDash([3,3]);
+            cx2.beginPath(); cx2.moveTo(W/2,H/2); cx2.lineTo(W/2+rs,H/2); cx2.stroke();
+            cx2.setLineDash([]);
+            cx2.font='bold 11px system-ui,sans-serif'; cx2.textAlign='center';
+            cx2.fillStyle=lc; cx2.fillText('r='+r,W/2+rs*0.52,H/2-9);
+            cx2.fillStyle=unk; cx2.font='bold 13px system-ui,sans-serif';
+            cx2.fillText('x=?',W/2,H/2+rs*0.55+8);
         } else if(q.qtype==='3d_vol_cyl') {
             var r3=q.a,h3=q.b;
-            var sc3=Math.min(12,(W-70)/(r3*2),(H-40)/h3);
+            var sc3=Math.min(12,(W-80)/(r3*2+4),(H-46)/h3);
             var rr=r3*sc3,hh3=h3*sc3,cxc=W/2,cyc=H/2;
             cx2.strokeStyle=col; cx2.lineWidth=2;
             cx2.strokeRect(cxc-rr,cyc-hh3/2,rr*2,hh3);
-            cx2.beginPath(); cx2.ellipse(cxc,cyc-hh3/2,rr,rr*0.3,0,0,2*Math.PI); cx2.stroke();
-            cx2.beginPath(); cx2.ellipse(cxc,cyc+hh3/2,rr,rr*0.3,0,Math.PI,false); cx2.stroke();
-            cx2.fillStyle=lc; cx2.textAlign='center';
-            cx2.fillText('r='+r3,cxc+rr+16,cyc);
-            cx2.fillText('h='+h3,cxc-rr-18,cyc);
-            cx2.fillStyle=unk; cx2.fillText('V=?',cxc,cyc+5);
+            cx2.beginPath(); cx2.ellipse(cxc,cyc-hh3/2,rr,rr*0.28,0,0,2*Math.PI); cx2.stroke();
+            cx2.beginPath(); cx2.ellipse(cxc,cyc+hh3/2,rr,rr*0.28,0,Math.PI,false); cx2.stroke();
+            cx2.strokeStyle=lc; cx2.lineWidth=1.2; cx2.setLineDash([3,3]);
+            cx2.beginPath(); cx2.moveTo(cxc,cyc-hh3/2); cx2.lineTo(cxc+rr,cyc-hh3/2); cx2.stroke();
+            cx2.setLineDash([]);
+            cx2.font='bold 11px system-ui,sans-serif'; cx2.textAlign='center';
+            cx2.fillStyle=lc;
+            cx2.fillText('r='+r3,cxc+rr/2,cyc-hh3/2-8);
+            cx2.fillText('h='+h3,cxc-rr-20,cyc+4);
+            cx2.fillStyle=unk; cx2.font='bold 13px system-ui,sans-serif';
+            cx2.fillText('x=?',cxc,cyc+6);
         }
     }
 
     function _quizRenderQuestion() {
         var qp=document.getElementById('quizContent'); if(!qp) return;
         var q=_quizState.q;
+        if(!q){
+            qp.innerHTML='<div style="padding:20px;text-align:center;color:#999;font-size:12px;">No question types selected.<br>Enable at least one category in ⚙ settings.</div>';
+            return;
+        }
         var d=getDark(),bw=getBW();
         var txt=bw?'#000':(d?'#e0e0f0':'#222');
         var sub=bw?'#333':(d?'#9090b0':'#666');
@@ -4728,12 +4754,12 @@
             +'<div style="font-size:13px;font-weight:700;color:'+txt+';margin-bottom:10px;">'+q.question+'</div>'
             +'<canvas id="quizCanvas" style="width:100%;height:150px;border-radius:8px;display:block;margin-bottom:10px;"></canvas>'
             +'<div style="display:flex;gap:8px;margin-bottom:8px;">'
-            +'<input id="quizAnswer" type="number" step="any" placeholder="Your answer..." style="flex:1;padding:8px 10px;border:1.5px solid '+bdr2+';border-radius:7px;font-size:14px;background:'+inpbg+';color:'+txt+';outline:none;">'
+            +'<input id="quizAnswer" type="number" step="any" placeholder="x = ?" style="flex:1;padding:8px 10px;border:1.5px solid '+bdr2+';border-radius:7px;font-size:14px;background:'+inpbg+';color:'+txt+';outline:none;">'
             +'<button id="quizSubmit" style="padding:8px 14px;background:'+acc+';color:#fff;border:none;border-radius:7px;font-weight:700;cursor:pointer;font-size:13px;">Check</button>'
             +'</div>'
             +'<div id="quizFeedback" style="min-height:22px;font-size:12px;margin-bottom:6px;"></div>'
             +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">'
-            +'<span style="font-size:11px;color:'+sub+';">Streak: <b id="quizStreak">'+_quizState.streak+'</b> &nbsp; Score: <b id="quizScore">'+_quizState.correct+'/'+_quizState.total+'</b></span>'
+            +'<span style="font-size:11px;color:'+sub+';">Streak: <b id="quizStreak">'+_quizState.streak+'</b>&nbsp; Score: <b id="quizScore">'+_quizState.correct+'/'+_quizState.total+'</b></span>'
             +'<div style="display:flex;gap:6px;">'
             +'<button id="quizHintBtn" style="padding:5px 10px;background:'+(bw?'#e8e8e8':(d?'#2a2a3e':'#f1f3f4'))+';color:'+sub+';border:1px solid '+bdr2+';border-radius:7px;font-size:11px;cursor:pointer;">Hint</button>'
             +'<button id="quizNext" style="padding:5px 10px;background:'+(bw?'#e8e8e8':(d?'#2a2a3e':'#e8f0fe'))+';color:'+acc+';border:1px solid '+(bw?'#000':acc)+';border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;">Skip ▶</button>'
@@ -4760,23 +4786,61 @@
             var ok=Math.abs(v-q.answer)<=tol;
             if(ok){_quizState.correct++;_quizState.streak++;}else{_quizState.streak=0;}
             document.getElementById('quizFeedback').innerHTML=ok
-                ?'<span style="color:#22a05a;font-weight:700;">✓ Correct! Answer: '+parseFloat(q.answer.toPrecision(6))+'</span>'
-                :'<span style="color:#c0392b;font-weight:700;">✗ Incorrect. Answer: '+parseFloat(q.answer.toPrecision(6))+'</span>';
+                ?'<span style="color:#22a05a;font-weight:700;">✓ Correct! x = '+parseFloat(q.answer.toPrecision(6))+'</span>'
+                :'<span style="color:#c0392b;font-weight:700;">✗ Incorrect. x = '+parseFloat(q.answer.toPrecision(6))+'</span>';
             if(document.getElementById('quizStreak')) document.getElementById('quizStreak').innerText=_quizState.streak;
             if(document.getElementById('quizScore')) document.getElementById('quizScore').innerText=_quizState.correct+'/'+_quizState.total;
             if(nb) nb.innerText='Next ▶';
         });
         if(nb) nb.addEventListener('click',function(){
-            if(!_quizState.answered) {
-                // Skip = wrong
+            if(!_quizState.answered){
                 _quizState.answered=true; _quizState.total++; _quizState.streak=0;
                 var fb=document.getElementById('quizFeedback');
-                if(fb) fb.innerHTML='<span style="color:#c0392b;font-weight:700;">Skipped. Answer: '+parseFloat(q.answer.toPrecision(6))+'</span>';
+                if(fb) fb.innerHTML='<span style="color:#c0392b;font-weight:700;">Skipped. x = '+parseFloat(q.answer.toPrecision(6))+'</span>';
                 if(document.getElementById('quizStreak')) document.getElementById('quizStreak').innerText=_quizState.streak;
                 if(document.getElementById('quizScore')) document.getElementById('quizScore').innerText=_quizState.correct+'/'+_quizState.total;
                 if(nb) nb.innerText='Next ▶';
                 return;
             }
+            _quizState.q=_quizGenQuestion(); _quizState.answered=false; _quizRenderQuestion();
+        });
+    }
+
+    function _quizRenderSettings(sp) {
+        if(!sp) sp=document.getElementById('quizSettingsPanel');
+        if(!sp) return;
+        var d=getDark(),bw=getBW();
+        var txt=bw?'#000':(d?'#e0e0f0':'#222');
+        var sub=bw?'#333':(d?'#9090b0':'#666');
+        var bdr2=bw?'#000':(d?'#333350':'#ddd');
+        var bg2=bw?'#f0f0f0':(d?'#252535':'#f8f9fa');
+        var cats=[
+            {key:'pythag2d', label:'Pythagoras — find hyp or leg'},
+            {key:'trig',     label:'Trigonometry — find angle'},
+            {key:'vol3d',    label:'3D Volume (prism & cylinder)'},
+            {key:'sa3d',     label:'3D Surface area (sphere)'}
+        ];
+        sp.innerHTML='<div style="padding:8px 14px 6px;font-size:11px;color:'+sub+';font-weight:700;letter-spacing:0.5px;border-bottom:1px solid '+bdr2+';">QUESTION CATEGORIES</div>'
+            +cats.map(function(c){
+                return '<label style="display:flex;align-items:center;gap:8px;padding:7px 14px;cursor:pointer;font-size:12px;color:'+txt+';border-bottom:1px solid '+bdr2+';background:'+bg2+';">'
+                    +'<input type="checkbox" data-cat="'+c.key+'" '+(_quizCats[c.key]?'checked':'')+' style="accent-color:#1a73e8;width:13px;height:13px;flex-shrink:0;">'
+                    +c.label+'</label>';
+            }).join('')
+            +'<div style="padding:8px 14px;background:'+bg2+';">'
+            +'<button id="quizNewNow" style="width:100%;padding:6px;border:1px solid '+bdr2+';background:'+(bw?'#000':(d?'#1a5090':'#1a73e8'))+';color:#fff;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;">↻ New question with these settings</button>'
+            +'</div>';
+
+        sp.querySelectorAll('input[data-cat]').forEach(function(chk){
+            chk.addEventListener('change',function(){
+                _quizCats[this.getAttribute('data-cat')]=this.checked;
+                // ensure at least one remains — recheck if all unchecked
+                var any=Object.keys(_quizCats).some(function(k){return _quizCats[k];});
+                if(!any){ _quizCats[this.getAttribute('data-cat')]=true; this.checked=true; }
+            });
+        });
+        var nnBtn=sp.querySelector('#quizNewNow');
+        if(nnBtn) nnBtn.addEventListener('click',function(){
+            sp.style.display='none';
             _quizState.q=_quizGenQuestion(); _quizState.answered=false; _quizRenderQuestion();
         });
     }
@@ -4790,20 +4854,32 @@
         var qp=document.createElement('div');
         qp.id='geoQuizPanel';
         qp.style.cssText='position:fixed;top:60px;right:30px;width:320px;background:'+bg+';border:1.5px solid '+bdr+';border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.22);z-index:999999;font-family:system-ui,sans-serif;';
-        qp.innerHTML='<div id="quizPanelHeader" style="padding:10px 14px;background:'+hdrBg+';border-radius:10px 10px 0 0;display:flex;justify-content:space-between;align-items:center;cursor:grab;user-select:none;">'
+        qp.innerHTML=
+            '<div id="quizPanelHeader" style="padding:10px 14px;background:'+hdrBg+';border-radius:10px 10px 0 0;display:flex;justify-content:space-between;align-items:center;cursor:grab;user-select:none;">'
             +'<span style="font-weight:700;color:#fff;font-size:13px;">&#x1F9E0; Geometry Quiz</span>'
+            +'<div style="display:flex;align-items:center;gap:8px;">'
+            +'<span id="quizSettingsBtn" title="Question settings" style="cursor:pointer;color:#fff;font-size:15px;opacity:0.85;padding:2px 4px;border-radius:4px;line-height:1;">&#9881;</span>'
             +'<span id="quizPanelClose" style="cursor:pointer;color:#fff;font-size:20px;line-height:1;opacity:0.8;">&times;</span>'
-            +'</div><div id="quizContent" style="padding:12px 14px;"></div>';
+            +'</div></div>'
+            +'<div id="quizSettingsPanel" style="display:none;border-bottom:1.5px solid '+bdr+';"></div>'
+            +'<div id="quizContent" style="padding:12px 14px;"></div>';
         document.body.appendChild(qp);
         _quizPanel=qp;
         _quizState.q=_quizGenQuestion(); _quizState.answered=false;
         _quizRenderQuestion();
+        _quizRenderSettings(qp.querySelector('#quizSettingsPanel'));
+
         qp.querySelector('#quizPanelClose').addEventListener('click',function(e){e.stopPropagation();qp.remove();_quizPanel=null;});
-        // Drag by header
+        qp.querySelector('#quizSettingsBtn').addEventListener('click',function(e){
+            e.stopPropagation();
+            var sp=document.getElementById('quizSettingsPanel');
+            if(sp) sp.style.display=sp.style.display==='none'?'block':'none';
+        });
+
         var _qd={on:false,sx:0,sy:0,ox:0,oy:0};
         var qHdr=qp.querySelector('#quizPanelHeader');
         qHdr.addEventListener('mousedown',function(e){
-            if(e.target.id==='quizPanelClose') return;
+            if(e.target.id==='quizPanelClose'||e.target.id==='quizSettingsBtn') return;
             _qd.on=true;
             var r=qp.getBoundingClientRect();
             _qd.ox=r.left; _qd.oy=r.top; _qd.sx=e.clientX; _qd.sy=e.clientY;
