@@ -128,6 +128,7 @@
     var initInteractDiag  = saved.interactDiag  === true;
     var initClickEdit     = saved.clickEdit     === true;
     var initColorCode     = saved.colorCode     !== false;
+    var initOuterAngles   = saved.outerAngles   === true;    // default false
     var initPrec          = saved.prec !== undefined ? String(saved.prec) : '2';
     var initUnit          = saved.unit          || 'none';
     var initOutputUnit    = saved.outputUnit     || 'same';
@@ -537,6 +538,9 @@
                 '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optColorCode"   style="accent-color:#1a73e8;width:14px;height:14px;flex-shrink:0;"> Colour-code result side</label>',
                 '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optInteractDiag" style="accent-color:#1a73e8;width:14px;height:14px;flex-shrink:0;"> Interactive diagram <span style="font-size:10px;color:#aaa;margin-left:2px;">(drag vertices)</span></label>',
                 '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optClickEdit"    style="accent-color:#1a73e8;width:14px;height:14px;flex-shrink:0;"> Click labels to edit</label>',
+                '<div style="height:1px;background:#eee;margin:2px 0;"></div>',
+                '<div style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;margin-bottom:2px;">TRIG SOLVER DIAGRAM</div>',
+                '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optOuterAngles" style="accent-color:#1a73e8;width:14px;height:14px;flex-shrink:0;"> Show exterior angles <span style="font-size:10px;color:#aaa;margin-left:2px;">(arcs outside triangle)</span></label>',
               '</div>',
               '<div style="height:1px;background:#eee;margin:10px 0;"></div>',
               '<div id="interactNote" style="font-size:10px;color:#999;line-height:1.5;">When interactive mode is on, drag any vertex on the diagram to reshape the triangle. Values update live. Click a side label to edit its value directly.</div>',
@@ -650,6 +654,7 @@
     get('optInteractDiag').checked= initInteractDiag;
     get('optClickEdit').checked   = initClickEdit;
     get('optColorCode').checked   = initColorCode;
+    var _oaChk = get('optOuterAngles'); if(_oaChk) _oaChk.checked = initOuterAngles;
     get('optShow3DBtn').checked   = initShow3DBtn;
     apply3DBtnVisibility();
     // New settings
@@ -673,6 +678,7 @@
     function getInteractDiag() { return get('optInteractDiag').checked; }
     function getClickEdit()    { return get('optClickEdit').checked; }
     function getColorCode()    { return get('optColorCode').checked; }
+    function getOuterAngles()  { var el=get('optOuterAngles'); return el?el.checked:false; }
     function getSelectedUnit() { return currentUnit; }
     function getOutputUnit()    { return currentOutputUnit; }
 
@@ -695,6 +701,7 @@
                 interactDiag: get('optInteractDiag').checked,
                 clickEdit:  get('optClickEdit').checked,
                 colorCode:  get('optColorCode').checked,
+                outerAngles:get('optOuterAngles') ? get('optOuterAngles').checked : false,
                 unit:       currentUnit,
                 outputUnit: currentOutputUnit,
                 calcPin:    get('calcPinOpen') ? get('calcPinOpen').checked : true,
@@ -739,6 +746,7 @@
         _chk('optInteractDiag',s.interactDiag);
         _chk('optClickEdit',   s.clickEdit);
         _chk('optColorCode',   s.colorCode !== false);
+        if(get('optOuterAngles') && s.outerAngles !== undefined) get('optOuterAngles').checked = !!s.outerAngles;
         if(get('calcPinOpen') && s.calcPin !== undefined)        get('calcPinOpen').checked        = s.calcPin !== false;
         if(get('calcInferBrackets') && s.calcInfer !== undefined) get('calcInferBrackets').checked  = s.calcInfer !== false;
         if(get('optShow3DBtn') && s.show3DBtn !== undefined)      get('optShow3DBtn').checked       = !!s.show3DBtn;
@@ -3446,6 +3454,8 @@
         saveSettings();
     });
     get('optClickEdit').addEventListener('change',saveSettings);
+    var _oaEl=get('optOuterAngles');
+    if(_oaEl) _oaEl.addEventListener('change',function(){ saveSettings(); if(modeTrig) _trigDrawDiagram(); });
     get('optColorCode').addEventListener('change',function(){
         if(lastCalcResult){
             var r=lastCalcResult;
@@ -5032,16 +5042,17 @@
         ctx2.strokeStyle=acc; ctx2.lineWidth=2.2;
         ctx2.beginPath(); ctx2.moveTo(ox,oy); ctx2.lineTo(bx,by); ctx2.lineTo(tx,ty); ctx2.closePath(); ctx2.stroke();
 
-        // θ arc at bottom-right
+        // θ arc at bottom-right (bx,by): CCW=inside, CW=outside (exterior angle)
         var th_to_top  = Math.atan2(ty-by,tx-bx);
         var th_to_left = Math.atan2(oy-by,ox-bx);
+        var outer = getOuterAngles();
         ctx2.strokeStyle=bw?'#555':(d?'#f0a040':'#d97706'); ctx2.lineWidth=1.5;
-        ctx2.beginPath(); ctx2.arc(bx,by,22,th_to_top,th_to_left,false); ctx2.stroke();
-        // α arc at top-left
+        ctx2.beginPath(); ctx2.arc(bx,by,22,th_to_top,th_to_left,!outer); ctx2.stroke();
+        // α arc at top-left (tx,ty): CCW=inside, CW=outside (exterior angle)
         var al_to_bot  = Math.atan2(oy-ty,ox-tx);
         var al_to_right= Math.atan2(by-ty,bx-tx);
         ctx2.strokeStyle=bw?'#888':(d?'#60c060':'#22a05a'); ctx2.lineWidth=1.5;
-        ctx2.beginPath(); ctx2.arc(tx,ty,20,al_to_bot,al_to_right,true); ctx2.stroke();
+        ctx2.beginPath(); ctx2.arc(tx,ty,20,al_to_bot,al_to_right,!outer); ctx2.stroke();
 
         var prec=getPrec(), deg=getDeg(), aLbl=deg?'°':'r';
         function fmtV(id,isAngle,fallback) {
