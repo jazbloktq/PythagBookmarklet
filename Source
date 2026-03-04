@@ -238,14 +238,17 @@
           '</div>',
           '<div id="panel3D" style="display:none;">',
             '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">',
-              '<div style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;">3D SHAPE:</div>',
+              '<div style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;">3D SHAPE TYPE:</div>',
               '<button id="toggle3DBack" style="padding:3px 9px;border:none;border-radius:5px;background:#e8f0fe;color:#1a73e8;font-size:10px;font-weight:700;cursor:pointer;">&#9664; Triangles</button>',
             '</div>',
             '<div id="shapeBtns3D" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px;"></div>',
+            '<div style="margin-bottom:14px;"><div style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;margin-bottom:7px;">FIND:</div><div id="goalBtns3D" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;"></div></div>',
+            '<div id="methodSection3D" style="margin-bottom:14px;display:none;"><div style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;margin-bottom:7px;">METHOD:</div><div id="methodBtns3D" style="display:flex;flex-direction:column;gap:5px;"></div></div>',
+            '<div id="inputs3D" style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px;"></div>',
             '<div id="canvasBox3D" style="position:relative;width:100%;margin-bottom:14px;border:1px solid #eee;border-radius:8px;overflow:hidden;background:#fafafa;display:none;">',
               '<canvas id="canvas3D" width="340" height="200" style="width:100%;display:block;"></canvas>',
+              '<button id="dlBtn3D" style="position:absolute;bottom:7px;right:7px;z-index:2;background:rgba(255,255,255,0.92);border:1px solid #ddd;padding:4px 9px;border-radius:4px;font-size:10px;cursor:pointer;font-weight:600;color:#555;">Save PNG</button>',
             '</div>',
-            '<div id="inputs3D" style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px;"></div>',
             '<div style="display:flex;gap:8px;margin-bottom:14px;">',
               '<button id="calc3D" style="flex:2;padding:11px;background:#1a73e8;color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px;">Calculate</button>',
               '<button id="clear3D" style="flex:1;padding:11px;background:#f1f3f4;border:none;border-radius:8px;cursor:pointer;font-size:13px;color:#555;">Clear</button>',
@@ -787,6 +790,7 @@
             var t3bk=get('toggle3DBack'); if(t3bk){ t3bk.style.background=d?'#1e2a3e':'#e8f0fe'; t3bk.style.color=d?'#4a9eff':'#1a73e8'; }
             var c3d=get('calc3D'); if(c3d){ c3d.style.background=d?'#1a5090':'#1a73e8'; c3d.style.color='#fff'; }
             var cl3d=get('clear3D'); if(cl3d){ cl3d.style.background=dk('btnBg'); cl3d.style.color=dk('btnTxt'); }
+            var ms3=get('methodSection3D'); if(ms3){ ms3.querySelectorAll('*').forEach(function(el){if(el.tagName==='BUTTON'){el.style.color=dk('text');}}); }
         }
         var t3btn=get('toggle3DBtn'); if(t3btn){ t3btn.style.background=d?'#1e2a3e':'#e8f0fe'; t3btn.style.color=d?'#4a9eff':'#1a73e8'; }
         var cb3d=get('canvasBox3D'); if(cb3d){ cb3d.style.background=dk('canvasBg'); cb3d.style.borderColor=dk('canvasBdr'); }
@@ -3649,6 +3653,8 @@
 
     // ── 3D Shape Solver ────────────────────────────────────────────────────────
     var current3DShape = 'rect_prism';
+    var current3DGoal  = 'all';
+    var current3DMethod = 0;
     var mode3D = false;
 
     var shapes3D = [
@@ -3658,382 +3664,558 @@
         {id:'tri_pyramid', label:'Tri. Pyramid'}
     ];
 
-    var shape3DFields = {
+    // Goals per shape
+    var goals3D = {
+        rect_prism:   ['all','diagonal','surface','volume','edges'],
+        rect_pyramid: ['all','diagonal','surface','volume','edges'],
+        tri_prism:    ['all','surface','volume','edges'],
+        tri_pyramid:  ['all','surface','volume','edges']
+    };
+
+    var goalLabel3D = {
+        all:'Solve All', diagonal:'Diagonal', surface:'Surface Area',
+        volume:'Volume', edges:'Total Edges'
+    };
+
+    // Methods per shape per goal. Each method: {id, label, inputs:[{id,lbl}]}
+    // 'all' goal = no methods (all inputs shown), others have methods
+    var methods3D = {
+        rect_prism: {
+            diagonal: [
+                {id:'rp_d_lwh', label:'L + W + H', inputs:[{id:'s3_l',lbl:'Length (l)'},{id:'s3_w',lbl:'Width (w)'},{id:'s3_h',lbl:'Height (h)'}]}
+            ],
+            surface: [
+                {id:'rp_sa_lwh', label:'L + W + H', inputs:[{id:'s3_l',lbl:'Length (l)'},{id:'s3_w',lbl:'Width (w)'},{id:'s3_h',lbl:'Height (h)'}]}
+            ],
+            volume: [
+                {id:'rp_v_lwh', label:'L + W + H', inputs:[{id:'s3_l',lbl:'Length (l)'},{id:'s3_w',lbl:'Width (w)'},{id:'s3_h',lbl:'Height (h)'}]},
+                {id:'rp_v_bah', label:'Base Area + H', inputs:[{id:'s3_ba',lbl:'Base Area'},{id:'s3_h',lbl:'Height (h)'}]}
+            ],
+            edges: [
+                {id:'rp_e_lwh', label:'L + W + H', inputs:[{id:'s3_l',lbl:'Length (l)'},{id:'s3_w',lbl:'Width (w)'},{id:'s3_h',lbl:'Height (h)'}]}
+            ]
+        },
+        rect_pyramid: {
+            diagonal: [
+                {id:'rpyr_d_lwh', label:'L + W + H', inputs:[{id:'s3_l',lbl:'Base Length (l)'},{id:'s3_w',lbl:'Base Width (w)'},{id:'s3_h',lbl:'Height (h)'}]}
+            ],
+            surface: [
+                {id:'rpyr_sa_lwh', label:'L + W + H', inputs:[{id:'s3_l',lbl:'Base Length (l)'},{id:'s3_w',lbl:'Base Width (w)'},{id:'s3_h',lbl:'Height (h)'}]}
+            ],
+            volume: [
+                {id:'rpyr_v_lwh', label:'L + W + H', inputs:[{id:'s3_l',lbl:'Base Length (l)'},{id:'s3_w',lbl:'Base Width (w)'},{id:'s3_h',lbl:'Height (h)'}]},
+                {id:'rpyr_v_bah', label:'Base Area + H', inputs:[{id:'s3_ba',lbl:'Base Area'},{id:'s3_h',lbl:'Height (h)'}]}
+            ],
+            edges: [
+                {id:'rpyr_e_lwh', label:'L + W + H', inputs:[{id:'s3_l',lbl:'Base Length (l)'},{id:'s3_w',lbl:'Base Width (w)'},{id:'s3_h',lbl:'Height (h)'}]}
+            ]
+        },
+        tri_prism: {
+            surface: [
+                {id:'tp_sa_abch', label:'3 sides + length', inputs:[{id:'s3_a',lbl:'Side a'},{id:'s3_b',lbl:'Side b'},{id:'s3_c',lbl:'Side c'},{id:'s3_h',lbl:'Length (h)'}]}
+            ],
+            volume: [
+                {id:'tp_v_abch', label:'3 sides + length', inputs:[{id:'s3_a',lbl:'Side a'},{id:'s3_b',lbl:'Side b'},{id:'s3_c',lbl:'Side c'},{id:'s3_h',lbl:'Length (h)'}]},
+                {id:'tp_v_bah',  label:'Base Area + length', inputs:[{id:'s3_ba',lbl:'Triangle Area'},{id:'s3_h',lbl:'Length (h)'}]}
+            ],
+            edges: [
+                {id:'tp_e_abch', label:'3 sides + length', inputs:[{id:'s3_a',lbl:'Side a'},{id:'s3_b',lbl:'Side b'},{id:'s3_c',lbl:'Side c'},{id:'s3_h',lbl:'Length (h)'}]}
+            ]
+        },
+        tri_pyramid: {
+            surface: [
+                {id:'tpyr_sa_abcsh', label:'3 sides + slant h', inputs:[{id:'s3_a',lbl:'Base Side a'},{id:'s3_b',lbl:'Base Side b'},{id:'s3_c',lbl:'Base Side c'},{id:'s3_sh',lbl:'Slant Height'}]}
+            ],
+            volume: [
+                {id:'tpyr_v_abcsh', label:'3 sides + slant h', inputs:[{id:'s3_a',lbl:'Base Side a'},{id:'s3_b',lbl:'Base Side b'},{id:'s3_c',lbl:'Base Side c'},{id:'s3_sh',lbl:'Slant Height'}]},
+                {id:'tpyr_v_bah',   label:'Base Area + height', inputs:[{id:'s3_ba',lbl:'Base Area'},{id:'s3_h',lbl:'Height (h)'}]}
+            ],
+            edges: [
+                {id:'tpyr_e_abcsh', label:'3 sides + slant h', inputs:[{id:'s3_a',lbl:'Base Side a'},{id:'s3_b',lbl:'Base Side b'},{id:'s3_c',lbl:'Base Side c'},{id:'s3_sh',lbl:'Slant Height'}]}
+            ]
+        }
+    };
+
+    // Solve-All fields per shape (shown when goal='all')
+    var solveAll3DFields = {
         rect_prism:   [{id:'s3_l',lbl:'Length (l)'},{id:'s3_w',lbl:'Width (w)'},{id:'s3_h',lbl:'Height (h)'}],
         rect_pyramid: [{id:'s3_l',lbl:'Base Length (l)'},{id:'s3_w',lbl:'Base Width (w)'},{id:'s3_h',lbl:'Height (h)'}],
-        tri_prism:    [{id:'s3_a',lbl:'Triangle Side a'},{id:'s3_b',lbl:'Triangle Side b'},{id:'s3_c',lbl:'Triangle Side c'},{id:'s3_h',lbl:'Prism Length (h)'}],
-        tri_pyramid:  [{id:'s3_a',lbl:'Base Side a'},{id:'s3_b',lbl:'Base Side b'},{id:'s3_c',lbl:'Base Side c'},{id:'s3_sh',lbl:'Slant Height (avg)'}]
+        tri_prism:    [{id:'s3_a',lbl:'Side a'},{id:'s3_b',lbl:'Side b'},{id:'s3_c',lbl:'Side c'},{id:'s3_h',lbl:'Length (h)'}],
+        tri_pyramid:  [{id:'s3_a',lbl:'Base Side a'},{id:'s3_b',lbl:'Base Side b'},{id:'s3_c',lbl:'Base Side c'},{id:'s3_sh',lbl:'Slant Height'}]
     };
 
     function get3D(id) { var el=document.getElementById(id); return el?parseFloat(el.value):NaN; }
 
     function build3DShapeBtns() {
         var el=get('shapeBtns3D'); el.innerHTML='';
-        var d=getDark();
         shapes3D.forEach(function(s){
             var b=document.createElement('button');
             b.style.cssText=s.id===current3DShape?bActiveStyle():bBaseStyle();
             b.innerText=s.label;
-            b.onclick=function(){ current3DShape=s.id; build3DShapeBtns(); render3DInputs(); };
+            b.onclick=function(){
+                current3DShape=s.id;
+                if(goals3D[current3DShape].indexOf(current3DGoal)<0) current3DGoal='all';
+                current3DMethod=0;
+                build3DShapeBtns(); buildGoalBtns3D(); buildMethodBtns3D(); render3DInputs();
+            };
             el.appendChild(b);
+        });
+    }
+
+    function buildGoalBtns3D() {
+        var el=get('goalBtns3D'); el.innerHTML='';
+        goals3D[current3DShape].forEach(function(gid){
+            var b=document.createElement('button');
+            b.style.cssText=gid===current3DGoal?bActiveStyle():bBaseStyle();
+            b.innerText=goalLabel3D[gid]||gid;
+            b.onclick=function(){ current3DGoal=gid; current3DMethod=0; buildGoalBtns3D(); buildMethodBtns3D(); render3DInputs(); };
+            el.appendChild(b);
+        });
+    }
+
+    function buildMethodBtns3D() {
+        var ms=get('methodSection3D'), mb=get('methodBtns3D');
+        if(current3DGoal==='all'){ ms.style.display='none'; return; }
+        var list=(methods3D[current3DShape]||{})[current3DGoal]||[];
+        if(list.length<=1){ ms.style.display='none'; return; }
+        ms.style.display='block'; mb.innerHTML='';
+        list.forEach(function(m,i){
+            var b=document.createElement('button');
+            b.style.cssText=i===current3DMethod?mActiveStyle():mBaseStyle();
+            b.innerText=m.label;
+            b.onclick=function(){ current3DMethod=i; buildMethodBtns3D(); render3DInputs(); };
+            mb.appendChild(b);
         });
     }
 
     function render3DInputs() {
         var d=getDark();
-        var fields=shape3DFields[current3DShape]||[];
+        var fields;
+        if(current3DGoal==='all'){
+            fields=solveAll3DFields[current3DShape]||[];
+        } else {
+            var list=(methods3D[current3DShape]||{})[current3DGoal]||[];
+            var m=list[Math.min(current3DMethod,list.length-1)];
+            fields=m?m.inputs:[];
+        }
         get('inputs3D').innerHTML=fields.map(function(f){
             return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">'+
                 '<label style="font-size:11px;font-weight:600;color:'+(d?'#9090b0':'#888')+';width:130px;flex-shrink:0;">'+f.lbl+'</label>'+
-                '<input type="number" id="'+f.id+'" placeholder="e.g. 5" style="flex:1;padding:8px 10px;border:1.5px solid '+(d?'#444466':'#ddd')+';border-radius:7px;font-size:14px;box-sizing:border-box;outline:none;background:'+(d?'#2a2a3e':'#fff')+';color:'+(d?'#e0e0f0':'#222')+';">'+
+                '<input type="number" id="'+f.id+'" placeholder="e.g. 5" style="flex:1;padding:8px 10px;border:1.5px solid '+(d?'#444466':'#ddd')+';border-radius:7px;font-size:14px;box-sizing:border-box;outline:none;background:'+(d?'#2a2a3e':'#fff')+';color:'+(d?'#e0e0f0':'#222')+';" onfocus="this.style.borderColor=\'#1a73e8\'" onblur="this.style.borderColor=\''+(d?'#444466':'#ddd')+'\'">'+
             '</div>';
         }).join('');
+        // bind Enter key
+        fields.forEach(function(f){
+            var inp=document.getElementById(f.id);
+            if(inp) inp.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();calc3D();}});
+        });
         get('res3D').style.display='none';
         var cb3=get('canvasBox3D'); if(cb3) cb3.style.display='none';
     }
 
-    function saRow3D(label,val,unit) {
-        var d=getDark();
-        var p=getPrec();
-        var vs=isNaN(val)?'—':(trimZ(parseFloat(val).toFixed(p))+(unit?' '+unit:''));
+    function saRow3D(label,val) {
+        var d=getDark(); var p=getPrec();
+        var vs=(!isNaN(val)&&val!==null)?trimZ(parseFloat(val).toFixed(p)):'—';
         return '<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid '+(d?'#2a2a40':'#eef2ff')+';font-size:12px;">'+
             '<span style="color:'+(d?'#9090b0':'#888')+';font-weight:600;">'+label+'</span>'+
-            '<span style="font-weight:700;color:'+(d?'#e0e0f0':'#222')+'">'+(isNaN(val)?'—':vs)+'</span></div>';
+            '<span style="font-weight:700;color:'+(d?'#e0e0f0':'#222')+'">'+vs+'</span></div>';
     }
 
+    // ── 3D Diagram Drawing ─────────────────────────────────────────────────────
     function draw3DShape(shape, dims) {
-        var cv = get('canvas3D');
-        var cb3 = get('canvasBox3D');
-        if(!cv || !cb3) return;
+        var cv = get('canvas3D'), cb3 = get('canvasBox3D');
+        if(!cv||!cb3||!getDiagram()) { if(cb3) cb3.style.display='none'; return; }
         cb3.style.display = 'block';
         var cx = cv.getContext('2d');
         var W = cv.width, H = cv.height;
-        cx.clearRect(0, 0, W, H);
+        cx.clearRect(0,0,W,H);
         var d = getDark();
-        var stroke = d ? '#4a9eff' : '#1a73e8';
-        var strokeDim = d ? '#2a4a7a' : '#93b8f0';
-        var fill = d ? 'rgba(30,46,78,0.7)' : 'rgba(232,240,254,0.7)';
-        var fillDark = d ? 'rgba(20,30,55,0.7)' : 'rgba(200,220,255,0.5)';
-        var labelCol = d ? '#c0d0ff' : '#1a73e8';
-        cx.font = 'bold 11px system-ui,sans-serif';
+        var stroke    = d?'#4a9eff':'#1a73e8';
+        var strokeDim = d?'#2a4a7a':'#a0b8e0';
+        var fill      = d?'rgba(30,46,78,0.72)':'rgba(232,240,254,0.72)';
+        var fillSide  = d?'rgba(20,30,55,0.72)':'rgba(200,220,248,0.55)';
+        var lblCol    = d?'#c0d0ff':'#1a5090';
+        var accentCol = '#e8430a';
 
-        // Isometric projection helpers
-        var isoX = function(x,y,z){ return W/2 + (x - z) * 0.866; };
-        var isoY = function(x,y,z){ return H/2 - y * 0.9 + (x + z) * 0.5; };
-        function pt(x,y,z){ return [isoX(x,y,z), isoY(x,y,z)]; }
-        function line(p1,p2,dim){
-            cx.beginPath(); cx.moveTo(p1[0],p1[1]); cx.lineTo(p2[0],p2[1]);
-            cx.strokeStyle = dim ? strokeDim : stroke;
-            cx.lineWidth = dim ? 1 : 1.8;
-            cx.setLineDash(dim ? [4,3] : []);
-            cx.stroke(); cx.setLineDash([]);
+        var isoX=function(x,y,z){return W/2+(x-z)*0.866;};
+        var isoY=function(x,y,z){return H/2-y*0.9+(x+z)*0.5;};
+        function pt(x,y,z){return[isoX(x,y,z),isoY(x,y,z)];}
+        function seg(p1,p2,dim,col,dash){
+            cx.beginPath();cx.moveTo(p1[0],p1[1]);cx.lineTo(p2[0],p2[1]);
+            cx.strokeStyle=col||(dim?strokeDim:stroke);
+            cx.lineWidth=dim?1:1.8;
+            cx.setLineDash(dash||(dim?[4,3]:[]));
+            cx.stroke();cx.setLineDash([]);
         }
-        function face(pts, fillStyle){
-            cx.beginPath(); cx.moveTo(pts[0][0],pts[0][1]);
-            for(var i=1;i<pts.length;i++) cx.lineTo(pts[i][0],pts[i][1]);
-            cx.closePath(); cx.fillStyle=fillStyle; cx.fill();
-            cx.strokeStyle=stroke; cx.lineWidth=1.8; cx.stroke();
+        function poly(pts,fillStyle){
+            cx.beginPath();cx.moveTo(pts[0][0],pts[0][1]);
+            for(var i=1;i<pts.length;i++)cx.lineTo(pts[i][0],pts[i][1]);
+            cx.closePath();cx.fillStyle=fillStyle;cx.fill();
+            cx.strokeStyle=stroke;cx.lineWidth=1.6;cx.stroke();
         }
-        function label(p, txt) {
-            cx.fillStyle = labelCol;
-            cx.font = 'bold 10px system-ui,sans-serif';
-            cx.fillText(txt, p[0]+3, p[1]-3);
+        // Draw a dimension label along the midpoint of two points
+        function dimLabel(p1,p2,txt,offset){
+            var mx=(p1[0]+p2[0])/2+(offset?offset[0]:0);
+            var my=(p1[1]+p2[1])/2+(offset?offset[1]:0);
+            cx.font='bold 10px system-ui,sans-serif';
+            var tw=cx.measureText(txt).width;
+            cx.fillStyle=d?'rgba(10,15,35,0.75)':'rgba(255,255,255,0.82)';
+            cx.fillRect(mx-tw/2-2,my-8,tw+4,12);
+            cx.fillStyle=lblCol;cx.fillText(txt,mx-tw/2,my+1);
+        }
+        function accentLabel(p,txt){
+            cx.font='bold 10px system-ui,sans-serif';
+            var tw=cx.measureText(txt).width;
+            cx.fillStyle=d?'rgba(10,15,35,0.75)':'rgba(255,255,255,0.82)';
+            cx.fillRect(p[0]-tw/2-2,p[1]-8,tw+4,12);
+            cx.fillStyle=accentCol;cx.fillText(txt,p[0]-tw/2,p[1]+1);
         }
 
-        var l = dims.l||1, w = dims.w||1, h = dims.h||1;
-        var sc = Math.min(80/(Math.max(l,w,h)), 50); // scale to fit
-        l*=sc; w*=sc; h*=sc;
+        function fmtV(v){return v!==undefined&&!isNaN(v)?String(parseFloat(v.toFixed(2))):'';}
 
-        if(shape === 'rect_prism') {
-            // 8 corners: bottom face then top face
-            var B = [[0,0,0],[l,0,0],[l,0,w],[0,0,w]];
-            var T = [[0,h,0],[l,h,0],[l,h,w],[0,h,w]];
+        if(shape==='rect_prism'){
+            var l=dims.l||1,w=dims.w||1,h=dims.h||1;
+            var sc=Math.min(90/Math.max(l,w,h),48);
+            var L=l*sc,W2=w*sc,H2=h*sc;
+            var B=[[0,0,0],[L,0,0],[L,0,W2],[0,0,W2]];
+            var T=[[0,H2,0],[L,H2,0],[L,H2,W2],[0,H2,W2]];
             var bp=B.map(function(v){return pt(v[0],v[1],v[2]);}),
                 tp=T.map(function(v){return pt(v[0],v[1],v[2]);});
-            // back hidden edges
-            line(bp[0],bp[1],true); line(bp[0],bp[3],true); line(bp[0],tp[0],true);
-            // visible faces
-            face([tp[0],tp[1],tp[2],tp[3]],fill);         // top
-            face([bp[3],bp[2],tp[2],tp[3]],fillDark);     // front
-            face([bp[2],bp[1],tp[1],tp[2]],fill);         // right
-            // visible base edges
-            line(bp[1],bp[2],false); line(bp[2],bp[3],false);
-            line(bp[1],tp[1],false); line(bp[2],tp[2],false); line(bp[3],tp[3],false);
-            // top edges
-            for(var i=0;i<4;i++) line(tp[i],tp[(i+1)%4],false);
-            // diagonal
-            var diag = [pt(0,0,0), pt(l,h,w)];
-            cx.beginPath(); cx.moveTo(diag[0][0],diag[0][1]); cx.lineTo(diag[1][0],diag[1][1]);
-            cx.strokeStyle='#e8430a'; cx.lineWidth=2; cx.setLineDash([5,3]); cx.stroke(); cx.setLineDash([]);
-            // labels
-            var mid=pt(l/2,h/2,w/2);
-            cx.fillStyle='#e8430a'; cx.font='bold 10px system-ui'; cx.fillText('d',mid[0]+2,mid[1]-2);
-            label(pt(l/2,0,w),'w'); label(pt(l,0,w/2),'l'); label(pt(l,h/2,w),'h');
+            seg(bp[0],bp[1],true);seg(bp[0],bp[3],true);seg(bp[0],tp[0],true);
+            poly([tp[0],tp[1],tp[2],tp[3]],fill);
+            poly([bp[3],bp[2],tp[2],tp[3]],fillSide);
+            poly([bp[2],bp[1],tp[1],tp[2]],fill);
+            seg(bp[1],bp[2],false);seg(bp[2],bp[3],false);
+            seg(bp[1],tp[1],false);seg(bp[2],tp[2],false);seg(bp[3],tp[3],false);
+            for(var i=0;i<4;i++)seg(tp[i],tp[(i+1)%4],false);
+            // space diagonal
+            seg(pt(0,0,0),pt(L,H2,W2),false,accentCol,[5,3]);
+            accentLabel([(pt(0,0,0)[0]+pt(L,H2,W2)[0])/2,(pt(0,0,0)[1]+pt(L,H2,W2)[1])/2],'d='+fmtV(dims.diag));
+            // dimension labels
+            dimLabel(bp[1],bp[2],'w='+fmtV(w),[ 4, 4]);
+            dimLabel(bp[2],bp[3],'l='+fmtV(l),[ 4, 4]);
+            dimLabel(bp[2],tp[2],'h='+fmtV(h),[ 8, 0]);
 
-        } else if(shape === 'rect_pyramid') {
-            var B2 = [[0,0,0],[l,0,0],[l,0,w],[0,0,w]];
-            var apex = pt(l/2, h, w/2);
-            var bp2=B2.map(function(v){return pt(v[0],v[1],v[2]);});
-            // hidden base edges
-            line(bp2[0],bp2[1],true); line(bp2[0],bp2[3],true);
-            line(bp2[0],apex,true);
-            // visible base edges
-            line(bp2[1],bp2[2],false); line(bp2[2],bp2[3],false);
-            // visible lateral faces
-            face([bp2[3],bp2[2],apex],fillDark);
-            face([bp2[1],bp2[2],apex],fill);
-            face([bp2[3],bp2[0],apex],fill);
-            // diagonal from apex to far corner
-            cx.beginPath(); cx.moveTo(apex[0],apex[1]); cx.lineTo(bp2[2][0],bp2[2][1]);
-            cx.strokeStyle='#e8430a'; cx.lineWidth=2; cx.setLineDash([5,3]); cx.stroke(); cx.setLineDash([]);
-            cx.fillStyle='#e8430a'; cx.font='bold 10px system-ui';
-            var dm=pt(l*0.75,h/2,w*0.75); cx.fillText('d',dm[0]+2,dm[1]-2);
-            label(pt(l/2,0,w),'w'); label(pt(l,0,w/2),'l'); label(pt(l+2,h/2,w/2),'h');
+        } else if(shape==='rect_pyramid'){
+            var l=dims.l||1,w=dims.w||1,h=dims.h||1;
+            var sc=Math.min(90/Math.max(l,w,h),48);
+            var L=l*sc,W2=w*sc,H2=h*sc;
+            var B=[[0,0,0],[L,0,0],[L,0,W2],[0,0,W2]];
+            var bp=B.map(function(v){return pt(v[0],v[1],v[2]);});
+            var apex=pt(L/2,H2,W2/2);
+            seg(bp[0],bp[1],true);seg(bp[0],bp[3],true);seg(bp[0],apex,true);
+            seg(bp[1],bp[2],false);seg(bp[2],bp[3],false);
+            poly([bp[3],bp[2],apex],fillSide);
+            poly([bp[2],bp[1],apex],fill);
+            poly([bp[3],bp[0],apex],fill);
+            // diagonal apex to far corner
+            seg(apex,bp[2],false,accentCol,[5,3]);
+            accentLabel([(apex[0]+bp[2][0])/2+4,(apex[1]+bp[2][1])/2],'d='+fmtV(dims.diag));
+            dimLabel(bp[1],bp[2],'w='+fmtV(w),[4,4]);
+            dimLabel(bp[2],bp[3],'l='+fmtV(l),[4,4]);
+            var midBase=pt(L/2,0,W2/2), apexXY=apex;
+            dimLabel(midBase,apexXY,'h='+fmtV(h),[10,0]);
 
-        } else if(shape === 'tri_prism') {
-            // Triangle at z=0 and z=dims.depth, dims: a,b,c sides, h=length
-            var da=dims.a*sc, db=dims.b*sc, dc=dims.c*sc, dh=dims.h*sc;
-            // Place triangle: vertex A at origin, B along x, C computed
-            var ax=0,ay=0, bx=dc,by=0;
-            var cosA=(dc*dc+db*db-da*da)/(2*dc*db); // actually use sides properly
-            // a=BC, b=AC, c=AB; place A,B on x axis with AB=c
-            var Ax=0,Az=0, Bx=dc,Bz=0;
-            var cosAng=(dc*dc+db*db-da*da)/(2*dc*db);
-            cosAng=Math.max(-1,Math.min(1,cosAng));
-            var Cx=db*cosAng, Cz=db*Math.sqrt(1-cosAng*cosAng);
-            var depth=dh;
-            function triPt(x,y,z){return pt(x-dc/2, y-Cz/2, z-depth/2);}
-            var f1=[triPt(Ax,0,0),triPt(Bx,0,0),triPt(Cx,Cz,0)];
-            var f2=[triPt(Ax,0,depth),triPt(Bx,0,depth),triPt(Cx,Cz,depth)];
-            // hidden edges
-            line(f1[0],f2[0],true); line(f1[0],f1[1],true);
-            // front triangular face
-            face(f2,fill);
-            // back triangle (partial)
-            face(f1,fillDark);
-            // rectangular sides
-            face([f1[1],f1[2],f2[2],f2[1]],fill);
-            face([f1[0],f1[2],f2[2],f2[0]],fillDark);
-            line(f1[0],f1[2],false); line(f1[1],f2[1],false); line(f1[2],f2[2],false);
-            var mid2=triPt((Ax+Bx)/2,0,depth/2); label(mid2,'c');
-            var mid3=triPt((Ax+Cx)/2,Cz/2,depth/2); label(mid3,'b');
-            var mid4=triPt((Bx+Cx)/2,Cz/2,depth/2); label(mid4,'a');
-            var midH=triPt(Ax-5,Cz/2,0); label(midH,'h');
+        } else if(shape==='tri_prism'){
+            var a=dims.a||1,b=dims.b||1,c=dims.c||1,h=dims.h||1;
+            var sc=Math.min(80/Math.max(a,b,c,h),40);
+            var A=a*sc,B2=b*sc,C=c*sc,H2=h*sc;
+            // triangle vertices: AB = side c, AC = side b, angle at A
+            var cosA=(C*C+B2*B2-A*A)/(2*C*B2);
+            cosA=Math.max(-1,Math.min(1,cosA));
+            var Ax=0,Az=0,Bx=C,Bz=0,Cx2=B2*cosA,Cz2=B2*Math.sqrt(1-cosA*cosA);
+            var ox=-(Ax+Bx+Cx2)/3+0, oz=-(Az+Bz+Cz2)/3+0;
+            function triPt(x,yy,z){return pt(x+ox,-Cz2*0.4+yy,z+oz);}
+            var f0=[triPt(Ax,0,Az),triPt(Bx,0,Bz),triPt(Cx2,0,Cz2)];
+            var fH=[triPt(Ax,H2,Az),triPt(Bx,H2,Bz),triPt(Cx2,H2,Cz2)];
+            seg(f0[0],f0[1],true);seg(f0[0],fH[0],true);
+            poly(fH,fill);
+            poly(f0,fillSide);
+            poly([f0[1],f0[2],fH[2],fH[1]],fill);
+            poly([f0[0],f0[2],fH[2],fH[0]],fillSide);
+            seg(f0[1],fH[1],false);seg(f0[2],fH[2],false);seg(f0[0],f0[2],false);
+            // side labels on front face
+            dimLabel(fH[0],fH[1],'c='+fmtV(c),[-2,-8]);
+            dimLabel(fH[0],fH[2],'b='+fmtV(b),[-8,-2]);
+            dimLabel(fH[1],fH[2],'a='+fmtV(a),[6,-2]);
+            // length label on a lateral edge
+            dimLabel(f0[1],fH[1],'h='+fmtV(h),[10,0]);
 
-        } else if(shape === 'tri_pyramid') {
-            var da=dims.a*sc, db=dims.b*sc, dc=dims.c*sc;
-            var Ax=0,Az=0, Bx=dc,Bz=0;
-            var cosAng=(dc*dc+db*db-da*da)/(2*dc*db);
-            cosAng=Math.max(-1,Math.min(1,cosAng));
-            var Cx=db*cosAng, Cz=db*Math.sqrt(1-cosAng*cosAng);
-            var phSc=(dims.sh||1)*sc;
-            // centroid
-            var centX=(Ax+Bx+Cx)/3, centZ=(Az+Bz+Cz)/3;
-            function pyrPt(x,y,z){return pt(x-centX,-y-Cz*0.3,z-centZ);}
-            var pA=pyrPt(Ax,0,Az), pB=pyrPt(Bx,0,Bz), pC=pyrPt(Cx,0,Cz);
-            var apex2=pyrPt(centX,phSc,centZ);
-            // base hidden
-            line(pA,pB,true);
-            // faces
-            face([pB,pC,apex2],fill);
-            face([pA,pC,apex2],fillDark);
-            face([pA,pB,apex2],fill);
-            line(pA,pC,false); line(pB,pC,false);
-            var mb=[(pA[0]+pB[0])/2,(pA[1]+pB[1])/2]; label(mb,'c');
-            var mac=[(pA[0]+pC[0])/2,(pA[1]+pC[1])/2]; label(mac,'b');
-            var mbc=[(pB[0]+pC[0])/2,(pB[1]+pC[1])/2]; label(mbc,'a');
-            // slant height line from midpoint of base side to apex
-            cx.beginPath(); cx.moveTo(mbc[0],mbc[1]); cx.lineTo(apex2[0],apex2[1]);
-            cx.strokeStyle='#e8430a'; cx.lineWidth=1.5; cx.setLineDash([4,3]); cx.stroke(); cx.setLineDash([]);
-            var sm=[(mbc[0]+apex2[0])/2,(mbc[1]+apex2[1])/2];
-            cx.fillStyle='#e8430a'; cx.font='bold 10px system-ui'; cx.fillText('sh',sm[0]+3,sm[1]);
+        } else if(shape==='tri_pyramid'){
+            var a=dims.a||1,b=dims.b||1,c=dims.c||1,sh=dims.sh||1;
+            var sc=Math.min(80/Math.max(a,b,c,sh),40);
+            var A=a*sc,B2=b*sc,C=c*sc,SH=sh*sc;
+            var cosA=(C*C+B2*B2-A*A)/(2*C*B2);
+            cosA=Math.max(-1,Math.min(1,cosA));
+            var Ax=0,Az=0,Bx=C,Bz=0,Cx2=B2*cosA,Cz2=B2*Math.sqrt(1-cosA*cosA);
+            var centX=(Ax+Bx+Cx2)/3,centZ=(Az+Bz+Cz2)/3;
+            var inR=(dims.baseArea||1)/((A+B2+C)/2/sc);
+            var pyH=Math.sqrt(Math.max(0,SH*SH-inR*inR));
+            function pyrPt(x,yy,z){return pt(x-centX,-yy-Cz2*0.3,z-centZ);}
+            var pA=pyrPt(Ax,0,Az),pB=pyrPt(Bx,0,Bz),pC=pyrPt(Cx2,0,Cz2);
+            var apex=pyrPt(centX,pyH,centZ);
+            seg(pA,pB,true);
+            poly([pB,pC,apex],fill);
+            poly([pA,pC,apex],fillSide);
+            poly([pA,pB,apex],fill);
+            seg(pA,pC,false);seg(pB,pC,false);
+            dimLabel(pA,pB,'c='+fmtV(c),[-2,8]);
+            dimLabel(pA,pC,'b='+fmtV(b),[-8,0]);
+            dimLabel(pB,pC,'a='+fmtV(a),[6,0]);
+            // slant height
+            var midBC=[(pB[0]+pC[0])/2,(pB[1]+pC[1])/2];
+            seg(midBC,apex,false,accentCol,[4,3]);
+            accentLabel([(midBC[0]+apex[0])/2+6,(midBC[1]+apex[1])/2],'sh='+fmtV(sh));
         }
     }
 
+    // ── 3D Calculations ────────────────────────────────────────────────────────
     function calc3D() {
-        var d=getDark(); var p=getPrec(); var html=''; var warn='';
+        var d=getDark(), p=getPrec(), html='', warn='';
         var surfArea=NaN, totalEdges=NaN;
+        var dimsForDiag={};
 
         try {
-        if(current3DShape==='rect_prism') {
-            var l=get3D('s3_l'), w=get3D('s3_w'), h=get3D('s3_h');
-            if(isNaN(l)||isNaN(w)||isNaN(h)||l<=0||w<=0||h<=0){warn='Enter positive Length, Width, and Height.';}
-            else {
-                var diag=Math.sqrt(l*l+w*w+h*h);
-                var faceDiagLW=Math.sqrt(l*l+w*w);
-                var faceDiagLH=Math.sqrt(l*l+h*h);
-                var faceDiagWH=Math.sqrt(w*w+h*h);
-                var vol=l*w*h;
-                surfArea=2*(l*w+l*h+w*h);
-                totalEdges=4*(l+w+h);
-                html+=saRow3D('Length',l); html+=saRow3D('Width',w); html+=saRow3D('Height',h);
-                html+=saRow3D('Space Diagonal',diag);
-                html+=saRow3D('Face Diag (l×w)',faceDiagLW);
-                html+=saRow3D('Face Diag (l×h)',faceDiagLH);
-                html+=saRow3D('Face Diag (w×h)',faceDiagWH);
-                html+=saRow3D('Volume',vol);
+        // ── Rectangular Prism ──────────────────────────────────────────────────
+        if(current3DShape==='rect_prism'){
+            var l,w,h,ba;
+            if(current3DGoal==='all'||current3DGoal==='diagonal'||current3DGoal==='surface'||current3DGoal==='edges'){
+                l=get3D('s3_l');w=get3D('s3_w');h=get3D('s3_h');
+                if(isNaN(l)||isNaN(w)||isNaN(h)||l<=0||w<=0||h<=0) warn='Enter positive Length, Width, and Height.';
+            } else if(current3DGoal==='volume'){
+                var list=(methods3D.rect_prism.volume||[]);
+                var m=list[current3DMethod]||list[0];
+                if(m.id==='rp_v_bah'){ba=get3D('s3_ba');h=get3D('s3_h');if(isNaN(ba)||isNaN(h)||ba<=0||h<=0)warn='Enter Base Area and Height.';}
+                else{l=get3D('s3_l');w=get3D('s3_w');h=get3D('s3_h');if(isNaN(l)||isNaN(w)||isNaN(h)||l<=0||w<=0||h<=0)warn='Enter L, W, H.';}
             }
-        } else if(current3DShape==='rect_pyramid') {
-            var l=get3D('s3_l'), w=get3D('s3_w'), h=get3D('s3_h');
-            if(isNaN(l)||isNaN(w)||isNaN(h)||l<=0||w<=0||h<=0){warn='Enter positive Base Length, Width, and Height.';}
-            else {
-                // Diagonal from apex to base corner
-                var halfDiagBase=Math.sqrt((l/2)*(l/2)+(w/2)*(w/2));
-                var spaceDiag=Math.sqrt(halfDiagBase*halfDiagBase+h*h);
-                var baseDiag=Math.sqrt(l*l+w*w);
-                var slantL=Math.sqrt(h*h+(w/2)*(w/2));
-                var slantW=Math.sqrt(h*h+(l/2)*(l/2));
-                var latFaceL=l*slantL;
-                var latFaceW=w*slantW;
-                var vol=(1/3)*l*w*h;
-                surfArea=l*w+latFaceL+latFaceW;
-                totalEdges=4*Math.sqrt((l/2)*(l/2)+(w/2)*(w/2)+h*h)*0 + 4*l + 0; // 4 base edges + 4 lateral
-                // Properly: 4 base edges + 4 lateral edges from apex to base corners
-                var lateralEdge=Math.sqrt((l/2)*(l/2)+(w/2)*(w/2)+h*h);
-                totalEdges=2*(l+w)+4*lateralEdge;
-                html+=saRow3D('Base Length',l); html+=saRow3D('Base Width',w); html+=saRow3D('Height',h);
-                html+=saRow3D('Space Diagonal (apex→corner)',spaceDiag);
-                html+=saRow3D('Base Diagonal',baseDiag);
-                html+=saRow3D('Lateral Edge',lateralEdge);
-                html+=saRow3D('Slant Height (l-face)',slantL);
-                html+=saRow3D('Slant Height (w-face)',slantW);
-                html+=saRow3D('Volume',vol);
+            if(!warn){
+                if(current3DGoal==='volume'&&!isNaN(ba)){
+                    var vol=ba*h;
+                    html+=saRow3D('Base Area',ba)+saRow3D('Height',h)+saRow3D('Volume',vol);
+                    dimsForDiag={l:Math.sqrt(ba),w:Math.sqrt(ba),h:h};
+                } else {
+                    var diag=Math.sqrt(l*l+w*w+h*h);
+                    var fdLW=Math.sqrt(l*l+w*w),fdLH=Math.sqrt(l*l+h*h),fdWH=Math.sqrt(w*w+h*h);
+                    var vol=l*w*h; surfArea=2*(l*w+l*h+w*h); totalEdges=4*(l+w+h);
+                    dimsForDiag={l:l,w:w,h:h,diag:diag};
+                    if(current3DGoal==='all'){
+                        html+=saRow3D('Length',l)+saRow3D('Width',w)+saRow3D('Height',h);
+                        html+=saRow3D('Space Diagonal',diag);
+                        html+=saRow3D('Face Diag (l×w)',fdLW)+saRow3D('Face Diag (l×h)',fdLH)+saRow3D('Face Diag (w×h)',fdWH);
+                        html+=saRow3D('Volume',vol);
+                    } else if(current3DGoal==='diagonal'){
+                        html+=saRow3D('Space Diagonal',diag)+saRow3D('Face Diag (l×w)',fdLW)+saRow3D('Face Diag (l×h)',fdLH)+saRow3D('Face Diag (w×h)',fdWH);
+                    } else if(current3DGoal==='surface'){
+                        html+=saRow3D('Surface Area',surfArea);
+                        html+=saRow3D('Face l×w (×2)',l*w)+saRow3D('Face l×h (×2)',l*h)+saRow3D('Face w×h (×2)',w*h);
+                    } else if(current3DGoal==='volume'){
+                        html+=saRow3D('Volume',vol);
+                    } else if(current3DGoal==='edges'){
+                        html+=saRow3D('Total Edge Length',totalEdges);
+                        html+=saRow3D('12 edges: 4×l+4×w+4×h','');
+                    }
+                }
             }
-        } else if(current3DShape==='tri_prism') {
-            var a=get3D('s3_a'), b=get3D('s3_b'), c=get3D('s3_c'), h=get3D('s3_h');
-            if(isNaN(a)||isNaN(b)||isNaN(c)||isNaN(h)||a<=0||b<=0||c<=0||h<=0){warn='Enter all three triangle sides and prism length.';}
-            else if(a+b<=c||a+c<=b||b+c<=a){warn='Those sides don\'t form a valid triangle.';}
-            else {
-                var s=(a+b+c)/2;
-                var triArea=Math.sqrt(s*(s-a)*(s-b)*(s-c));
-                var vol=triArea*h;
-                surfArea=2*triArea+(a+b+c)*h;
-                totalEdges=3*h+2*(a+b+c); // 3 rectangular edges + 2 triangles' edges
-                // Actually: 3 lateral edges of length h, 3+3=6 triangle edges (a,b,c × 2)
-                totalEdges=3*h+2*(a+b+c);
-                // Lateral face areas:
-                var faceA=a*h, faceB=b*h, faceC=c*h;
-                html+=saRow3D('Triangle Side a',a); html+=saRow3D('Triangle Side b',b); html+=saRow3D('Triangle Side c',c);
-                html+=saRow3D('Prism Length (h)',h);
-                html+=saRow3D('Triangle Area',triArea);
-                html+=saRow3D('Lateral Face A (a×h)',faceA);
-                html+=saRow3D('Lateral Face B (b×h)',faceB);
-                html+=saRow3D('Lateral Face C (c×h)',faceC);
-                html+=saRow3D('Volume',vol);
+
+        // ── Rectangular Pyramid ────────────────────────────────────────────────
+        } else if(current3DShape==='rect_pyramid'){
+            var l,w,h,ba;
+            if(current3DGoal==='volume'){
+                var list=methods3D.rect_pyramid.volume||[];
+                var m=list[current3DMethod]||list[0];
+                if(m.id==='rpyr_v_bah'){ba=get3D('s3_ba');h=get3D('s3_h');if(isNaN(ba)||isNaN(h)||ba<=0||h<=0)warn='Enter Base Area and Height.';}
+                else{l=get3D('s3_l');w=get3D('s3_w');h=get3D('s3_h');if(isNaN(l)||isNaN(w)||isNaN(h)||l<=0||w<=0||h<=0)warn='Enter L, W, H.';}
+            } else {
+                l=get3D('s3_l');w=get3D('s3_w');h=get3D('s3_h');
+                if(isNaN(l)||isNaN(w)||isNaN(h)||l<=0||w<=0||h<=0) warn='Enter positive Base Length, Width, and Height.';
             }
-        } else if(current3DShape==='tri_pyramid') {
-            var a=get3D('s3_a'), b=get3D('s3_b'), c=get3D('s3_c'), sh=get3D('s3_sh');
-            if(isNaN(a)||isNaN(b)||isNaN(c)||isNaN(sh)||a<=0||b<=0||c<=0||sh<=0){warn='Enter all three base sides and slant height.';}
-            else if(a+b<=c||a+c<=b||b+c<=a){warn='Those sides don\'t form a valid triangle.';}
-            else {
-                var s=(a+b+c)/2;
-                var baseArea=Math.sqrt(s*(s-a)*(s-b)*(s-c));
-                // Lateral faces: each side × slant height / 2 (approx — using avg slant)
-                var latA=0.5*a*sh, latB=0.5*b*sh, latC=0.5*c*sh;
-                surfArea=baseArea+latA+latB+latC;
-                // Approximate lateral edge length from slant height and base centroid
-                var perimBase=a+b+c;
-                // height of pyramid from slant and base inradius
-                var inR=baseArea/s;
-                var pH=Math.sqrt(Math.max(0,sh*sh-inR*inR));
-                var vol=(1/3)*baseArea*pH;
-                // lateral edge ≈ from each base vertex to apex; approx using centroid distance
-                // centroid distances for each vertex are complex; provide total edges simply
-                totalEdges=perimBase*2; // 3 base + 3 lateral (approx same length as slant)
-                var latEdgeApprox=Math.sqrt(sh*sh+(inR)*(inR)); // rough
-                totalEdges=perimBase+3*latEdgeApprox;
-                html+=saRow3D('Base Side a',a); html+=saRow3D('Base Side b',b); html+=saRow3D('Base Side c',c);
-                html+=saRow3D('Slant Height',sh);
-                html+=saRow3D('Base Area',baseArea);
-                html+=saRow3D('Lateral Face A',latA);
-                html+=saRow3D('Lateral Face B',latB);
-                html+=saRow3D('Lateral Face C',latC);
-                html+=saRow3D('Pyramid Height (approx)',pH);
-                html+=saRow3D('Volume (approx)',vol);
-                html+=saRow3D('Lateral Edge (approx)',latEdgeApprox);
+            if(!warn){
+                if(current3DGoal==='volume'&&!isNaN(ba)){
+                    var vol=(1/3)*ba*h;
+                    html+=saRow3D('Base Area',ba)+saRow3D('Height',h)+saRow3D('Volume',vol);
+                    dimsForDiag={l:Math.sqrt(ba),w:Math.sqrt(ba),h:h};
+                } else {
+                    var latEdge=Math.sqrt((l/2)*(l/2)+(w/2)*(w/2)+h*h);
+                    var slantL=Math.sqrt(h*h+(w/2)*(w/2)), slantW=Math.sqrt(h*h+(l/2)*(l/2));
+                    var baseDiag=Math.sqrt(l*l+w*w);
+                    var diag=latEdge; // apex to base corner IS the lateral edge
+                    var vol=(1/3)*l*w*h;
+                    surfArea=l*w+l*slantL+w*slantW;
+                    totalEdges=2*(l+w)+4*latEdge;
+                    dimsForDiag={l:l,w:w,h:h,diag:latEdge};
+                    if(current3DGoal==='all'){
+                        html+=saRow3D('Base Length',l)+saRow3D('Base Width',w)+saRow3D('Height',h);
+                        html+=saRow3D('Lateral Edge (apex→corner)',latEdge);
+                        html+=saRow3D('Base Diagonal',baseDiag);
+                        html+=saRow3D('Slant Height (l-face)',slantL)+saRow3D('Slant Height (w-face)',slantW);
+                        html+=saRow3D('Volume',vol);
+                    } else if(current3DGoal==='diagonal'){
+                        html+=saRow3D('Lateral Edge (apex→corner)',latEdge)+saRow3D('Base Diagonal',baseDiag);
+                        html+=saRow3D('Slant Height (l-face)',slantL)+saRow3D('Slant Height (w-face)',slantW);
+                    } else if(current3DGoal==='surface'){
+                        html+=saRow3D('Surface Area',surfArea);
+                        html+=saRow3D('Base (l×w)',l*w)+saRow3D('2 Lateral (l-faces)',l*slantL)+saRow3D('2 Lateral (w-faces)',w*slantW);
+                    } else if(current3DGoal==='volume'){
+                        html+=saRow3D('Volume',vol);
+                    } else if(current3DGoal==='edges'){
+                        html+=saRow3D('Total Edge Length',totalEdges);
+                        html+=saRow3D('4 Base + 4 Lateral','');
+                    }
+                }
+            }
+
+        // ── Triangular Prism ───────────────────────────────────────────────────
+        } else if(current3DShape==='tri_prism'){
+            var a,b,c,h,ba;
+            if(current3DGoal==='volume'){
+                var list=methods3D.tri_prism.volume||[];
+                var m=list[current3DMethod]||list[0];
+                if(m.id==='tp_v_bah'){ba=get3D('s3_ba');h=get3D('s3_h');if(isNaN(ba)||isNaN(h)||ba<=0||h<=0)warn='Enter Triangle Area and Length.';}
+                else{a=get3D('s3_a');b=get3D('s3_b');c=get3D('s3_c');h=get3D('s3_h');if(isNaN(a)||isNaN(b)||isNaN(c)||isNaN(h)||a<=0||b<=0||c<=0||h<=0)warn='Enter all sides and length.';}
+            } else {
+                a=get3D('s3_a');b=get3D('s3_b');c=get3D('s3_c');h=get3D('s3_h');
+                if(isNaN(a)||isNaN(b)||isNaN(c)||isNaN(h)||a<=0||b<=0||c<=0||h<=0)warn='Enter all three sides and prism length.';
+                else if(a+b<=c||a+c<=b||b+c<=a)warn='Those sides don\'t form a valid triangle.';
+            }
+            if(!warn){
+                if(current3DGoal==='volume'&&!isNaN(ba)){
+                    var vol=ba*h;
+                    html+=saRow3D('Triangle Area',ba)+saRow3D('Length',h)+saRow3D('Volume',vol);
+                    dimsForDiag={a:Math.sqrt(ba*2),b:Math.sqrt(ba*2),c:Math.sqrt(ba*2),h:h};
+                } else {
+                    var sv=(a+b+c)/2;
+                    var triArea=Math.sqrt(sv*(sv-a)*(sv-b)*(sv-c));
+                    var vol=triArea*h;
+                    surfArea=2*triArea+(a+b+c)*h;
+                    totalEdges=3*h+2*(a+b+c);
+                    dimsForDiag={a:a,b:b,c:c,h:h};
+                    if(current3DGoal==='all'){
+                        html+=saRow3D('Side a',a)+saRow3D('Side b',b)+saRow3D('Side c',c)+saRow3D('Length (h)',h);
+                        html+=saRow3D('Triangle Area',triArea);
+                        html+=saRow3D('Lateral Face a×h',a*h)+saRow3D('Lateral Face b×h',b*h)+saRow3D('Lateral Face c×h',c*h);
+                        html+=saRow3D('Volume',vol);
+                    } else if(current3DGoal==='surface'){
+                        html+=saRow3D('Surface Area',surfArea);
+                        html+=saRow3D('2 Triangle Faces',2*triArea)+saRow3D('Rect Face a×h',a*h)+saRow3D('Rect Face b×h',b*h)+saRow3D('Rect Face c×h',c*h);
+                    } else if(current3DGoal==='volume'){
+                        html+=saRow3D('Volume',vol);
+                    } else if(current3DGoal==='edges'){
+                        html+=saRow3D('Total Edge Length',totalEdges);
+                        html+=saRow3D('3 length edges',3*h)+saRow3D('6 triangle edges',2*(a+b+c));
+                    }
+                }
+            }
+
+        // ── Triangular Pyramid ─────────────────────────────────────────────────
+        } else if(current3DShape==='tri_pyramid'){
+            var a,b,c,sh,ba,h;
+            if(current3DGoal==='volume'){
+                var list=methods3D.tri_pyramid.volume||[];
+                var m=list[current3DMethod]||list[0];
+                if(m.id==='tpyr_v_bah'){ba=get3D('s3_ba');h=get3D('s3_h');if(isNaN(ba)||isNaN(h)||ba<=0||h<=0)warn='Enter Base Area and Height.';}
+                else{a=get3D('s3_a');b=get3D('s3_b');c=get3D('s3_c');sh=get3D('s3_sh');if(isNaN(a)||isNaN(b)||isNaN(c)||isNaN(sh)||a<=0||b<=0||c<=0||sh<=0)warn='Enter all sides and slant height.';}
+            } else {
+                a=get3D('s3_a');b=get3D('s3_b');c=get3D('s3_c');sh=get3D('s3_sh');
+                if(isNaN(a)||isNaN(b)||isNaN(c)||isNaN(sh)||a<=0||b<=0||c<=0||sh<=0)warn='Enter all three sides and slant height.';
+                else if(a+b<=c||a+c<=b||b+c<=a)warn='Those sides don\'t form a valid triangle.';
+            }
+            if(!warn){
+                if(current3DGoal==='volume'&&!isNaN(ba)){
+                    var vol=(1/3)*ba*h;
+                    html+=saRow3D('Base Area',ba)+saRow3D('Height',h)+saRow3D('Volume',vol);
+                    dimsForDiag={a:Math.sqrt(ba*2),b:Math.sqrt(ba*2),c:Math.sqrt(ba*2),sh:h};
+                } else {
+                    var sv=(a+b+c)/2;
+                    var baseArea=Math.sqrt(sv*(sv-a)*(sv-b)*(sv-c));
+                    var latA=0.5*a*sh, latB=0.5*b*sh, latC=0.5*c*sh;
+                    surfArea=baseArea+latA+latB+latC;
+                    var inR=baseArea/sv;
+                    var pyH=Math.sqrt(Math.max(0,sh*sh-inR*inR));
+                    var vol=(1/3)*baseArea*pyH;
+                    var latEdge=Math.sqrt(sh*sh+inR*inR);
+                    totalEdges=(a+b+c)+3*latEdge;
+                    dimsForDiag={a:a,b:b,c:c,sh:sh,baseArea:baseArea};
+                    if(current3DGoal==='all'){
+                        html+=saRow3D('Base Side a',a)+saRow3D('Base Side b',b)+saRow3D('Base Side c',c)+saRow3D('Slant Height',sh);
+                        html+=saRow3D('Base Area',baseArea);
+                        html+=saRow3D('Lateral Face A',latA)+saRow3D('Lateral Face B',latB)+saRow3D('Lateral Face C',latC);
+                        html+=saRow3D('Pyramid Height (approx)',pyH);
+                        html+=saRow3D('Lateral Edge (approx)',latEdge);
+                        html+=saRow3D('Volume (approx)',vol);
+                    } else if(current3DGoal==='surface'){
+                        html+=saRow3D('Surface Area',surfArea);
+                        html+=saRow3D('Base Area',baseArea)+saRow3D('Lateral Face A',latA)+saRow3D('Lateral Face B',latB)+saRow3D('Lateral Face C',latC);
+                    } else if(current3DGoal==='volume'){
+                        html+=saRow3D('Volume (approx)',vol);
+                        html+=saRow3D('Base Area',baseArea)+saRow3D('Height (approx)',pyH);
+                    } else if(current3DGoal==='edges'){
+                        html+=saRow3D('Total Edge Length',totalEdges);
+                        html+=saRow3D('3 Base edges',a+b+c)+saRow3D('3 Lateral edges',3*latEdge);
+                    }
+                }
             }
         }
         } catch(err){ warn='Calculation error: '+err.message; }
 
         var r=get('res3D'); r.style.display='block';
         var rows=get('res3DRows');
-        if(warn) {
+        if(warn){
             rows.innerHTML='<div style="color:'+(d?'#ff7070':'#c0392b')+';font-weight:600;font-size:12px;">\u26a0 '+warn+'</div>';
-            get('surfaceAreaRes').innerText='';
-            get('totalEdgesRes').innerText='';
+            get('surfaceAreaRes').innerText=''; get('totalEdgesRes').innerText='';
             var cb3=get('canvasBox3D'); if(cb3) cb3.style.display='none';
         } else {
             rows.innerHTML=html;
             var pr=getPrec();
-            get('surfaceAreaRes').innerText=isNaN(surfArea)?'':trimZ(surfArea.toFixed(pr));
-            get('totalEdgesRes').innerText=isNaN(totalEdges)?'':trimZ(totalEdges.toFixed(pr));
-            // Draw diagram
-            var dims3 = {};
-            if(current3DShape==='rect_prism'||current3DShape==='rect_pyramid'){
-                dims3={l:get3D('s3_l'),w:get3D('s3_w'),h:get3D('s3_h')};
-            } else if(current3DShape==='tri_prism'){
-                dims3={a:get3D('s3_a'),b:get3D('s3_b'),c:get3D('s3_c'),h:get3D('s3_h')};
-            } else if(current3DShape==='tri_pyramid'){
-                dims3={a:get3D('s3_a'),b:get3D('s3_b'),c:get3D('s3_c'),sh:get3D('s3_sh')};
-            }
-            draw3DShape(current3DShape, dims3);
+            get('surfaceAreaRes').innerText=(!isNaN(surfArea))?trimZ(surfArea.toFixed(pr)):'—';
+            get('totalEdgesRes').innerText=(!isNaN(totalEdges))?trimZ(totalEdges.toFixed(pr)):'—';
+            draw3DShape(current3DShape, dimsForDiag);
         }
         applyDark();
     }
 
-    // IDs of elements in uiBody that belong to triangle mode (not 3D)
-    var _triModeEls = ['triBtns','goalBtns','methodSection','posToggle','inputStack','canvasBox','res','unitBox'];
-    // Also need to hide the wrapper divs (secLabel containers) — we'll target them by their parent
-    var _triModeWrappers = null; // filled on first enter
+    // ── 3D Mode enter/exit ─────────────────────────────────────────────────────
+    var _triModeWrappers = null;
 
     function enter3DMode() {
         mode3D=true;
         var htb=get('headerTriBtn');
-        if(htb){ htb.innerHTML='&#9650;'; htb.title='Back to triangles'; htb.style.transform='scale(1.15)'; htb.style.opacity='1'; }
-
-        // Collect all direct children of uiBody that are NOT the 3D panel, save & hide them
+        if(htb){htb.innerHTML='&#9650;';htb.title='Back to triangles';htb.style.transform='scale(1.15)';htb.style.opacity='1';}
         var uiBody=get('uiBody');
-        _triModeWrappers = [];
-        var children = uiBody.children;
-        for(var ci=0; ci<children.length; ci++){
+        _triModeWrappers=[];
+        var children=uiBody.children;
+        for(var ci=0;ci<children.length;ci++){
             var ch=children[ci];
-            if(ch.id !== 'panel3D') {
-                _triModeWrappers.push({el:ch, prev:ch.style.display});
-                ch.style.display='none';
-            }
+            if(ch.id!=='panel3D'){_triModeWrappers.push({el:ch,prev:ch.style.display});ch.style.display='none';}
         }
         get('panel3D').style.display='block';
-        build3DShapeBtns(); render3DInputs();
+        build3DShapeBtns(); buildGoalBtns3D(); buildMethodBtns3D(); render3DInputs();
         applyDark();
     }
 
     function exit3DMode() {
         mode3D=false;
         var htb=get('headerTriBtn');
-        if(htb){ htb.innerHTML='&#9651;'; htb.title='Switch to 3D shapes'; htb.style.transform='scale(1)'; htb.style.opacity='0.9'; }
+        if(htb){htb.innerHTML='&#9651;';htb.title='Switch to 3D shapes';htb.style.transform='scale(1)';htb.style.opacity='0.9';}
         get('panel3D').style.display='none';
-        // Restore all saved elements
-        if(_triModeWrappers) {
-            _triModeWrappers.forEach(function(item){
-                item.el.style.display = item.prev;
-            });
-            _triModeWrappers = null;
-        }
-        // Re-apply diagram and result visibility (they have their own logic)
-        applyDiagramVisibility();
-        applyResultVisibility();
-        applyDark();
+        if(_triModeWrappers){_triModeWrappers.forEach(function(item){item.el.style.display=item.prev;});_triModeWrappers=null;}
+        applyDiagramVisibility(); applyResultVisibility(); applyDark();
     }
 
-    get('toggle3DBtn').addEventListener('click', function(e){ e.stopPropagation(); enter3DMode(); });
-    get('toggle3DBack').addEventListener('click', function(e){ e.stopPropagation(); exit3DMode(); });
-    get('headerTriBtn').addEventListener('click', function(e){ e.stopPropagation(); if(mode3D) exit3DMode(); else enter3DMode(); });
-    get('calc3D').addEventListener('click', function(e){ e.stopPropagation(); calc3D(); });
+    get('toggle3DBtn').addEventListener('click', function(e){e.stopPropagation();enter3DMode();});
+    get('toggle3DBack').addEventListener('click', function(e){e.stopPropagation();exit3DMode();});
+    get('headerTriBtn').addEventListener('click', function(e){e.stopPropagation();if(mode3D)exit3DMode();else enter3DMode();});
+    get('calc3D').addEventListener('click', function(e){e.stopPropagation();calc3D();});
+    get('dlBtn3D').addEventListener('click', function(){
+        var cv=get('canvas3D'); if(!cv)return;
+        var a=document.createElement('a');a.download='3dshape.png';a.href=cv.toDataURL();a.click();
+    });
     get('clear3D').addEventListener('click', function(e){
         e.stopPropagation();
-        var fields=shape3DFields[current3DShape]||[];
-        fields.forEach(function(f){ var el=document.getElementById(f.id); if(el) el.value=''; });
+        ['s3_l','s3_w','s3_h','s3_a','s3_b','s3_c','s3_sh','s3_ba'].forEach(function(id){
+            var el=document.getElementById(id);if(el)el.value='';
+        });
         get('res3D').style.display='none';
+        var cb3=get('canvasBox3D');if(cb3)cb3.style.display='none';
     });
 
 })();
