@@ -1168,6 +1168,7 @@
     }
 
     function buildTriBtns() {
+        if(mode3D) return;
         var el=get('triBtns'); el.innerHTML='';
         triTypes.forEach(function(t){
             var b=document.createElement('button');
@@ -1183,6 +1184,7 @@
         });
     }
     function buildGoalBtns() {
+        if(mode3D) return;
         var el=get('goalBtns'); el.innerHTML=''; var adv=getAdv();
         triGoals[currentTri].forEach(function(gid){
             var b=document.createElement('button');
@@ -1193,6 +1195,7 @@
         });
     }
     function buildMethodBtns() {
+        if(mode3D) return;
         var el=get('methodBtns'); el.innerHTML=''; var list=getMethodList();
         get('methodSection').style.display=list.length>1?'block':'none';
         list.forEach(function(m,i){
@@ -1204,6 +1207,7 @@
         });
     }
     function renderInputs() {
+        if(mode3D) return;
         var d=getDark();
 
         // ── Solve All: show solver-style fields (label + input side by side) ──
@@ -4249,6 +4253,9 @@
             if(ch.id!=='panel3D'){_triModeWrappers.push({el:ch,prev:ch.style.display});ch.style.display='none';}
         }
         get('panel3D').style.display='block';
+        // Explicitly hide triangle-mode elements that might have been re-shown by JS
+        var _triHide=['methodSection','posToggle','unitContextBar','res','unitBox'];
+        _triHide.forEach(function(id){var el=get(id);if(el)el.style.display='none';});
         build3DShapeBtns(); buildGoalBtns3D(); buildMethodBtns3D(); render3DInputs();
         applyDiagramVisibility(); applyDark();
     }
