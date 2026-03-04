@@ -3406,7 +3406,13 @@
     }
     // Override the applyDark call to also update lockBtn
     var _origApplyDark = applyDark;
-    applyDark = function() { _origApplyDark(); if(typeof applyDark_lockBtn==='function') applyDark_lockBtn(); };
+    var _applyDarkRunning = false;
+    applyDark = function() {
+        if(_applyDarkRunning) return;
+        _applyDarkRunning = true;
+        try { _origApplyDark(); if(typeof applyDark_lockBtn==='function') applyDark_lockBtn(); }
+        finally { _applyDarkRunning = false; }
+    };
 
     // Patch the drag mousemove to enforce type constraints when locked
     // We need to wrap the constraint logic into the drag handler.
@@ -4298,7 +4304,6 @@
             get('totalEdgesRes').innerText=(!isNaN(totalEdges))?trimZ(totalEdges.toFixed(pr)):'—';
             draw3DShape(current3DShape, dimsForDiag);
         }
-        applyDark();
     }
 
     // ── 3D Mode enter/exit ─────────────────────────────────────────────────────
