@@ -131,6 +131,7 @@
     var initOutputUnit    = saved.outputUnit     || 'same';
     var initCalcPin       = saved.calcPin       !== false;   // default true
     var initCalcInfer     = saved.calcInfer     !== false;   // default true
+    var initShow3DBtn     = saved.show3DBtn     === true;    // default false
 
     var styleEl = document.getElementById('geo-ultimate-styles');
     if(styleEl) styleEl.remove();
@@ -185,8 +186,8 @@
           '</div>',
         '</div>',
         '<div id="uiBody" style="padding:16px;overflow-y:auto;overflow-x:hidden;flex:1;box-sizing:border-box;">',
-          '<div style="margin-bottom:14px;"><div class="secLabel" style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;margin-bottom:7px;">TRIANGLE TYPE:</div><div id="triBtns" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;"></div></div>',
-          '<div style="margin-bottom:14px;"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;"><span class="secLabel" style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;">FIND:</span><button id="toggle3DBtn" title="Switch to 3D shape solver" style="padding:3px 9px;border:none;border-radius:5px;background:#e8f0fe;color:#1a73e8;font-size:10px;font-weight:700;cursor:pointer;letter-spacing:0.3px;">&#9656; 3D Shapes</button></div><div id="goalBtns" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;"></div></div>',
+          '<div style="margin-bottom:14px;"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;"><span class="secLabel" style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;">TRIANGLE TYPE:</span><button id="toggle3DBtn" style="display:none;padding:3px 9px;border:none;border-radius:5px;background:#e8f0fe;color:#1a73e8;font-size:10px;font-weight:700;cursor:pointer;letter-spacing:0.3px;">&#9656; 3D Shapes</button></div><div id="triBtns" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;"></div></div>',
+          '<div style="margin-bottom:14px;"><div style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;margin-bottom:7px;">FIND:</div><div id="goalBtns" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;"></div></div>',
           '<div id="methodSection" style="margin-bottom:14px;"><div class="secLabel" style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;margin-bottom:7px;">METHOD:</div><div id="methodBtns" style="display:flex;flex-direction:column;gap:5px;"></div></div>',
           '<div id="posToggle" style="background:#eef3fe;padding:9px 12px;border-radius:8px;margin-bottom:14px;font-size:12px;display:none;">',
             '<div id="posTitle" style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;margin-bottom:6px;">HEIGHT POSITION:</div>',
@@ -326,6 +327,8 @@
                   '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optShowArea"  style="accent-color:#1a73e8;width:13px;height:13px;flex-shrink:0;"> Area</label>',
                   '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optShowPerim" style="accent-color:#1a73e8;width:13px;height:13px;flex-shrink:0;"> Perimeter</label>',
                 '</div>',
+                '<div style="height:1px;background:#eee;margin:2px 0;"></div>',
+                '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optShow3DBtn" style="accent-color:#1a73e8;width:14px;height:14px;flex-shrink:0;"> Show &#9656; 3D Shapes button <span style="font-size:10px;color:#aaa;margin-left:2px;">(use \u25b3 icon otherwise)</span></label>',
               '</div>',
             '</div>',
 
@@ -437,6 +440,8 @@
     get('optInteractDiag').checked= initInteractDiag;
     get('optClickEdit').checked   = initClickEdit;
     get('optColorCode').checked   = initColorCode;
+    get('optShow3DBtn').checked   = initShow3DBtn;
+    apply3DBtnVisibility();
 
     function getAdv()      { return get('optAdvanced').checked; }
     function getSurd()     { return get('optSurd').checked; }
@@ -478,7 +483,8 @@
                 unit:       currentUnit,
                 outputUnit: currentOutputUnit,
                 calcPin:    get('calcPinOpen') ? get('calcPinOpen').checked : true,
-                calcInfer:  get('calcInferBrackets') ? get('calcInferBrackets').checked : true
+                calcInfer:  get('calcInferBrackets') ? get('calcInferBrackets').checked : true,
+                show3DBtn:  get('optShow3DBtn') ? get('optShow3DBtn').checked : false
             };
             var _sStr = JSON.stringify(_sObj);
             // Write to localStorage (fast, same-origin)
@@ -517,6 +523,7 @@
         _chk('optColorCode',   s.colorCode !== false);
         if(get('calcPinOpen') && s.calcPin !== undefined)        get('calcPinOpen').checked        = s.calcPin !== false;
         if(get('calcInferBrackets') && s.calcInfer !== undefined) get('calcInferBrackets').checked  = s.calcInfer !== false;
+        if(get('optShow3DBtn') && s.show3DBtn !== undefined)      get('optShow3DBtn').checked       = !!s.show3DBtn;
         rebuildAll();
         applyDark();
         updateUnitBtns();
@@ -524,12 +531,24 @@
         updateUnitContextBar();
         applyDiagramVisibility();
         applyResultVisibility();
+        apply3DBtnVisibility();
     };
+
+    function getShow3DBtn()  { var el=get('optShow3DBtn'); return el?el.checked:false; }
 
     function applyDiagramVisibility() {
         var show = getDiagram();
         var cb = get('canvasBox');
-        if(cb) cb.style.display = show ? 'block' : 'none';
+        // Only show the triangle canvas when NOT in 3D mode
+        if(cb) cb.style.display = (show && !mode3D) ? 'block' : 'none';
+        // Also update the 3D canvas if we're in 3D mode and diagram is off
+        var cb3 = get('canvasBox3D');
+        if(cb3 && mode3D && !show) cb3.style.display = 'none';
+    }
+
+    function apply3DBtnVisibility() {
+        var btn = get('toggle3DBtn');
+        if(btn) btn.style.display = getShow3DBtn() ? 'inline-block' : 'none';
     }
 
     function applyResultVisibility() {
@@ -3086,6 +3105,8 @@
             '5':'5','6':'6','7':'7','8':'8','9':'9',
             '.':'.', '+':'+', '-':'-',
             '*':'\u00d7',
+            'x':'\u00d7',
+            'X':'\u00d7',
             '/':'\u00f7',
             '`':'\u221a',
             'p':'\u03c0',
@@ -3164,6 +3185,7 @@
     get('optAdvanced').addEventListener('change',function(){rebuildAll();saveSettings();});
     get('optDark').addEventListener('change',function(){applyDark();saveSettings();});
     get('optDiagram').addEventListener('change',function(){applyDiagramVisibility();saveSettings();});
+    get('optShow3DBtn').addEventListener('change',function(){apply3DBtnVisibility();saveSettings();});
     get('optAutoCalc').addEventListener('change',function(){saveSettings();});
     get('optShowSteps').addEventListener('change',function(){applyResultVisibility();saveSettings();});
     get('optShowArea').addEventListener('change',function(){applyResultVisibility();saveSettings();});
@@ -3824,148 +3846,187 @@
     // ── 3D Diagram Drawing ─────────────────────────────────────────────────────
     function draw3DShape(shape, dims) {
         var cv = get('canvas3D'), cb3 = get('canvasBox3D');
-        if(!cv||!cb3||!getDiagram()) { if(cb3) cb3.style.display='none'; return; }
+        if(!cv || !cb3) return;
+        if(!getDiagram()) { cb3.style.display='none'; return; }
         cb3.style.display = 'block';
-        var cx = cv.getContext('2d');
+
+        // Match canvas pixel size to its display size (like the triangle canvas)
+        cv.width  = cv.offsetWidth  || 340;
+        cv.height = cv.offsetHeight || 210;
         var W = cv.width, H = cv.height;
+        var PAD = 28; // padding so labels don't clip
+
+        var cx = cv.getContext('2d');
         cx.clearRect(0,0,W,H);
         var d = getDark();
         var stroke    = d?'#4a9eff':'#1a73e8';
-        var strokeDim = d?'#2a4a7a':'#a0b8e0';
-        var fill      = d?'rgba(30,46,78,0.72)':'rgba(232,240,254,0.72)';
-        var fillSide  = d?'rgba(20,30,55,0.72)':'rgba(200,220,248,0.55)';
-        var lblCol    = d?'#c0d0ff':'#1a5090';
-        var accentCol = '#e8430a';
+        var strokeDim = d?'#334466':'#b0c8e8';
+        var fill      = d?'rgba(30,50,90,0.75)':'rgba(220,235,255,0.75)';
+        var fillSide  = d?'rgba(15,25,55,0.75)':'rgba(190,210,245,0.6)';
+        var lblCol    = d?'#a0c0ff':'#1a4080';
+        var accentCol = '#e05010';
+        var bgCol     = d?'#12192b':'#f8faff';
+        cx.fillStyle = bgCol; cx.fillRect(0,0,W,H);
 
-        var isoX=function(x,y,z){return W/2+(x-z)*0.866;};
-        var isoY=function(x,y,z){return H/2-y*0.9+(x+z)*0.5;};
-        function pt(x,y,z){return[isoX(x,y,z),isoY(x,y,z)];}
-        function seg(p1,p2,dim,col,dash){
-            cx.beginPath();cx.moveTo(p1[0],p1[1]);cx.lineTo(p2[0],p2[1]);
-            cx.strokeStyle=col||(dim?strokeDim:stroke);
-            cx.lineWidth=dim?1:1.8;
-            cx.setLineDash(dash||(dim?[4,3]:[]));
-            cx.stroke();cx.setLineDash([]);
+        // ── Isometric projection (raw, unit coords) ───────────────────────────
+        // We build all 2D points first, then compute bounding box, then translate+scale to fit
+        var ISO_AX = 0.866, ISO_AY = 0.5; // isometric x-axis direction
+        var ISO_ZX = -0.866, ISO_ZY = 0.5; // isometric z-axis direction
+        var ISO_YX = 0, ISO_YY = -1;       // isometric y-axis direction (up)
+
+        function iso2D(x,y,z) {
+            return [
+                x*ISO_AX + z*ISO_ZX + y*ISO_YX,
+                x*ISO_AY + z*ISO_ZY + y*ISO_YY
+            ];
         }
-        function poly(pts,fillStyle){
-            cx.beginPath();cx.moveTo(pts[0][0],pts[0][1]);
-            for(var i=1;i<pts.length;i++)cx.lineTo(pts[i][0],pts[i][1]);
-            cx.closePath();cx.fillStyle=fillStyle;cx.fill();
-            cx.strokeStyle=stroke;cx.lineWidth=1.6;cx.stroke();
+
+        // ── First pass: collect all raw 2D points to compute bounding box ─────
+        var rawPts = [];
+        function collectPts() {
+            // All shapes work in normalised space; collect key vertices
+            var L = dims.l||1, Wv = dims.w||1, Hv = dims.h||1;
+            if(shape==='rect_prism') {
+                [[0,0,0],[L,0,0],[L,0,Wv],[0,0,Wv],[0,Hv,0],[L,Hv,0],[L,Hv,Wv],[0,Hv,Wv]].forEach(function(v){rawPts.push(iso2D(v[0],v[1],v[2]));});
+            } else if(shape==='rect_pyramid') {
+                [[0,0,0],[L,0,0],[L,0,Wv],[0,0,Wv],[L/2,Hv,Wv/2]].forEach(function(v){rawPts.push(iso2D(v[0],v[1],v[2]));});
+            } else if(shape==='tri_prism') {
+                var a=dims.a||1,b=dims.b||1,c=dims.c||1,h=dims.h||1;
+                var cosA=(c*c+b*b-a*a)/(2*c*b); cosA=Math.max(-1,Math.min(1,cosA));
+                var Cx=b*cosA,Cz=b*Math.sqrt(1-cosA*cosA);
+                [[0,0,0],[c,0,0],[Cx,0,Cz],[0,h,0],[c,h,0],[Cx,h,Cz]].forEach(function(v){rawPts.push(iso2D(v[0],v[1],v[2]));});
+            } else if(shape==='tri_pyramid') {
+                var a=dims.a||1,b=dims.b||1,c=dims.c||1,sh=dims.sh||1;
+                var cosA=(c*c+b*b-a*a)/(2*c*b); cosA=Math.max(-1,Math.min(1,cosA));
+                var Cx=b*cosA,Cz=b*Math.sqrt(1-cosA*cosA);
+                var cX=(0+c+Cx)/3,cZ=(0+0+Cz)/3;
+                var inR=(dims.baseArea||1)/((a+b+c)/2);
+                var pyH=Math.sqrt(Math.max(0,sh*sh-inR*inR));
+                [[0,0,0],[c,0,0],[Cx,0,Cz],[cX,pyH,cZ]].forEach(function(v){rawPts.push(iso2D(v[0],v[1],v[2]));});
+            }
         }
-        // Draw a dimension label along the midpoint of two points
-        function dimLabel(p1,p2,txt,offset){
-            var mx=(p1[0]+p2[0])/2+(offset?offset[0]:0);
-            var my=(p1[1]+p2[1])/2+(offset?offset[1]:0);
+        collectPts();
+
+        // Compute bounding box of raw points
+        var minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+        rawPts.forEach(function(p){minX=Math.min(minX,p[0]);maxX=Math.max(maxX,p[0]);minY=Math.min(minY,p[1]);maxY=Math.max(maxY,p[1]);});
+        var spanX=maxX-minX||1, spanY=maxY-minY||1;
+        var scaleX=(W-PAD*2)/spanX, scaleY=(H-PAD*2)/spanY;
+        var sc=Math.min(scaleX,scaleY); // uniform scale to fit with padding
+        var offX=PAD+(W-PAD*2-spanX*sc)/2 - minX*sc;
+        var offY=PAD+(H-PAD*2-spanY*sc)/2 - minY*sc;
+
+        // ── Final projection with computed scale/offset ───────────────────────
+        function pt(x,y,z) {
+            var p=iso2D(x,y,z);
+            return [p[0]*sc+offX, p[1]*sc+offY];
+        }
+
+        function seg(p1,p2,dim,col,dash) {
+            cx.beginPath(); cx.moveTo(p1[0],p1[1]); cx.lineTo(p2[0],p2[1]);
+            cx.strokeStyle = col || (dim?strokeDim:stroke);
+            cx.lineWidth   = dim ? 1.2 : 2;
+            cx.setLineDash(dash || (dim?[5,4]:[]));
+            cx.stroke(); cx.setLineDash([]);
+        }
+        function poly(pts, fillStyle) {
+            cx.beginPath(); cx.moveTo(pts[0][0],pts[0][1]);
+            for(var i=1;i<pts.length;i++) cx.lineTo(pts[i][0],pts[i][1]);
+            cx.closePath(); cx.fillStyle=fillStyle; cx.fill();
+            cx.strokeStyle=stroke; cx.lineWidth=1.8; cx.stroke();
+        }
+        function lbl(px,py,txt,accent) {
             cx.font='bold 10px system-ui,sans-serif';
             var tw=cx.measureText(txt).width;
-            cx.fillStyle=d?'rgba(10,15,35,0.75)':'rgba(255,255,255,0.82)';
-            cx.fillRect(mx-tw/2-2,my-8,tw+4,12);
-            cx.fillStyle=lblCol;cx.fillText(txt,mx-tw/2,my+1);
+            cx.fillStyle=d?'rgba(8,12,28,0.82)':'rgba(255,255,255,0.88)';
+            cx.beginPath(); cx.roundRect?cx.roundRect(px-tw/2-3,py-7,tw+6,13,3):cx.rect(px-tw/2-3,py-7,tw+6,13);
+            cx.fill();
+            cx.fillStyle=accent?accentCol:lblCol;
+            cx.fillText(txt, px-tw/2, py+3);
         }
-        function accentLabel(p,txt){
-            cx.font='bold 10px system-ui,sans-serif';
-            var tw=cx.measureText(txt).width;
-            cx.fillStyle=d?'rgba(10,15,35,0.75)':'rgba(255,255,255,0.82)';
-            cx.fillRect(p[0]-tw/2-2,p[1]-8,tw+4,12);
-            cx.fillStyle=accentCol;cx.fillText(txt,p[0]-tw/2,p[1]+1);
+        function midLbl(p1,p2,txt,ox,oy,accent) {
+            lbl((p1[0]+p2[0])/2+(ox||0),(p1[1]+p2[1])/2+(oy||0),txt,accent);
         }
+        function fmtV(v){ return (v!==undefined&&!isNaN(v)&&v!==null)?String(parseFloat(v.toFixed(2))):'?'; }
 
-        function fmtV(v){return v!==undefined&&!isNaN(v)?String(parseFloat(v.toFixed(2))):'';}
-
-        if(shape==='rect_prism'){
-            var l=dims.l||1,w=dims.w||1,h=dims.h||1;
-            var sc=Math.min(90/Math.max(l,w,h),48);
-            var L=l*sc,W2=w*sc,H2=h*sc;
-            var B=[[0,0,0],[L,0,0],[L,0,W2],[0,0,W2]];
-            var T=[[0,H2,0],[L,H2,0],[L,H2,W2],[0,H2,W2]];
-            var bp=B.map(function(v){return pt(v[0],v[1],v[2]);}),
-                tp=T.map(function(v){return pt(v[0],v[1],v[2]);});
-            seg(bp[0],bp[1],true);seg(bp[0],bp[3],true);seg(bp[0],tp[0],true);
+        // ── Draw each shape ───────────────────────────────────────────────────
+        if(shape==='rect_prism') {
+            var L=dims.l||1,Wv=dims.w||1,Hv=dims.h||1;
+            var bp=[pt(0,0,0),pt(L,0,0),pt(L,0,Wv),pt(0,0,Wv)];
+            var tp=[pt(0,Hv,0),pt(L,Hv,0),pt(L,Hv,Wv),pt(0,Hv,Wv)];
+            // hidden back edges (dashed)
+            seg(bp[0],bp[1],true); seg(bp[0],bp[3],true); seg(bp[0],tp[0],true);
+            // faces back-to-front
             poly([tp[0],tp[1],tp[2],tp[3]],fill);
             poly([bp[3],bp[2],tp[2],tp[3]],fillSide);
             poly([bp[2],bp[1],tp[1],tp[2]],fill);
-            seg(bp[1],bp[2],false);seg(bp[2],bp[3],false);
-            seg(bp[1],tp[1],false);seg(bp[2],tp[2],false);seg(bp[3],tp[3],false);
-            for(var i=0;i<4;i++)seg(tp[i],tp[(i+1)%4],false);
+            // visible base edges
+            seg(bp[1],bp[2],false); seg(bp[2],bp[3],false);
+            seg(bp[1],tp[1],false); seg(bp[2],tp[2],false); seg(bp[3],tp[3],false);
+            for(var ii=0;ii<4;ii++) seg(tp[ii],tp[(ii+1)%4],false);
             // space diagonal
-            seg(pt(0,0,0),pt(L,H2,W2),false,accentCol,[5,3]);
-            accentLabel([(pt(0,0,0)[0]+pt(L,H2,W2)[0])/2,(pt(0,0,0)[1]+pt(L,H2,W2)[1])/2],'d='+fmtV(dims.diag));
+            seg(pt(0,0,0),pt(L,Hv,Wv),false,accentCol,[6,4]);
+            midLbl(pt(0,0,0),pt(L,Hv,Wv),'d='+fmtV(dims.diag),0,-8,true);
             // dimension labels
-            dimLabel(bp[1],bp[2],'w='+fmtV(w),[ 4, 4]);
-            dimLabel(bp[2],bp[3],'l='+fmtV(l),[ 4, 4]);
-            dimLabel(bp[2],tp[2],'h='+fmtV(h),[ 8, 0]);
+            midLbl(bp[2],bp[3],'l='+fmtV(dims.l),0,12);
+            midLbl(bp[1],bp[2],'w='+fmtV(dims.w),10,6);
+            midLbl(bp[2],tp[2],'h='+fmtV(dims.h),14,0);
 
-        } else if(shape==='rect_pyramid'){
-            var l=dims.l||1,w=dims.w||1,h=dims.h||1;
-            var sc=Math.min(90/Math.max(l,w,h),48);
-            var L=l*sc,W2=w*sc,H2=h*sc;
-            var B=[[0,0,0],[L,0,0],[L,0,W2],[0,0,W2]];
-            var bp=B.map(function(v){return pt(v[0],v[1],v[2]);});
-            var apex=pt(L/2,H2,W2/2);
-            seg(bp[0],bp[1],true);seg(bp[0],bp[3],true);seg(bp[0],apex,true);
-            seg(bp[1],bp[2],false);seg(bp[2],bp[3],false);
+        } else if(shape==='rect_pyramid') {
+            var L=dims.l||1,Wv=dims.w||1,Hv=dims.h||1;
+            var bp=[pt(0,0,0),pt(L,0,0),pt(L,0,Wv),pt(0,0,Wv)];
+            var apex=pt(L/2,Hv,Wv/2);
+            seg(bp[0],bp[1],true); seg(bp[0],bp[3],true); seg(bp[0],apex,true);
+            seg(bp[1],bp[2],false); seg(bp[2],bp[3],false);
             poly([bp[3],bp[2],apex],fillSide);
-            poly([bp[2],bp[1],apex],fill);
-            poly([bp[3],bp[0],apex],fill);
-            // diagonal apex to far corner
-            seg(apex,bp[2],false,accentCol,[5,3]);
-            accentLabel([(apex[0]+bp[2][0])/2+4,(apex[1]+bp[2][1])/2],'d='+fmtV(dims.diag));
-            dimLabel(bp[1],bp[2],'w='+fmtV(w),[4,4]);
-            dimLabel(bp[2],bp[3],'l='+fmtV(l),[4,4]);
-            var midBase=pt(L/2,0,W2/2), apexXY=apex;
-            dimLabel(midBase,apexXY,'h='+fmtV(h),[10,0]);
+            poly([bp[1],bp[2],apex],fill);
+            poly([bp[0],bp[3],apex],fill);
+            // lateral edge diagonal
+            seg(apex,bp[2],false,accentCol,[6,4]);
+            midLbl(apex,bp[2],'d='+fmtV(dims.diag),12,0,true);
+            midLbl(bp[2],bp[3],'l='+fmtV(dims.l),0,12);
+            midLbl(bp[1],bp[2],'w='+fmtV(dims.w),10,6);
+            midLbl(pt(L/2,0,Wv/2),apex,'h='+fmtV(dims.h),14,0);
 
-        } else if(shape==='tri_prism'){
+        } else if(shape==='tri_prism') {
             var a=dims.a||1,b=dims.b||1,c=dims.c||1,h=dims.h||1;
-            var sc=Math.min(80/Math.max(a,b,c,h),40);
-            var A=a*sc,B2=b*sc,C=c*sc,H2=h*sc;
-            // triangle vertices: AB = side c, AC = side b, angle at A
-            var cosA=(C*C+B2*B2-A*A)/(2*C*B2);
-            cosA=Math.max(-1,Math.min(1,cosA));
-            var Ax=0,Az=0,Bx=C,Bz=0,Cx2=B2*cosA,Cz2=B2*Math.sqrt(1-cosA*cosA);
-            var ox=-(Ax+Bx+Cx2)/3+0, oz=-(Az+Bz+Cz2)/3+0;
-            function triPt(x,yy,z){return pt(x+ox,-Cz2*0.4+yy,z+oz);}
-            var f0=[triPt(Ax,0,Az),triPt(Bx,0,Bz),triPt(Cx2,0,Cz2)];
-            var fH=[triPt(Ax,H2,Az),triPt(Bx,H2,Bz),triPt(Cx2,H2,Cz2)];
-            seg(f0[0],f0[1],true);seg(f0[0],fH[0],true);
+            var cosA=(c*c+b*b-a*a)/(2*c*b); cosA=Math.max(-1,Math.min(1,cosA));
+            var Cx=b*cosA, Cz=b*Math.sqrt(1-cosA*cosA);
+            var f0=[pt(0,0,0),pt(c,0,0),pt(Cx,0,Cz)];
+            var fH=[pt(0,h,0),pt(c,h,0),pt(Cx,h,Cz)];
+            seg(f0[0],f0[1],true); seg(f0[0],fH[0],true);
             poly(fH,fill);
             poly(f0,fillSide);
             poly([f0[1],f0[2],fH[2],fH[1]],fill);
             poly([f0[0],f0[2],fH[2],fH[0]],fillSide);
-            seg(f0[1],fH[1],false);seg(f0[2],fH[2],false);seg(f0[0],f0[2],false);
-            // side labels on front face
-            dimLabel(fH[0],fH[1],'c='+fmtV(c),[-2,-8]);
-            dimLabel(fH[0],fH[2],'b='+fmtV(b),[-8,-2]);
-            dimLabel(fH[1],fH[2],'a='+fmtV(a),[6,-2]);
-            // length label on a lateral edge
-            dimLabel(f0[1],fH[1],'h='+fmtV(h),[10,0]);
+            seg(f0[1],fH[1],false); seg(f0[2],fH[2],false); seg(f0[0],f0[2],false);
+            midLbl(fH[0],fH[1],'c='+fmtV(c),0,-10);
+            midLbl(fH[0],fH[2],'b='+fmtV(b),-12,-4);
+            midLbl(fH[1],fH[2],'a='+fmtV(a),10,-4);
+            midLbl(f0[1],fH[1],'h='+fmtV(h),14,0);
 
-        } else if(shape==='tri_pyramid'){
+        } else if(shape==='tri_pyramid') {
             var a=dims.a||1,b=dims.b||1,c=dims.c||1,sh=dims.sh||1;
-            var sc=Math.min(80/Math.max(a,b,c,sh),40);
-            var A=a*sc,B2=b*sc,C=c*sc,SH=sh*sc;
-            var cosA=(C*C+B2*B2-A*A)/(2*C*B2);
-            cosA=Math.max(-1,Math.min(1,cosA));
-            var Ax=0,Az=0,Bx=C,Bz=0,Cx2=B2*cosA,Cz2=B2*Math.sqrt(1-cosA*cosA);
-            var centX=(Ax+Bx+Cx2)/3,centZ=(Az+Bz+Cz2)/3;
-            var inR=(dims.baseArea||1)/((A+B2+C)/2/sc);
-            var pyH=Math.sqrt(Math.max(0,SH*SH-inR*inR));
-            function pyrPt(x,yy,z){return pt(x-centX,-yy-Cz2*0.3,z-centZ);}
-            var pA=pyrPt(Ax,0,Az),pB=pyrPt(Bx,0,Bz),pC=pyrPt(Cx2,0,Cz2);
-            var apex=pyrPt(centX,pyH,centZ);
+            var cosA=(c*c+b*b-a*a)/(2*c*b); cosA=Math.max(-1,Math.min(1,cosA));
+            var Cx=b*cosA,Cz=b*Math.sqrt(1-cosA*cosA);
+            var centX=(0+c+Cx)/3, centZ=(0+0+Cz)/3;
+            var sv=(a+b+c)/2;
+            var baseArea=dims.baseArea||Math.sqrt(Math.max(0,sv*(sv-a)*(sv-b)*(sv-c)));
+            var inR=baseArea/sv;
+            var pyH=Math.sqrt(Math.max(0,sh*sh-inR*inR));
+            var pA=pt(0,0,0),pB=pt(c,0,0),pC=pt(Cx,0,Cz),apex=pt(centX,pyH,centZ);
             seg(pA,pB,true);
             poly([pB,pC,apex],fill);
             poly([pA,pC,apex],fillSide);
             poly([pA,pB,apex],fill);
-            seg(pA,pC,false);seg(pB,pC,false);
-            dimLabel(pA,pB,'c='+fmtV(c),[-2,8]);
-            dimLabel(pA,pC,'b='+fmtV(b),[-8,0]);
-            dimLabel(pB,pC,'a='+fmtV(a),[6,0]);
-            // slant height
-            var midBC=[(pB[0]+pC[0])/2,(pB[1]+pC[1])/2];
-            seg(midBC,apex,false,accentCol,[4,3]);
-            accentLabel([(midBC[0]+apex[0])/2+6,(midBC[1]+apex[1])/2],'sh='+fmtV(sh));
+            seg(pA,pC,false); seg(pB,pC,false);
+            midLbl(pA,pB,'c='+fmtV(c),0,12);
+            midLbl(pA,pC,'b='+fmtV(b),-12,4);
+            midLbl(pB,pC,'a='+fmtV(a),12,4);
+            // slant height from mid of front base edge to apex
+            var midBC=[( pB[0]+pC[0])/2,(pB[1]+pC[1])/2];
+            seg(midBC,apex,false,accentCol,[5,4]);
+            midLbl(midBC,apex,'sh='+fmtV(sh),14,0,true);
         }
     }
 
@@ -4189,7 +4250,7 @@
         }
         get('panel3D').style.display='block';
         build3DShapeBtns(); buildGoalBtns3D(); buildMethodBtns3D(); render3DInputs();
-        applyDark();
+        applyDiagramVisibility(); applyDark();
     }
 
     function exit3DMode() {
@@ -4198,7 +4259,7 @@
         if(htb){htb.innerHTML='&#9651;';htb.title='Switch to 3D shapes';htb.style.transform='scale(1)';htb.style.opacity='0.9';}
         get('panel3D').style.display='none';
         if(_triModeWrappers){_triModeWrappers.forEach(function(item){item.el.style.display=item.prev;});_triModeWrappers=null;}
-        applyDiagramVisibility(); applyResultVisibility(); applyDark();
+        applyDiagramVisibility(); applyResultVisibility(); apply3DBtnVisibility(); applyDark();
     }
 
     get('toggle3DBtn').addEventListener('click', function(e){e.stopPropagation();enter3DMode();});
