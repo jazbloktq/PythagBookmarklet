@@ -5006,17 +5006,18 @@
         ctx2.strokeStyle=acc; ctx2.lineWidth=2.2;
         ctx2.beginPath(); ctx2.moveTo(ox,oy); ctx2.lineTo(bx,by); ctx2.lineTo(tx,ty); ctx2.closePath(); ctx2.stroke();
 
-        // angle arc θ at bottom-right (bx,by): between directions to (ox,oy) and to (tx,ty)
-        var th_start = Math.atan2(oy-by, ox-bx); // direction toward bottom-left (ox,oy)
-        var th_end   = Math.atan2(ty-by, tx-bx); // direction toward top (tx,ty)
+        // angle arc θ at bottom-right (bx,by): sweep from direction→(tx,ty) to direction→(ox,oy), clockwise
+        var th_to_top  = Math.atan2(ty-by, tx-bx); // direction toward top-left vertex
+        var th_to_left = Math.atan2(oy-by, ox-bx); // direction toward bottom-left vertex (straight left)
         ctx2.strokeStyle = bw?'#555':(d?'#f0a040':'#d97706'); ctx2.lineWidth=1.5;
-        ctx2.beginPath(); ctx2.arc(bx,by,22,th_end,th_start,false); ctx2.stroke();
+        ctx2.beginPath(); ctx2.arc(bx,by,22,th_to_top,th_to_left,false); ctx2.stroke();
 
-        // angle arc α at top-left (tx,ty): between directions to (ox,oy) and to (bx,by)
-        var al_start = Math.atan2(oy-ty, ox-tx); // direction toward bottom-left (ox,oy) = straight down
-        var al_end   = Math.atan2(by-ty, bx-tx); // direction toward bottom-right (bx,by)
+        // angle arc α at top-left (tx,ty): sweep from direction→(bx,by) to direction→(ox,oy), anticlockwise
+        // (tx==ox so al_to_bot=90°, al_to_right≈23° — need CCW to get the small inside arc)
+        var al_to_bot  = Math.atan2(oy-ty, ox-tx); // direction toward bottom-left (straight down = 90°)
+        var al_to_right= Math.atan2(by-ty, bx-tx); // direction toward bottom-right (~23°)
         ctx2.strokeStyle = bw?'#888':(d?'#60c060':'#22a05a'); ctx2.lineWidth=1.5;
-        ctx2.beginPath(); ctx2.arc(tx,ty,20,al_start,al_end,false); ctx2.stroke();
+        ctx2.beginPath(); ctx2.arc(tx,ty,20,al_to_bot,al_to_right,true); ctx2.stroke();
 
         var prec = getPrec();
         var deg = getDeg();
