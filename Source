@@ -348,8 +348,8 @@
             '<button id="lockTypeBtn" title="Lock triangle type while dragging" style="position:absolute;bottom:7px;left:7px;z-index:2;background:rgba(255,255,255,0.92);border:1px solid #ddd;padding:4px 7px;border-radius:4px;font-size:13px;cursor:pointer;line-height:1;">&#128275;</button>',
           '</div>',
           '<div style="display:flex;gap:8px;margin-bottom:14px;">',
-            '<button id="calc"  style="flex:2;padding:11px;background:#1a73e8;color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px;">Calculate</button>',
-            '<button id="clear" style="flex:1;padding:11px;background:#f1f3f4;border:none;border-radius:8px;cursor:pointer;font-size:13px;color:#555;">Clear</button>',
+            '<button id="calc" type="button" style="flex:2;padding:11px;background:#1a73e8;color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px;">Calculate</button>',
+            '<button id="clear" type="button" style="flex:1;padding:11px;background:#f1f3f4;border:none;border-radius:8px;cursor:pointer;font-size:13px;color:#555;">Clear</button>',
           '</div>',
           '<div id="res" style="padding:14px;background:#f0f6ff;border-radius:10px;display:none;border:1px solid #c5d8f8;">',
             '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">',
@@ -577,6 +577,7 @@
     var canvas = get('triCanvas'), ctx = canvas.getContext('2d');
     var history = [];
     var autoCalcTimer = null;
+    var _manualCalcPending = false;
     var currentUnit = initUnit;
     var currentOutputUnit = initOutputUnit;
     var lastCalcResult = null;
@@ -1405,7 +1406,7 @@
             tog.style.display='block';
         } else { tog.style.display='none'; }
         // Only reset result panel if there's nothing currently shown — don't wipe a live result
-        if(!lastCalcResult) { get('res').style.display='none'; var _ub=get('unitBox');if(_ub)_ub.style.display='none'; ctx.clearRect(0,0,canvas.width,canvas.height); }
+        if(!lastCalcResult && !_manualCalcPending) { get('res').style.display='none'; var _ub=get('unitBox');if(_ub)_ub.style.display='none'; ctx.clearRect(0,0,canvas.width,canvas.height); }
         // If autoCalc is on and there are filled inputs, trigger redraw for the new method
         clearTimeout(autoCalcTimer);
         var _hasVals = false;
@@ -2601,7 +2602,7 @@
         }
     }
 
-    get('calc').addEventListener('click', function(e) { e.stopPropagation(); clearTimeout(autoCalcTimer); doCalculate(false); });
+    get('calc').addEventListener('click', function(e) { e.stopPropagation(); clearTimeout(autoCalcTimer); _manualCalcPending = true; doCalculate(false); setTimeout(function(){ _manualCalcPending = false; }, 500); });
 
     function canvasToTriCoord(sx, sy) {
         return { x: (sx - diagOffX) / diagScale, y: (sy - diagOffY) / diagScale };
