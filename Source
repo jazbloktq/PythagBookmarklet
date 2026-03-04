@@ -409,7 +409,7 @@
               '</div>',
             '</div>',
           '</div>',
-        '<div id="panelTrig" style="display:none;position:absolute;top:50px;left:0;right:0;bottom:0;overflow-y:auto;overflow-x:hidden;padding:16px;box-sizing:border-box;z-index:10002;">',
+        '<div id="panelTrig" style="display:none;position:absolute;top:50px;left:0;right:0;bottom:0;overflow-y:auto;overflow-x:hidden;padding:16px;box-sizing:border-box;z-index:10002;background:var(--gp-bg);">',
           '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">',
             '<div class="gp-label" style="font-size:10px;font-weight:700;letter-spacing:0.8px;">TRIG SOLVER <span style="font-weight:400;font-size:10px;opacity:0.8;">(right triangle)</span></div>',
             '<button id="toggleTrigBack" class="gp-pill-btn" style="padding:3px 9px;border:none;border-radius:5px;font-size:10px;font-weight:700;cursor:pointer;">&#9664; Triangles</button>',
