@@ -143,32 +143,159 @@
         '  -webkit-appearance: none; margin: 0;',
         '}',
         '#geo-ultimate-vscroll input[type=number] { -moz-appearance: textfield; }',
-        /* Dark mode scrollbars for the main panel body and any inner scrollable divs */
+
+        /* ── Base (light) tokens ── */
+        '#geo-ultimate-vscroll {',
+        '  --gp-bg: #fff; --gp-body-bg: #fff; --gp-border: #ddd;',
+        '  --gp-text: #222; --gp-subtext: #666; --gp-label: #888;',
+        '  --gp-input-bg: #fff; --gp-input-bdr: #ddd;',
+        '  --gp-btn-bg: #f1f3f4; --gp-btn-txt: #555;',
+        '  --gp-res-bg: #f0f6ff; --gp-res-bdr: #c5d8f8;',
+        '  --gp-card-bg: #fff;',
+        '  --gp-canvas-bg: #fafafa; --gp-canvas-bdr: #eee;',
+        '  --gp-menu-bg: #fff; --gp-menu-bdr: #ddd;',
+        '  --gp-code-bg: #fff; --gp-code-bdr: #dde8fb; --gp-code-txt: #333;',
+        '  --gp-tag-bg: #e8f0fe; --gp-tag-txt: #1a73e8;',
+        '  --gp-pos-bg: #eef3fe;',
+        '  --gp-sep: #eee;',
+        '  --gp-accent: #1a73e8;',
+        '  --gp-btn-active-bg: #e8f0fe; --gp-btn-active-txt: #1a73e8; --gp-btn-active-bdr: #1a73e8;',
+        '  --gp-btn-base-bg: #fff; --gp-btn-base-txt: #555; --gp-btn-base-bdr: #ddd;',
+        '  --gp-method-active-bg: #e8f0fe; --gp-method-active-txt: #1a73e8; --gp-method-active-bdr: #1a73e8;',
+        '  --gp-method-base-bg: #fff; --gp-method-base-txt: #555; --gp-method-base-bdr: #ddd;',
+        '  --gp-row-bdr: #eef2ff;',
+        '}',
+
+        /* ── Dark tokens ── */
+        '#geo-ultimate-vscroll.geo-dark {',
+        '  --gp-bg: #1e1e2e; --gp-body-bg: #1e1e2e; --gp-border: #333350;',
+        '  --gp-text: #e0e0f0; --gp-subtext: #9090b0; --gp-label: #7070a0;',
+        '  --gp-input-bg: #2a2a3e; --gp-input-bdr: #444466;',
+        '  --gp-btn-bg: #2a2a3e; --gp-btn-txt: #c0c0e0;',
+        '  --gp-res-bg: #1a1a2e; --gp-res-bdr: #3a3a5e;',
+        '  --gp-card-bg: #2a2a3e;',
+        '  --gp-canvas-bg: #181828; --gp-canvas-bdr: #333350;',
+        '  --gp-menu-bg: #252535; --gp-menu-bdr: #3a3a5e;',
+        '  --gp-code-bg: #2a2a3e; --gp-code-bdr: #3a3a5e; --gp-code-txt: #c0c0e0;',
+        '  --gp-tag-bg: #1e2e4e; --gp-tag-txt: #4a9eff;',
+        '  --gp-pos-bg: #1e2240;',
+        '  --gp-sep: rgba(200,200,255,0.1);',
+        '  --gp-accent: #4a9eff;',
+        '  --gp-btn-active-bg: #1e2e4e; --gp-btn-active-txt: #4a9eff; --gp-btn-active-bdr: #4a9eff;',
+        '  --gp-btn-base-bg: #2a2a3e; --gp-btn-base-txt: #c0c0e0; --gp-btn-base-bdr: #444466;',
+        '  --gp-method-active-bg: #1e2e4e; --gp-method-active-txt: #4a9eff; --gp-method-active-bdr: #4a9eff;',
+        '  --gp-method-base-bg: #2a2a3e; --gp-method-base-txt: #c0c0e0; --gp-method-base-bdr: #444466;',
+        '  --gp-row-bdr: #2a2a40;',
+        '}',
+
+        /* ── Apply tokens to all elements ── */
+        '#geo-ultimate-vscroll, #geo-ultimate-vscroll #uiBody, #geo-ultimate-vscroll #panel3D {',
+        '  background: var(--gp-bg); color: var(--gp-text);',
+        '}',
+        '#geo-ultimate-vscroll input, #geo-ultimate-vscroll textarea {',
+        '  background: var(--gp-input-bg) !important; border-color: var(--gp-input-bdr) !important;',
+        '  color: var(--gp-text) !important;',
+        '}',
+        /* Section labels */
+        '#geo-ultimate-vscroll .secLabel, #geo-ultimate-vscroll .gp-label {',
+        '  color: var(--gp-label) !important;',
+        '}',
+        /* All plain buttons default */
+        '#geo-ultimate-vscroll .gp-btn-base {',
+        '  background: var(--gp-btn-base-bg) !important; color: var(--gp-btn-base-txt) !important;',
+        '  border-color: var(--gp-btn-base-bdr) !important;',
+        '}',
+        '#geo-ultimate-vscroll .gp-btn-active {',
+        '  background: var(--gp-btn-active-bg) !important; color: var(--gp-btn-active-txt) !important;',
+        '  border-color: var(--gp-btn-active-bdr) !important;',
+        '}',
+        '#geo-ultimate-vscroll .gp-method-base {',
+        '  background: var(--gp-method-base-bg) !important; color: var(--gp-method-base-txt) !important;',
+        '  border-color: var(--gp-method-base-bdr) !important;',
+        '}',
+        '#geo-ultimate-vscroll .gp-method-active {',
+        '  background: var(--gp-method-active-bg) !important; color: var(--gp-method-active-txt) !important;',
+        '  border-color: var(--gp-method-active-bdr) !important;',
+        '}',
+        /* Result panels */
+        '#geo-ultimate-vscroll #res, #geo-ultimate-vscroll #res3D {',
+        '  background: var(--gp-res-bg) !important; border-color: var(--gp-res-bdr) !important;',
+        '}',
+        '#geo-ultimate-vscroll #areaBox, #geo-ultimate-vscroll #perimBox,',
+        '#geo-ultimate-vscroll .gp-card {',
+        '  background: var(--gp-card-bg) !important;',
+        '}',
+        '#geo-ultimate-vscroll #areaRes, #geo-ultimate-vscroll #perimRes,',
+        '#geo-ultimate-vscroll #surfaceAreaRes, #geo-ultimate-vscroll #totalEdgesRes,',
+        '#geo-ultimate-vscroll .gp-result-val {',
+        '  color: var(--gp-text) !important;',
+        '}',
+        /* Row separators in 3D results */
+        '#geo-ultimate-vscroll .gp-row {',
+        '  border-bottom-color: var(--gp-row-bdr) !important;',
+        '}',
+        '#geo-ultimate-vscroll .gp-row-label { color: var(--gp-subtext) !important; font-weight:600; }',
+        '#geo-ultimate-vscroll .gp-row-val   { color: var(--gp-text) !important;    font-weight:700; }',
+        /* Canvas boxes */
+        '#geo-ultimate-vscroll #canvasBox, #geo-ultimate-vscroll #canvasBox3D {',
+        '  background: var(--gp-canvas-bg) !important; border-color: var(--gp-canvas-bdr) !important;',
+        '}',
+        /* Menus */
+        '#geo-ultimate-vscroll #histMenu, #geo-ultimate-vscroll #setMenu,',
+        '#geo-ultimate-vscroll #miniCalc {',
+        '  background: var(--gp-menu-bg) !important; border-color: var(--gp-menu-bdr) !important;',
+        '  color: var(--gp-text) !important;',
+        '}',
+        '#geo-ultimate-vscroll #setMenu label, #geo-ultimate-vscroll #histMenu *,',
+        '#geo-ultimate-vscroll #calcSettingsPanel label {',
+        '  color: var(--gp-text) !important;',
+        '}',
+        /* Steps / code block */
+        '#geo-ultimate-vscroll #formulaText {',
+        '  background: var(--gp-code-bg) !important; border-color: var(--gp-code-bdr) !important;',
+        '  color: var(--gp-code-txt) !important;',
+        '}',
+        /* Save PNG buttons */
+        '#geo-ultimate-vscroll #dlBtn, #geo-ultimate-vscroll #dlBtn3D {',
+        '  background: var(--gp-card-bg) !important; border-color: var(--gp-input-bdr) !important;',
+        '  color: var(--gp-btn-txt) !important;',
+        '}',
+        /* Clear / utility buttons */
+        '#geo-ultimate-vscroll #clear, #geo-ultimate-vscroll #clear3D,',
+        '#geo-ultimate-vscroll #closeHist {',
+        '  background: var(--gp-btn-bg) !important; color: var(--gp-btn-txt) !important;',
+        '}',
+        /* Pos toggle */
+        '#geo-ultimate-vscroll #posToggle {',
+        '  background: var(--gp-pos-bg) !important;',
+        '}',
+        /* Unit box */
+        '#geo-ultimate-vscroll #unitBox {',
+        '  background: var(--gp-res-bg) !important; border-color: var(--gp-code-bdr) !important;',
+        '}',
+        /* Separators in settings */
+        '#geo-ultimate-vscroll .gp-sep { background: var(--gp-sep) !important; }',
+
+        /* Dark scrollbars */
         '#geo-ultimate-vscroll.geo-dark #uiBody::-webkit-scrollbar,',
+        '#geo-ultimate-vscroll.geo-dark #panel3D::-webkit-scrollbar,',
         '#geo-ultimate-vscroll.geo-dark #setMenu ::-webkit-scrollbar,',
         '#geo-ultimate-vscroll.geo-dark #miniCalc ::-webkit-scrollbar {',
         '  width: 6px; height: 6px;',
         '}',
         '#geo-ultimate-vscroll.geo-dark #uiBody::-webkit-scrollbar-track,',
+        '#geo-ultimate-vscroll.geo-dark #panel3D::-webkit-scrollbar-track,',
         '#geo-ultimate-vscroll.geo-dark #setMenu ::-webkit-scrollbar-track,',
         '#geo-ultimate-vscroll.geo-dark #miniCalc ::-webkit-scrollbar-track {',
         '  background: #1e1e2e;',
         '}',
         '#geo-ultimate-vscroll.geo-dark #uiBody::-webkit-scrollbar-thumb,',
+        '#geo-ultimate-vscroll.geo-dark #panel3D::-webkit-scrollbar-thumb,',
         '#geo-ultimate-vscroll.geo-dark #setMenu ::-webkit-scrollbar-thumb,',
         '#geo-ultimate-vscroll.geo-dark #miniCalc ::-webkit-scrollbar-thumb {',
         '  background: #444466; border-radius: 3px;',
         '}',
-        '#geo-ultimate-vscroll.geo-dark #uiBody::-webkit-scrollbar-thumb:hover,',
-        '#geo-ultimate-vscroll.geo-dark #setMenu ::-webkit-scrollbar-thumb:hover,',
-        '#geo-ultimate-vscroll.geo-dark #miniCalc ::-webkit-scrollbar-thumb:hover {',
-        '  background: #6666aa;',
-        '}',
-        /* Firefox dark scrollbars */
-        '#geo-ultimate-vscroll.geo-dark #uiBody,',
-        '#geo-ultimate-vscroll.geo-dark #setMenu div[style*="overflow-y"] {',
-        '  scrollbar-color: #444466 #1e1e2e; scrollbar-width: thin;',
-        '}',
+        '#geo-ultimate-vscroll.geo-dark #uiBody { scrollbar-color: #444466 #1e1e2e; scrollbar-width: thin; }',
     ].join('\n');
     document.head.appendChild(styleEl);
 
@@ -758,100 +885,48 @@
     function applyDark() {
         var d = getDark();
         ui.classList.toggle('geo-dark', d);
-        ui.style.background = dk('uiBg');
-        ui.style.borderColor = dk('uiBorder');
-        ui.style.color = dk('text');
+        // Header bg (not reachable by child CSS token)
         var hdr = get('uiHeader');
-        if(hdr) hdr.style.background = dk('headerBg');
-        var body = get('uiBody');
-        if(body) body.style.background = dk('bodyBg');
-        ui.querySelectorAll('.secLabel').forEach(function(el){ el.style.color = dk('label'); });
-        var tog = get('posToggle');
-        if(tog) tog.style.background = dk('posBg');
-        var cb = get('canvasBox');
-        if(cb){ cb.style.background = dk('canvasBg'); cb.style.borderColor = dk('canvasBdr'); }
-        var clr = get('clear');
-        if(clr){ clr.style.background = dk('btnBg'); clr.style.color = dk('btnTxt'); }
-        var res = get('res');
-        if(res){ res.style.background = dk('resBg'); res.style.borderColor = dk('resBdr'); }
-        ['areaBox','perimBox'].forEach(function(id){
-            var el=get(id); if(el){ el.style.background=dk('cardBg'); }
-        });
-        var aR=get('areaRes'),pR=get('perimRes');
-        if(aR) aR.style.color=dk('text'); if(pR) pR.style.color=dk('text');
-        var tb=get('tripleBox');
-        if(tb){ tb.style.background=dk('tripleBg'); tb.style.borderColor=dk('tripleBdr'); tb.style.color=dk('tripleTxt'); }
-        var ab=get('anglesBox');
-        if(ab){ ab.style.background=dk('angleBg'); ab.style.borderColor=dk('angleBdr'); }
-        var ft=get('formulaText');
-        if(ft){ ft.style.background=dk('codeBg'); ft.style.borderColor=dk('codeBdr'); ft.style.color=dk('codeTxt'); }
-        var ct=get('classTag');
-        if(ct){ ct.style.background=dk('tagBg'); ct.style.color=dk('tagTxt'); }
-        var fa=get('finalApprox'); if(fa) fa.style.color=dk('subtext');
-        ['histMenu','miniCalc'].forEach(function(id){
-            var m=get(id); if(m){ m.style.background=dk('menuBg'); m.style.borderColor=dk('menuBdr'); m.style.color=dk('text'); }
-        });
-        var mch=get('miniCalcHeader'); if(mch) mch.style.background=dk('headerBg');
-        var csp=get('calcSettingsPanel');
-        if(csp){ csp.style.background=dk('resBg'); csp.style.borderColor=dk('codeBdr');
-                 csp.querySelectorAll('label').forEach(function(l){l.style.color=dk('text');}); }
-        if(typeof ck_renderDisplay==='function') ck_renderDisplay();
-        var hL=get('histList'); if(hL) hL.style.color=dk('subtext');
-        // 3D panel dark mode
-        var p3d=get('panel3D');
-        if(p3d){
-            p3d.style.background=d?'#12192b':'#fff';
-            var r3d=get('res3D'); if(r3d){ r3d.style.background=dk('resBg'); r3d.style.borderColor=dk('resBdr'); }
-            var sa3=get('surfaceAreaRes'), te3=get('totalEdgesRes');
-            if(sa3) sa3.style.color=dk('text'); if(te3) te3.style.color=dk('text');
-            p3d.querySelectorAll('#inputs3D input').forEach(function(inp){
-                inp.style.background=dk('inputBg'); inp.style.borderColor=dk('inputBdr'); inp.style.color=dk('text');
-            });
-            var t3bk=get('toggle3DBack'); if(t3bk){ t3bk.style.background=d?'#1e2a3e':'#e8f0fe'; t3bk.style.color=d?'#4a9eff':'#1a73e8'; }
-            var c3d=get('calc3D'); if(c3d){ c3d.style.background=d?'#1a5090':'#1a73e8'; c3d.style.color='#fff'; }
-            var cl3d=get('clear3D'); if(cl3d){ cl3d.style.background=dk('btnBg'); cl3d.style.color=dk('btnTxt'); }
-            var ms3=get('methodSection3D'); if(ms3){ ms3.querySelectorAll('*').forEach(function(el){if(el.tagName==='BUTTON'){el.style.color=dk('text');}}); }
-        }
+        if(hdr) hdr.style.background = d ? '#3a4f63' : '#1a73e8';
+        // Mini-calc header
+        var mch=get('miniCalcHeader'); if(mch) mch.style.background = d ? '#3a4f63' : '#1a73e8';
+        // Primary action buttons (blue — can't be overridden by token alone)
+        var calc=get('calc'); if(calc){ calc.style.background=d?'#1a5090':'#1a73e8'; calc.style.color='#fff'; }
+        var c3d=get('calc3D'); if(c3d){ c3d.style.background=d?'#1a5090':'#1a73e8'; c3d.style.color='#fff'; }
+        // 3D toggle button (blue pill)
         var t3btn=get('toggle3DBtn'); if(t3btn){ t3btn.style.background=d?'#1e2a3e':'#e8f0fe'; t3btn.style.color=d?'#4a9eff':'#1a73e8'; }
-        var cb3d=get('canvasBox3D'); if(cb3d){ cb3d.style.background=dk('canvasBg'); cb3d.style.borderColor=dk('canvasBdr'); }
-        var cd=get('calcDisplay');
-        if(cd){ cd.style.background=dk('resBg'); cd.style.borderColor=dk('codeBdr'); cd.style.color=d?'#4a9eff':'#1a73e8'; }
-        var ce=get('calcExpr'); if(ce) ce.style.color=dk('subtext');
+        var t3bk=get('toggle3DBack'); if(t3bk){ t3bk.style.background=d?'#1e2a3e':'#e8f0fe'; t3bk.style.color=d?'#4a9eff':'#1a73e8'; }
+        // Lock type button
+        var lt=get('lockTypeBtn'); if(lt){ lt.style.background=d?'rgba(30,30,46,0.9)':'rgba(255,255,255,0.92)'; lt.style.borderColor=d?'#444466':'#ddd'; }
+        // Calculator keys
         document.querySelectorAll('.ck').forEach(function(btn){
             var k=btn.getAttribute('data-k');
-            if(k==='C'){ btn.style.background=d?'#3a1a1a':'#fee2e2'; btn.style.color=d?'#ff8080':'#c0392b'; }
-            else if(k==='='){ btn.style.background=d?'#1a5090':'#1a73e8'; btn.style.color='#fff'; }
+            if(k==='C'){ btn.style.background=d?'#3a1a1a':'#fee2e2'; btn.style.color=d?'#ff8080':'#c0392b'; btn.style.borderColor=''; }
+            else if(k==='='){ btn.style.background=d?'#1a5090':'#1a73e8'; btn.style.color='#fff'; btn.style.borderColor=''; }
             else if(k==='+' || k==='-' || k==='\u00d7' || k==='\u00f7' || k==='\u221a' || k==='\u03c0' || k==='(' || k===')'){
-                btn.style.background=d?'#1e2a3e':'#e8f0fe'; btn.style.color=d?'#4a9eff':'#1a73e8';
+                btn.style.background=d?'#1e2a3e':'#e8f0fe'; btn.style.color=d?'#4a9eff':'#1a73e8'; btn.style.borderColor='';
             } else if(k==='x\u00b2'||k==='x\u00b3'||k==='x\u02b8'){
-                btn.style.background=d?'#2a1e4e':'#ede9fe'; btn.style.color=d?'#c084fc':'#7c3aed';
-            } else if(k==='\u232b'){ btn.style.background=dk('btnBg'); btn.style.color=dk('btnTxt'); btn.style.borderColor=''; }
-            else { btn.style.background=dk('inputBg'); btn.style.borderColor=dk('inputBdr'); btn.style.color=dk('text'); }
+                btn.style.background=d?'#2a1e4e':'#ede9fe'; btn.style.color=d?'#c084fc':'#7c3aed'; btn.style.borderColor='';
+            } else {
+                btn.style.background=''; btn.style.borderColor=''; btn.style.color='';
+            }
         });
-        ui.querySelectorAll('#inputStack input').forEach(function(inp){
-            inp.style.background=dk('inputBg'); inp.style.borderColor=dk('inputBdr'); inp.style.color=dk('text');
-        });
-        var prec=get('prec'); if(prec){ prec.style.background=dk('inputBg'); prec.style.borderColor=dk('inputBdr'); prec.style.color=dk('text'); }
-        var sm=get('setMenu');
-        if(sm){
-            sm.style.background=dk('menuBg'); sm.style.borderColor=dk('menuBdr'); sm.style.color=dk('text');
-            sm.querySelectorAll('label').forEach(function(l){ l.style.color=dk('text'); });
-            var smt=get('setMenuTitle'); if(smt) smt.style.color=dk('text');
-            var pl=get('precLabel'); if(pl) pl.style.color=dk('subtext');
-            updateUnitBtns();
-            sm.querySelectorAll('div[style*="height:1px"]').forEach(function(dv){ dv.style.background=d?'rgba(200,200,255,0.12)':'#eee'; });
-            var interactNote=get('interactNote'); if(interactNote) interactNote.style.color=d?'#7070a0':'#999';
-        }
-        var dl=get('dlBtn');
-        if(dl){ dl.style.background=d?'rgba(30,30,46,0.9)':'rgba(255,255,255,0.92)'; dl.style.borderColor=dk('inputBdr'); dl.style.color=dk('btnTxt'); }
-        var ch=get('closeHist'); if(ch){ ch.style.background=dk('btnBg'); ch.style.color=dk('btnTxt'); }
-        var ub=get('unitBox');
-        if(ub){ ub.style.background=d?'#1a1a2e':'#f8fbff'; ub.style.borderColor=dk('codeBdr'); }
+        // Calc display
+        var cd=get('calcDisplay');
+        if(cd){ cd.style.background=d?'#1a1a2e':'#f0f6ff'; cd.style.borderColor=d?'#3a3a5e':'#c5d8f8'; cd.style.color=d?'#4a9eff':'#1a73e8'; }
+        // Unit buttons (need active state)
+        updateUnitBtns();
+        updateOutUnitBtns();
+        updateUnitContextBar();
+        // Rebuild dynamic buttons so they pick up new class styles
         buildTriBtns(); buildGoalBtns(); buildMethodBtns();
+        if(mode3D){ build3DShapeBtns(); buildGoalBtns3D(); buildMethodBtns3D(); }
         applyDiagramVisibility();
         applyResultVisibility();
-        updateUnitContextBar();
-        updateOutUnitBtns();
+        // Redraw 3D diagram with new dark colours
+        if(mode3D && get('canvasBox3D') && get('canvasBox3D').style.display!=='none') {
+            calc3D();
+        }
     }
 
     var errTimer = null;
@@ -1152,20 +1227,20 @@
     function gsa(id){ var el=get(id); if(!el||el.value.trim()==='') return NaN; var v=parseFloat(el.value); return isNaN(v)?NaN:v; }
 
     function bBaseStyle()   {
-        var d=getDark();
-        return 'border:2px solid '+(d?'#444466':'#e0e0e0')+';border-radius:8px;padding:8px 10px;cursor:pointer;font-size:12px;font-weight:600;background:'+(d?'#2a2a3e':'#fff')+';color:'+(d?'#c0c0e0':'#555')+';text-align:center;';
+        return 'border:2px solid;border-radius:8px;padding:8px 10px;cursor:pointer;font-size:12px;font-weight:600;text-align:center;width:100%;box-sizing:border-box;';
     }
     function bActiveStyle() {
-        var d=getDark();
-        return 'border:2px solid #1a73e8;border-radius:8px;padding:8px 10px;cursor:pointer;font-size:12px;font-weight:700;background:'+(d?'#1e2e4e':'#e8f0fe')+';color:'+(d?'#4a9eff':'#1a73e8')+';text-align:center;';
+        return 'border:2px solid;border-radius:8px;padding:8px 10px;cursor:pointer;font-size:12px;font-weight:700;text-align:center;width:100%;box-sizing:border-box;';
     }
     function mBaseStyle()   {
-        var d=getDark();
-        return 'border:1.5px solid '+(d?'#444466':'#e8e8e8')+';border-radius:7px;padding:8px 11px;cursor:pointer;font-size:12px;background:'+(d?'#2a2a3e':'#fff')+';color:'+(d?'#c0c0e0':'#555')+';text-align:left;font-weight:500;';
+        return 'border:1.5px solid;border-radius:7px;padding:8px 11px;cursor:pointer;font-size:12px;text-align:left;font-weight:500;width:100%;box-sizing:border-box;';
     }
     function mActiveStyle() {
-        var d=getDark();
-        return 'border:1.5px solid #1a73e8;border-radius:7px;padding:8px 11px;cursor:pointer;font-size:12px;background:'+(d?'#1e2e4e':'#e8f0fe')+';color:'+(d?'#4a9eff':'#1a73e8')+';text-align:left;font-weight:700;';
+        return 'border:1.5px solid;border-radius:7px;padding:8px 11px;cursor:pointer;font-size:12px;text-align:left;font-weight:700;width:100%;box-sizing:border-box;';
+    }
+    function setBtn(b, active, isMethod) {
+        b.style.cssText = active ? (isMethod?mActiveStyle():bActiveStyle()) : (isMethod?mBaseStyle():bBaseStyle());
+        b.className = active ? (isMethod?'gp-method-active':'gp-btn-active') : (isMethod?'gp-method-base':'gp-btn-base');
     }
 
     function buildTriBtns() {
@@ -1173,7 +1248,7 @@
         var el=get('triBtns'); el.innerHTML='';
         triTypes.forEach(function(t){
             var b=document.createElement('button');
-            b.style.cssText=t.id===currentTri?bActiveStyle():bBaseStyle();
+            setBtn(b, t.id===currentTri, false);
             b.innerText=t.label;
             b.onclick=function(){
                 currentTri=t.id;
@@ -1189,7 +1264,7 @@
         var el=get('goalBtns'); el.innerHTML=''; var adv=getAdv();
         triGoals[currentTri].forEach(function(gid){
             var b=document.createElement('button');
-            b.style.cssText=gid===currentGoal?bActiveStyle():bBaseStyle();
+            setBtn(b, gid===currentGoal, false);
             b.innerText=(adv?goalLabel.a:goalLabel.s)[gid]||gid;
             b.onclick=function(){currentGoal=gid;currentMethod=0;buildGoalBtns();buildMethodBtns();renderInputs();saveSettings();};
             el.appendChild(b);
@@ -1201,7 +1276,7 @@
         get('methodSection').style.display=list.length>1?'block':'none';
         list.forEach(function(m,i){
             var b=document.createElement('button');
-            b.style.cssText=i===currentMethod?mActiveStyle():mBaseStyle();
+            setBtn(b, i===currentMethod, true);
             b.innerText=m.text;
             b.onclick=function(){currentMethod=i;buildMethodBtns();renderInputs();saveSettings();};
             el.appendChild(b);
@@ -3777,7 +3852,7 @@
         var el=get('shapeBtns3D'); el.innerHTML='';
         shapes3D.forEach(function(s){
             var b=document.createElement('button');
-            b.style.cssText=s.id===current3DShape?bActiveStyle():bBaseStyle();
+            setBtn(b, s.id===current3DShape, false);
             b.innerText=s.label;
             b.onclick=function(){
                 current3DShape=s.id;
@@ -3793,7 +3868,7 @@
         var el=get('goalBtns3D'); el.innerHTML='';
         goals3D[current3DShape].forEach(function(gid){
             var b=document.createElement('button');
-            b.style.cssText=gid===current3DGoal?bActiveStyle():bBaseStyle();
+            setBtn(b, gid===current3DGoal, false);
             b.innerText=goalLabel3D[gid]||gid;
             b.onclick=function(){ current3DGoal=gid; current3DMethod=0; buildGoalBtns3D(); buildMethodBtns3D(); render3DInputs(); };
             el.appendChild(b);
@@ -3808,7 +3883,7 @@
         ms.style.display='block'; mb.innerHTML='';
         list.forEach(function(m,i){
             var b=document.createElement('button');
-            b.style.cssText=i===current3DMethod?mActiveStyle():mBaseStyle();
+            setBtn(b, i===current3DMethod, true);
             b.innerText=m.label;
             b.onclick=function(){ current3DMethod=i; buildMethodBtns3D(); render3DInputs(); };
             mb.appendChild(b);
@@ -3816,7 +3891,6 @@
     }
 
     function render3DInputs() {
-        var d=getDark();
         var fields;
         if(current3DGoal==='all'){
             fields=solveAll3DFields[current3DShape]||[];
@@ -3827,11 +3901,10 @@
         }
         get('inputs3D').innerHTML=fields.map(function(f){
             return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">'+
-                '<label style="font-size:11px;font-weight:600;color:'+(d?'#9090b0':'#888')+';width:130px;flex-shrink:0;">'+f.lbl+'</label>'+
-                '<input type="number" id="'+f.id+'" placeholder="e.g. 5" style="flex:1;padding:8px 10px;border:1.5px solid '+(d?'#444466':'#ddd')+';border-radius:7px;font-size:14px;box-sizing:border-box;outline:none;background:'+(d?'#2a2a3e':'#fff')+';color:'+(d?'#e0e0f0':'#222')+';" onfocus="this.style.borderColor=\'#1a73e8\'" onblur="this.style.borderColor=\''+(d?'#444466':'#ddd')+'\'">'+
+                '<label class="gp-label" style="font-size:11px;font-weight:600;width:130px;flex-shrink:0;">'+f.lbl+'</label>'+
+                '<input type="number" id="'+f.id+'" placeholder="e.g. 5" style="flex:1;padding:8px 10px;border:1.5px solid;border-radius:7px;font-size:14px;box-sizing:border-box;outline:none;">'+
             '</div>';
         }).join('');
-        // bind Enter key
         fields.forEach(function(f){
             var inp=document.getElementById(f.id);
             if(inp) inp.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();calc3D();}});
@@ -3841,11 +3914,11 @@
     }
 
     function saRow3D(label,val) {
-        var d=getDark(); var p=getPrec();
+        var p=getPrec();
         var vs=(!isNaN(val)&&val!==null)?trimZ(parseFloat(val).toFixed(p)):'—';
-        return '<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid '+(d?'#2a2a40':'#eef2ff')+';font-size:12px;">'+
-            '<span style="color:'+(d?'#9090b0':'#888')+';font-weight:600;">'+label+'</span>'+
-            '<span style="font-weight:700;color:'+(d?'#e0e0f0':'#222')+'">'+vs+'</span></div>';
+        return '<div class="gp-row" style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid;font-size:12px;">'+
+            '<span class="gp-row-label">'+label+'</span>'+
+            '<span class="gp-row-val">'+vs+'</span></div>';
     }
 
     // ── 3D Diagram Drawing ─────────────────────────────────────────────────────
@@ -4260,7 +4333,6 @@
         if(htb){htb.innerHTML='&#9651;';htb.title='Switch to 3D shapes';htb.style.transform='scale(1)';htb.style.opacity='0.9';}
         get('panel3D').style.display='none';
         applyDiagramVisibility(); applyResultVisibility(); apply3DBtnVisibility(); applyDark();
-    }
     }
 
     get('toggle3DBtn').addEventListener('click', function(e){e.stopPropagation();enter3DMode();});
