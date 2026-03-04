@@ -377,7 +377,7 @@
             '<button class="ck" data-k="\u232b" style="padding:9px 4px;border:none;border-radius:7px;background:#f1f3f4;color:#555;font-weight:700;cursor:pointer;font-size:14px;">\u232b</button>',
             '<button class="ck" data-k="\u221a"  style="padding:9px 4px;border:none;border-radius:7px;background:#e8f0fe;color:#1a73e8;font-weight:700;cursor:pointer;font-size:14px;">\u221a</button>',
             '<button class="ck" data-k="x\u00b2" title="Square (q)" style="padding:9px 4px;border:none;border-radius:7px;background:#ede9fe;color:#7c3aed;font-weight:700;cursor:pointer;font-size:13px;">x\u00b2</button>',
-            '<button class="ck" data-k="x\u00b3" title="Cube (e)" style="padding:9px 4px;border:none;border-radius:7px;background:#ede9fe;color:#7c3aed;font-weight:700;cursor:pointer;font-size:13px;">x\u00b3</button>',
+            '<button class="ck" data-k="x\u00b3" title="Cube" style="padding:9px 4px;border:none;border-radius:7px;background:#ede9fe;color:#7c3aed;font-weight:700;cursor:pointer;font-size:13px;">x\u00b3</button>',
             '<button class="ck" data-k="x\u02b8" title="Power (^)" style="grid-column:span 3;padding:9px 4px;border:none;border-radius:7px;background:#ede9fe;color:#7c3aed;font-weight:700;cursor:pointer;font-size:13px;">x\u02b8 (power)</button>',
             '<button class="ck" data-k="7"   style="padding:9px 4px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">7</button>',
             '<button class="ck" data-k="8"   style="padding:9px 4px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">8</button>',
@@ -3006,39 +3006,17 @@
             ck_tokens.push({ e:'\u03c0', d:'\u03c0', kind:'pi' });
 
         } else if(k === 'x\u00b2') {
-            // Square the current displayed value or wrap current token in **2
+            // Append ² as a postfix power token — does NOT auto-evaluate
             if(ck_lastIsNum()) {
                 ck_insertPendingCloses();
-                // Wrap last number/expression: (val)**2
-                var _s2 = ck_buildStrings();
-                var _v2 = parseFloat(_s2.e);
-                if(!isNaN(_v2)) {
-                    var _r2 = _v2 * _v2;
-                    var _rd2 = parseFloat(_r2.toPrecision(12));
-                    ckExpr.innerText = _s2.d + '\u00b2 =';
-                    ck_tokens = [{ e: String(_rd2), d: String(_rd2), kind: 'num' }];
-                    ck_justEvaled = true;
-                } else {
-                    // Wrap in power: use (expr)**2
-                    ck_tokens.push({ e:'**2', d:'\u00b2', kind:'op' });
-                }
+                ck_tokens.push({ e:'**2', d:'\u00b2', kind:'op' });
             }
 
         } else if(k === 'x\u00b3') {
-            // Cube the current displayed value
+            // Append ³ as a postfix power token — does NOT auto-evaluate
             if(ck_lastIsNum()) {
                 ck_insertPendingCloses();
-                var _s3 = ck_buildStrings();
-                var _v3 = parseFloat(_s3.e);
-                if(!isNaN(_v3)) {
-                    var _r3 = _v3 * _v3 * _v3;
-                    var _rd3 = parseFloat(_r3.toPrecision(12));
-                    ckExpr.innerText = _s3.d + '\u00b3 =';
-                    ck_tokens = [{ e: String(_rd3), d: String(_rd3), kind: 'num' }];
-                    ck_justEvaled = true;
-                } else {
-                    ck_tokens.push({ e:'**3', d:'\u00b3', kind:'op' });
-                }
+                ck_tokens.push({ e:'**3', d:'\u00b3', kind:'op' });
             }
 
         } else if(k === 'x\u02b8') {
@@ -3106,8 +3084,6 @@
             'Escape':'C',
             'q':'x\u00b2',
             'Q':'x\u00b2',
-            'e':'x\u00b3',
-            'E':'x\u00b3',
             '^':'x\u02b8'
         };
 
@@ -3838,18 +3814,27 @@
         applyDark();
     }
 
+    // IDs of elements in uiBody that belong to triangle mode (not 3D)
+    var _triModeEls = ['triBtns','goalBtns','methodSection','posToggle','inputStack','canvasBox','res','unitBox'];
+    // Also need to hide the wrapper divs (secLabel containers) — we'll target them by their parent
+    var _triModeWrappers = null; // filled on first enter
+
     function enter3DMode() {
         mode3D=true;
         var htb=get('headerTriBtn');
         if(htb){ htb.innerHTML='&#9650;'; htb.title='Back to triangles'; htb.style.transform='scale(1.15)'; htb.style.opacity='1'; }
-        // Hide triangle UI
-        ['triBtns','goalBtns','methodSection','posToggle','inputStack','canvasBox','res','unitBox'].forEach(function(id){
-            var el=get(id); if(el) { el._prev3Ddisplay=el.style.display; el.style.display='none'; }
-        });
-        // Also hide the secLabel divs around triangle/find
+
+        // Collect all direct children of uiBody that are NOT the 3D panel, save & hide them
         var uiBody=get('uiBody');
-        var sections=uiBody.querySelectorAll(':scope > div:not(#panel3D):not(#unitBox)');
-        sections.forEach(function(el){ el._prev3Ddisplay=el.style.display; el.style.display='none'; });
+        _triModeWrappers = [];
+        var children = uiBody.children;
+        for(var ci=0; ci<children.length; ci++){
+            var ch=children[ci];
+            if(ch.id !== 'panel3D') {
+                _triModeWrappers.push({el:ch, prev:ch.style.display});
+                ch.style.display='none';
+            }
+        }
         get('panel3D').style.display='block';
         build3DShapeBtns(); render3DInputs();
         applyDark();
@@ -3860,11 +3845,16 @@
         var htb=get('headerTriBtn');
         if(htb){ htb.innerHTML='&#9651;'; htb.title='Switch to 3D shapes'; htb.style.transform='scale(1)'; htb.style.opacity='0.9'; }
         get('panel3D').style.display='none';
-        var uiBody=get('uiBody');
-        var sections=uiBody.querySelectorAll(':scope > div:not(#panel3D)');
-        sections.forEach(function(el){
-            if(el._prev3Ddisplay!==undefined) el.style.display=el._prev3Ddisplay;
-        });
+        // Restore all saved elements
+        if(_triModeWrappers) {
+            _triModeWrappers.forEach(function(item){
+                item.el.style.display = item.prev;
+            });
+            _triModeWrappers = null;
+        }
+        // Re-apply diagram and result visibility (they have their own logic)
+        applyDiagramVisibility();
+        applyResultVisibility();
         applyDark();
     }
 
