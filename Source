@@ -186,7 +186,7 @@
         '</div>',
         '<div id="uiBody" style="padding:16px;overflow-y:auto;overflow-x:hidden;flex:1;box-sizing:border-box;">',
           '<div style="margin-bottom:14px;"><div class="secLabel" style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;margin-bottom:7px;">TRIANGLE TYPE:</div><div id="triBtns" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;"></div></div>',
-          '<div style="margin-bottom:14px;"><div class="secLabel" style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;margin-bottom:7px;">FIND:</div><div id="goalBtns" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;"></div></div>',
+          '<div style="margin-bottom:14px;"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;"><span class="secLabel" style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;">FIND:</span><button id="toggle3DBtn" title="Switch to 3D shape solver" style="padding:3px 9px;border:none;border-radius:5px;background:#e8f0fe;color:#1a73e8;font-size:10px;font-weight:700;cursor:pointer;letter-spacing:0.3px;">&#9656; 3D Shapes</button></div><div id="goalBtns" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;"></div></div>',
           '<div id="methodSection" style="margin-bottom:14px;"><div class="secLabel" style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;margin-bottom:7px;">METHOD:</div><div id="methodBtns" style="display:flex;flex-direction:column;gap:5px;"></div></div>',
           '<div id="posToggle" style="background:#eef3fe;padding:9px 12px;border-radius:8px;margin-bottom:14px;font-size:12px;display:none;">',
             '<div id="posTitle" style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;margin-bottom:6px;">HEIGHT POSITION:</div>',
@@ -235,6 +235,26 @@
           '<div id="unitBox" style="display:none;padding:10px 14px;background:#f8fbff;border-radius:10px;margin-top:10px;border:1px solid #dde8fb;">',
             '<div style="font-size:10px;font-weight:700;color:#1a73e8;letter-spacing:0.5px;margin-bottom:7px;">UNIT CONVERSIONS</div>',
             '<div id="unitRows" style="display:flex;flex-direction:column;gap:4px;font-size:12px;"></div>',
+          '</div>',
+          '<div id="panel3D" style="display:none;">',
+            '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">',
+              '<div style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;">3D SHAPE:</div>',
+              '<button id="toggle3DBack" style="padding:3px 9px;border:none;border-radius:5px;background:#e8f0fe;color:#1a73e8;font-size:10px;font-weight:700;cursor:pointer;">&#9664; Triangles</button>',
+            '</div>',
+            '<div id="shapeBtns3D" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px;"></div>',
+            '<div id="inputs3D" style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px;"></div>',
+            '<div style="display:flex;gap:8px;margin-bottom:14px;">',
+              '<button id="calc3D" style="flex:2;padding:11px;background:#1a73e8;color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px;">Calculate</button>',
+              '<button id="clear3D" style="flex:1;padding:11px;background:#f1f3f4;border:none;border-radius:8px;cursor:pointer;font-size:13px;color:#555;">Clear</button>',
+            '</div>',
+            '<div id="res3D" style="padding:14px;background:#f0f6ff;border-radius:10px;display:none;border:1px solid #c5d8f8;">',
+              '<div style="font-size:10px;font-weight:700;color:#1a73e8;letter-spacing:0.5px;margin-bottom:10px;">RESULTS</div>',
+              '<div id="res3DRows" style="font-size:12px;"></div>',
+              '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;border-top:1px solid #c5d8f8;padding-top:10px;">',
+                '<div style="background:#fff;padding:8px;border-radius:6px;"><div style="color:#888;font-size:10px;font-weight:600;">SURFACE AREA</div><div id="surfaceAreaRes" style="font-weight:700;color:#222;font-size:14px;"></div></div>',
+                '<div style="background:#fff;padding:8px;border-radius:6px;"><div style="color:#888;font-size:10px;font-weight:600;">TOTAL EDGES</div><div id="totalEdgesRes" style="font-weight:700;color:#222;font-size:14px;"></div></div>',
+              '</div>',
+            '</div>',
           '</div>',
         '</div>',
         '<div id="histMenu" style="display:none;position:absolute;top:50px;left:16px;right:16px;background:#fff;border:1px solid #ddd;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.15);padding:14px;z-index:10005;font-size:12px;">',
@@ -356,6 +376,9 @@
             '<button class="ck" data-k=")"   style="padding:9px 4px;border:none;border-radius:7px;background:#e8f0fe;color:#1a73e8;font-weight:700;cursor:pointer;font-size:14px;">)</button>',
             '<button class="ck" data-k="\u232b" style="padding:9px 4px;border:none;border-radius:7px;background:#f1f3f4;color:#555;font-weight:700;cursor:pointer;font-size:14px;">\u232b</button>',
             '<button class="ck" data-k="\u221a"  style="padding:9px 4px;border:none;border-radius:7px;background:#e8f0fe;color:#1a73e8;font-weight:700;cursor:pointer;font-size:14px;">\u221a</button>',
+            '<button class="ck" data-k="x\u00b2" title="Square (q)" style="padding:9px 4px;border:none;border-radius:7px;background:#ede9fe;color:#7c3aed;font-weight:700;cursor:pointer;font-size:13px;">x\u00b2</button>',
+            '<button class="ck" data-k="x\u00b3" title="Cube (e)" style="padding:9px 4px;border:none;border-radius:7px;background:#ede9fe;color:#7c3aed;font-weight:700;cursor:pointer;font-size:13px;">x\u00b3</button>',
+            '<button class="ck" data-k="x\u02b8" title="Power (^)" style="grid-column:span 3;padding:9px 4px;border:none;border-radius:7px;background:#ede9fe;color:#7c3aed;font-weight:700;cursor:pointer;font-size:13px;">x\u02b8 (power)</button>',
             '<button class="ck" data-k="7"   style="padding:9px 4px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">7</button>',
             '<button class="ck" data-k="8"   style="padding:9px 4px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">8</button>',
             '<button class="ck" data-k="9"   style="padding:9px 4px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">9</button>',
@@ -749,6 +772,20 @@
                  csp.querySelectorAll('label').forEach(function(l){l.style.color=dk('text');}); }
         if(typeof ck_renderDisplay==='function') ck_renderDisplay();
         var hL=get('histList'); if(hL) hL.style.color=dk('subtext');
+        // 3D panel dark mode
+        var p3d=get('panel3D');
+        if(p3d){
+            var r3d=get('res3D'); if(r3d){ r3d.style.background=dk('resBg'); r3d.style.borderColor=dk('resBdr'); }
+            var sa3=get('surfaceAreaRes'), te3=get('totalEdgesRes');
+            if(sa3) sa3.style.color=dk('text'); if(te3) te3.style.color=dk('text');
+            p3d.querySelectorAll('#inputs3D input').forEach(function(inp){
+                inp.style.background=dk('inputBg'); inp.style.borderColor=dk('inputBdr'); inp.style.color=dk('text');
+            });
+            var t3bk=get('toggle3DBack'); if(t3bk){ t3bk.style.background=d?'#1e2a3e':'#e8f0fe'; t3bk.style.color=d?'#4a9eff':'#1a73e8'; }
+            var c3d=get('calc3D'); if(c3d){ c3d.style.background=d?'#1a5090':'#1a73e8'; c3d.style.color='#fff'; }
+            var cl3d=get('clear3D'); if(cl3d){ cl3d.style.background=dk('btnBg'); cl3d.style.color=dk('btnTxt'); }
+        }
+        var t3btn=get('toggle3DBtn'); if(t3btn){ t3btn.style.background=d?'#1e2a3e':'#e8f0fe'; t3btn.style.color=d?'#4a9eff':'#1a73e8'; }
         var cd=get('calcDisplay');
         if(cd){ cd.style.background=dk('resBg'); cd.style.borderColor=dk('codeBdr'); cd.style.color=d?'#4a9eff':'#1a73e8'; }
         var ce=get('calcExpr'); if(ce) ce.style.color=dk('subtext');
@@ -758,6 +795,8 @@
             else if(k==='='){ btn.style.background=d?'#1a5090':'#1a73e8'; btn.style.color='#fff'; }
             else if(k==='+' || k==='-' || k==='\u00d7' || k==='\u00f7' || k==='\u221a' || k==='\u03c0' || k==='(' || k===')'){
                 btn.style.background=d?'#1e2a3e':'#e8f0fe'; btn.style.color=d?'#4a9eff':'#1a73e8';
+            } else if(k==='x\u00b2'||k==='x\u00b3'||k==='x\u02b8'){
+                btn.style.background=d?'#2a1e4e':'#ede9fe'; btn.style.color=d?'#c084fc':'#7c3aed';
             } else if(k==='\u232b'){ btn.style.background=dk('btnBg'); btn.style.color=dk('btnTxt'); btn.style.borderColor=''; }
             else { btn.style.background=dk('inputBg'); btn.style.borderColor=dk('inputBdr'); btn.style.color=dk('text'); }
         });
@@ -2966,6 +3005,49 @@
             }
             ck_tokens.push({ e:'\u03c0', d:'\u03c0', kind:'pi' });
 
+        } else if(k === 'x\u00b2') {
+            // Square the current displayed value or wrap current token in **2
+            if(ck_lastIsNum()) {
+                ck_insertPendingCloses();
+                // Wrap last number/expression: (val)**2
+                var _s2 = ck_buildStrings();
+                var _v2 = parseFloat(_s2.e);
+                if(!isNaN(_v2)) {
+                    var _r2 = _v2 * _v2;
+                    var _rd2 = parseFloat(_r2.toPrecision(12));
+                    ckExpr.innerText = _s2.d + '\u00b2 =';
+                    ck_tokens = [{ e: String(_rd2), d: String(_rd2), kind: 'num' }];
+                    ck_justEvaled = true;
+                } else {
+                    // Wrap in power: use (expr)**2
+                    ck_tokens.push({ e:'**2', d:'\u00b2', kind:'op' });
+                }
+            }
+
+        } else if(k === 'x\u00b3') {
+            // Cube the current displayed value
+            if(ck_lastIsNum()) {
+                ck_insertPendingCloses();
+                var _s3 = ck_buildStrings();
+                var _v3 = parseFloat(_s3.e);
+                if(!isNaN(_v3)) {
+                    var _r3 = _v3 * _v3 * _v3;
+                    var _rd3 = parseFloat(_r3.toPrecision(12));
+                    ckExpr.innerText = _s3.d + '\u00b3 =';
+                    ck_tokens = [{ e: String(_rd3), d: String(_rd3), kind: 'num' }];
+                    ck_justEvaled = true;
+                } else {
+                    ck_tokens.push({ e:'**3', d:'\u00b3', kind:'op' });
+                }
+            }
+
+        } else if(k === 'x\u02b8') {
+            // Power operator: x^y — inserts ** ready for exponent input
+            if(ck_lastIsNum()) {
+                ck_insertPendingCloses();
+                ck_tokens.push({ e:'**', d:'^', kind:'op' });
+            }
+
         } else if(k === '.') {
             var lastNumTok = null;
             for(var ni = ck_tokens.length - 1; ni >= 0; ni--) {
@@ -3021,7 +3103,12 @@
             '(':'(', ')':')',
             'Enter':'=',
             'Backspace':'\u232b',
-            'Escape':'C'
+            'Escape':'C',
+            'q':'x\u00b2',
+            'Q':'x\u00b2',
+            'e':'x\u00b3',
+            'E':'x\u00b3',
+            '^':'x\u02b8'
         };
 
         var mapped = keyMap[k];
@@ -3577,4 +3664,214 @@
     get('histMenu').style.display = 'none';
     get('miniCalc').style.display = 'none';
     get('calcSettingsPanel').style.display = 'none';
+
+    // ── 3D Shape Solver ────────────────────────────────────────────────────────
+    var current3DShape = 'rect_prism';
+    var mode3D = false;
+
+    var shapes3D = [
+        {id:'rect_prism',  label:'Rect. Prism'},
+        {id:'rect_pyramid',label:'Rect. Pyramid'},
+        {id:'tri_prism',   label:'Tri. Prism'},
+        {id:'tri_pyramid', label:'Tri. Pyramid'}
+    ];
+
+    var shape3DFields = {
+        rect_prism:   [{id:'s3_l',lbl:'Length (l)'},{id:'s3_w',lbl:'Width (w)'},{id:'s3_h',lbl:'Height (h)'}],
+        rect_pyramid: [{id:'s3_l',lbl:'Base Length (l)'},{id:'s3_w',lbl:'Base Width (w)'},{id:'s3_h',lbl:'Height (h)'}],
+        tri_prism:    [{id:'s3_a',lbl:'Triangle Side a'},{id:'s3_b',lbl:'Triangle Side b'},{id:'s3_c',lbl:'Triangle Side c'},{id:'s3_h',lbl:'Prism Length (h)'}],
+        tri_pyramid:  [{id:'s3_a',lbl:'Base Side a'},{id:'s3_b',lbl:'Base Side b'},{id:'s3_c',lbl:'Base Side c'},{id:'s3_sh',lbl:'Slant Height (avg)'}]
+    };
+
+    function get3D(id) { var el=document.getElementById(id); return el?parseFloat(el.value):NaN; }
+
+    function build3DShapeBtns() {
+        var el=get('shapeBtns3D'); el.innerHTML='';
+        var d=getDark();
+        shapes3D.forEach(function(s){
+            var b=document.createElement('button');
+            b.style.cssText=s.id===current3DShape?bActiveStyle():bBaseStyle();
+            b.innerText=s.label;
+            b.onclick=function(){ current3DShape=s.id; build3DShapeBtns(); render3DInputs(); };
+            el.appendChild(b);
+        });
+    }
+
+    function render3DInputs() {
+        var d=getDark();
+        var fields=shape3DFields[current3DShape]||[];
+        get('inputs3D').innerHTML=fields.map(function(f){
+            return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">'+
+                '<label style="font-size:11px;font-weight:600;color:'+(d?'#9090b0':'#888')+';width:130px;flex-shrink:0;">'+f.lbl+'</label>'+
+                '<input type="number" id="'+f.id+'" placeholder="e.g. 5" style="flex:1;padding:8px 10px;border:1.5px solid '+(d?'#444466':'#ddd')+';border-radius:7px;font-size:14px;box-sizing:border-box;outline:none;background:'+(d?'#2a2a3e':'#fff')+';color:'+(d?'#e0e0f0':'#222')+';">'+
+            '</div>';
+        }).join('');
+        get('res3D').style.display='none';
+    }
+
+    function saRow3D(label,val,unit) {
+        var d=getDark();
+        var p=getPrec();
+        var vs=isNaN(val)?'—':(trimZ(parseFloat(val).toFixed(p))+(unit?' '+unit:''));
+        return '<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid '+(d?'#2a2a40':'#eef2ff')+';font-size:12px;">'+
+            '<span style="color:'+(d?'#9090b0':'#888')+';font-weight:600;">'+label+'</span>'+
+            '<span style="font-weight:700;color:'+(d?'#e0e0f0':'#222')+'">'+(isNaN(val)?'—':vs)+'</span></div>';
+    }
+
+    function calc3D() {
+        var d=getDark(); var p=getPrec(); var html=''; var warn='';
+        var surfArea=NaN, totalEdges=NaN;
+
+        try {
+        if(current3DShape==='rect_prism') {
+            var l=get3D('s3_l'), w=get3D('s3_w'), h=get3D('s3_h');
+            if(isNaN(l)||isNaN(w)||isNaN(h)||l<=0||w<=0||h<=0){warn='Enter positive Length, Width, and Height.';}
+            else {
+                var diag=Math.sqrt(l*l+w*w+h*h);
+                var faceDiagLW=Math.sqrt(l*l+w*w);
+                var faceDiagLH=Math.sqrt(l*l+h*h);
+                var faceDiagWH=Math.sqrt(w*w+h*h);
+                var vol=l*w*h;
+                surfArea=2*(l*w+l*h+w*h);
+                totalEdges=4*(l+w+h);
+                html+=saRow3D('Length',l); html+=saRow3D('Width',w); html+=saRow3D('Height',h);
+                html+=saRow3D('Space Diagonal',diag);
+                html+=saRow3D('Face Diag (l×w)',faceDiagLW);
+                html+=saRow3D('Face Diag (l×h)',faceDiagLH);
+                html+=saRow3D('Face Diag (w×h)',faceDiagWH);
+                html+=saRow3D('Volume',vol);
+            }
+        } else if(current3DShape==='rect_pyramid') {
+            var l=get3D('s3_l'), w=get3D('s3_w'), h=get3D('s3_h');
+            if(isNaN(l)||isNaN(w)||isNaN(h)||l<=0||w<=0||h<=0){warn='Enter positive Base Length, Width, and Height.';}
+            else {
+                // Diagonal from apex to base corner
+                var halfDiagBase=Math.sqrt((l/2)*(l/2)+(w/2)*(w/2));
+                var spaceDiag=Math.sqrt(halfDiagBase*halfDiagBase+h*h);
+                var baseDiag=Math.sqrt(l*l+w*w);
+                var slantL=Math.sqrt(h*h+(w/2)*(w/2));
+                var slantW=Math.sqrt(h*h+(l/2)*(l/2));
+                var latFaceL=l*slantL;
+                var latFaceW=w*slantW;
+                var vol=(1/3)*l*w*h;
+                surfArea=l*w+latFaceL+latFaceW;
+                totalEdges=4*Math.sqrt((l/2)*(l/2)+(w/2)*(w/2)+h*h)*0 + 4*l + 0; // 4 base edges + 4 lateral
+                // Properly: 4 base edges + 4 lateral edges from apex to base corners
+                var lateralEdge=Math.sqrt((l/2)*(l/2)+(w/2)*(w/2)+h*h);
+                totalEdges=2*(l+w)+4*lateralEdge;
+                html+=saRow3D('Base Length',l); html+=saRow3D('Base Width',w); html+=saRow3D('Height',h);
+                html+=saRow3D('Space Diagonal (apex→corner)',spaceDiag);
+                html+=saRow3D('Base Diagonal',baseDiag);
+                html+=saRow3D('Lateral Edge',lateralEdge);
+                html+=saRow3D('Slant Height (l-face)',slantL);
+                html+=saRow3D('Slant Height (w-face)',slantW);
+                html+=saRow3D('Volume',vol);
+            }
+        } else if(current3DShape==='tri_prism') {
+            var a=get3D('s3_a'), b=get3D('s3_b'), c=get3D('s3_c'), h=get3D('s3_h');
+            if(isNaN(a)||isNaN(b)||isNaN(c)||isNaN(h)||a<=0||b<=0||c<=0||h<=0){warn='Enter all three triangle sides and prism length.';}
+            else if(a+b<=c||a+c<=b||b+c<=a){warn='Those sides don\'t form a valid triangle.';}
+            else {
+                var s=(a+b+c)/2;
+                var triArea=Math.sqrt(s*(s-a)*(s-b)*(s-c));
+                var vol=triArea*h;
+                surfArea=2*triArea+(a+b+c)*h;
+                totalEdges=3*h+2*(a+b+c); // 3 rectangular edges + 2 triangles' edges
+                // Actually: 3 lateral edges of length h, 3+3=6 triangle edges (a,b,c × 2)
+                totalEdges=3*h+2*(a+b+c);
+                // Lateral face areas:
+                var faceA=a*h, faceB=b*h, faceC=c*h;
+                html+=saRow3D('Triangle Side a',a); html+=saRow3D('Triangle Side b',b); html+=saRow3D('Triangle Side c',c);
+                html+=saRow3D('Prism Length (h)',h);
+                html+=saRow3D('Triangle Area',triArea);
+                html+=saRow3D('Lateral Face A (a×h)',faceA);
+                html+=saRow3D('Lateral Face B (b×h)',faceB);
+                html+=saRow3D('Lateral Face C (c×h)',faceC);
+                html+=saRow3D('Volume',vol);
+            }
+        } else if(current3DShape==='tri_pyramid') {
+            var a=get3D('s3_a'), b=get3D('s3_b'), c=get3D('s3_c'), sh=get3D('s3_sh');
+            if(isNaN(a)||isNaN(b)||isNaN(c)||isNaN(sh)||a<=0||b<=0||c<=0||sh<=0){warn='Enter all three base sides and slant height.';}
+            else if(a+b<=c||a+c<=b||b+c<=a){warn='Those sides don\'t form a valid triangle.';}
+            else {
+                var s=(a+b+c)/2;
+                var baseArea=Math.sqrt(s*(s-a)*(s-b)*(s-c));
+                // Lateral faces: each side × slant height / 2 (approx — using avg slant)
+                var latA=0.5*a*sh, latB=0.5*b*sh, latC=0.5*c*sh;
+                surfArea=baseArea+latA+latB+latC;
+                // Approximate lateral edge length from slant height and base centroid
+                var perimBase=a+b+c;
+                // height of pyramid from slant and base inradius
+                var inR=baseArea/s;
+                var pH=Math.sqrt(Math.max(0,sh*sh-inR*inR));
+                var vol=(1/3)*baseArea*pH;
+                // lateral edge ≈ from each base vertex to apex; approx using centroid distance
+                // centroid distances for each vertex are complex; provide total edges simply
+                totalEdges=perimBase*2; // 3 base + 3 lateral (approx same length as slant)
+                var latEdgeApprox=Math.sqrt(sh*sh+(inR)*(inR)); // rough
+                totalEdges=perimBase+3*latEdgeApprox;
+                html+=saRow3D('Base Side a',a); html+=saRow3D('Base Side b',b); html+=saRow3D('Base Side c',c);
+                html+=saRow3D('Slant Height',sh);
+                html+=saRow3D('Base Area',baseArea);
+                html+=saRow3D('Lateral Face A',latA);
+                html+=saRow3D('Lateral Face B',latB);
+                html+=saRow3D('Lateral Face C',latC);
+                html+=saRow3D('Pyramid Height (approx)',pH);
+                html+=saRow3D('Volume (approx)',vol);
+                html+=saRow3D('Lateral Edge (approx)',latEdgeApprox);
+            }
+        }
+        } catch(err){ warn='Calculation error: '+err.message; }
+
+        var r=get('res3D'); r.style.display='block';
+        var rows=get('res3DRows');
+        if(warn) {
+            rows.innerHTML='<div style="color:'+(d?'#ff7070':'#c0392b')+';font-weight:600;font-size:12px;">\u26a0 '+warn+'</div>';
+            get('surfaceAreaRes').innerText='';
+            get('totalEdgesRes').innerText='';
+        } else {
+            rows.innerHTML=html;
+            var pr=getPrec();
+            get('surfaceAreaRes').innerText=isNaN(surfArea)?'':trimZ(surfArea.toFixed(pr));
+            get('totalEdgesRes').innerText=isNaN(totalEdges)?'':trimZ(totalEdges.toFixed(pr));
+        }
+        applyDark();
+    }
+
+    function enter3DMode() {
+        mode3D=true;
+        // Hide triangle UI
+        ['triBtns','goalBtns','methodSection','posToggle','inputStack','canvasBox','res','unitBox'].forEach(function(id){
+            var el=get(id); if(el) { el._prev3Ddisplay=el.style.display; el.style.display='none'; }
+        });
+        // Also hide the secLabel divs around triangle/find
+        var uiBody=get('uiBody');
+        var sections=uiBody.querySelectorAll(':scope > div:not(#panel3D):not(#unitBox)');
+        sections.forEach(function(el){ el._prev3Ddisplay=el.style.display; el.style.display='none'; });
+        get('panel3D').style.display='block';
+        build3DShapeBtns(); render3DInputs();
+        applyDark();
+    }
+
+    function exit3DMode() {
+        mode3D=false;
+        get('panel3D').style.display='none';
+        var uiBody=get('uiBody');
+        var sections=uiBody.querySelectorAll(':scope > div:not(#panel3D)');
+        sections.forEach(function(el){
+            if(el._prev3Ddisplay!==undefined) el.style.display=el._prev3Ddisplay;
+        });
+        applyDark();
+    }
+
+    get('toggle3DBtn').addEventListener('click', function(e){ e.stopPropagation(); enter3DMode(); });
+    get('toggle3DBack').addEventListener('click', function(e){ e.stopPropagation(); exit3DMode(); });
+    get('calc3D').addEventListener('click', function(e){ e.stopPropagation(); calc3D(); });
+    get('clear3D').addEventListener('click', function(e){
+        e.stopPropagation();
+        var fields=shape3DFields[current3DShape]||[];
+        fields.forEach(function(f){ var el=document.getElementById(f.id); if(el) el.value=''; });
+        get('res3D').style.display='none';
+    });
+
 })();
