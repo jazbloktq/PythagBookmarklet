@@ -411,16 +411,32 @@
           '</div>',
         '<div id="panelTrig" style="display:none;position:absolute;top:50px;left:0;right:0;bottom:0;overflow-y:auto;overflow-x:hidden;padding:16px;box-sizing:border-box;z-index:10002;background:var(--gp-bg);">',
           '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">',
-            '<div class="gp-label" style="font-size:10px;font-weight:700;letter-spacing:0.8px;">TRIG SOLVER <span style="font-weight:400;font-size:10px;opacity:0.8;">(right triangle)</span></div>',
+            '<div class="gp-label" style="font-size:10px;font-weight:700;letter-spacing:0.8px;">TRIG SOLVER</div>',
             '<button id="toggleTrigBack" class="gp-pill-btn" style="padding:3px 9px;border:none;border-radius:5px;font-size:10px;font-weight:700;cursor:pointer;">&#9664; Triangles</button>',
           '</div>',
-          '<div style="font-size:10px;color:var(--gp-subtext);margin-bottom:10px;line-height:1.5;">Enter any <strong>2 known values</strong>. Angles in <span id="trigDegRadLbl">degrees</span>.</div>',
-          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">',
-            '<div><div class="gp-label" style="font-size:10px;font-weight:600;margin-bottom:3px;">a &mdash; opposite</div><input id="trigIn_a" type="number" step="any" placeholder="side" style="width:100%;padding:7px 9px;border:1.5px solid var(--gp-input-bdr);border-radius:7px;background:var(--gp-input-bg);color:var(--gp-text);font-size:12px;box-sizing:border-box;outline:none;"></div>',
-            '<div><div class="gp-label" style="font-size:10px;font-weight:600;margin-bottom:3px;">b &mdash; adjacent</div><input id="trigIn_b" type="number" step="any" placeholder="side" style="width:100%;padding:7px 9px;border:1.5px solid var(--gp-input-bdr);border-radius:7px;background:var(--gp-input-bg);color:var(--gp-text);font-size:12px;box-sizing:border-box;outline:none;"></div>',
-            '<div><div class="gp-label" style="font-size:10px;font-weight:600;margin-bottom:3px;">c &mdash; hypotenuse</div><input id="trigIn_hyp" type="number" step="any" placeholder="side" style="width:100%;padding:7px 9px;border:1.5px solid var(--gp-input-bdr);border-radius:7px;background:var(--gp-input-bg);color:var(--gp-text);font-size:12px;box-sizing:border-box;outline:none;"></div>',
-            '<div><div class="gp-label" style="font-size:10px;font-weight:600;margin-bottom:3px;">\u03b1 &mdash; angle A (opp a)</div><input id="trigIn_A" type="number" step="any" placeholder="angle" style="width:100%;padding:7px 9px;border:1.5px solid var(--gp-input-bdr);border-radius:7px;background:var(--gp-input-bg);color:var(--gp-text);font-size:12px;box-sizing:border-box;outline:none;"></div>',
-            '<div style="grid-column:span 1;"><div class="gp-label" style="font-size:10px;font-weight:600;margin-bottom:3px;">\u03b8 &mdash; angle B (opp b)</div><input id="trigIn_B" type="number" step="any" placeholder="angle" style="width:100%;padding:7px 9px;border:1.5px solid var(--gp-input-bdr);border-radius:7px;background:var(--gp-input-bg);color:var(--gp-text);font-size:12px;box-sizing:border-box;outline:none;"></div>',
+          '<div style="display:flex;gap:6px;margin-bottom:12px;">',
+            '<button id="trigModeRight" style="flex:1;padding:7px;border:1.5px solid var(--gp-accent);border-radius:7px;background:var(--gp-accent);color:#fff;font-size:11px;font-weight:700;cursor:pointer;">Right triangle</button>',
+            '<button id="trigModeAny"   style="flex:1;padding:7px;border:1.5px solid var(--gp-input-bdr);border-radius:7px;background:var(--gp-input-bg);color:var(--gp-text);font-size:11px;font-weight:700;cursor:pointer;">Any triangle</button>',
+          '</div>',
+          '<div style="font-size:10px;color:var(--gp-subtext);margin-bottom:10px;line-height:1.5;" id="trigHint"></div>',
+          '<div id="trigInputsRight">',
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">',
+              '<div><div class="gp-label" style="font-size:10px;font-weight:600;margin-bottom:3px;">a — opposite</div><input id="trigIn_a" type="number" step="any" placeholder="side" style="width:100%;padding:7px 9px;border:1.5px solid var(--gp-input-bdr);border-radius:7px;background:var(--gp-input-bg);color:var(--gp-text);font-size:12px;box-sizing:border-box;outline:none;"></div>',
+              '<div><div class="gp-label" style="font-size:10px;font-weight:600;margin-bottom:3px;">b — adjacent</div><input id="trigIn_b" type="number" step="any" placeholder="side" style="width:100%;padding:7px 9px;border:1.5px solid var(--gp-input-bdr);border-radius:7px;background:var(--gp-input-bg);color:var(--gp-text);font-size:12px;box-sizing:border-box;outline:none;"></div>',
+              '<div><div class="gp-label" style="font-size:10px;font-weight:600;margin-bottom:3px;">c — hypotenuse</div><input id="trigIn_hyp" type="number" step="any" placeholder="side" style="width:100%;padding:7px 9px;border:1.5px solid var(--gp-input-bdr);border-radius:7px;background:var(--gp-input-bg);color:var(--gp-text);font-size:12px;box-sizing:border-box;outline:none;"></div>',
+              '<div><div class="gp-label" style="font-size:10px;font-weight:600;margin-bottom:3px;">α — angle A (top)</div><input id="trigIn_A" type="number" step="any" placeholder="angle" style="width:100%;padding:7px 9px;border:1.5px solid var(--gp-input-bdr);border-radius:7px;background:var(--gp-input-bg);color:var(--gp-text);font-size:12px;box-sizing:border-box;outline:none;"></div>',
+              '<div><div class="gp-label" style="font-size:10px;font-weight:600;margin-bottom:3px;">θ — angle B (right)</div><input id="trigIn_B" type="number" step="any" placeholder="angle" style="width:100%;padding:7px 9px;border:1.5px solid var(--gp-input-bdr);border-radius:7px;background:var(--gp-input-bg);color:var(--gp-text);font-size:12px;box-sizing:border-box;outline:none;"></div>',
+            '</div>',
+          '</div>',
+          '<div id="trigInputsAny" style="display:none;">',
+            '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">',
+              '<div><div class="gp-label" style="font-size:10px;font-weight:600;margin-bottom:3px;">side a</div><input id="trigIn_sa" type="number" step="any" placeholder="" style="width:100%;padding:7px 9px;border:1.5px solid var(--gp-input-bdr);border-radius:7px;background:var(--gp-input-bg);color:var(--gp-text);font-size:12px;box-sizing:border-box;outline:none;"></div>',
+              '<div><div class="gp-label" style="font-size:10px;font-weight:600;margin-bottom:3px;">side b</div><input id="trigIn_sb" type="number" step="any" placeholder="" style="width:100%;padding:7px 9px;border:1.5px solid var(--gp-input-bdr);border-radius:7px;background:var(--gp-input-bg);color:var(--gp-text);font-size:12px;box-sizing:border-box;outline:none;"></div>',
+              '<div><div class="gp-label" style="font-size:10px;font-weight:600;margin-bottom:3px;">side c</div><input id="trigIn_sc" type="number" step="any" placeholder="" style="width:100%;padding:7px 9px;border:1.5px solid var(--gp-input-bdr);border-radius:7px;background:var(--gp-input-bg);color:var(--gp-text);font-size:12px;box-sizing:border-box;outline:none;"></div>',
+              '<div><div class="gp-label" style="font-size:10px;font-weight:600;margin-bottom:3px;">angle A (opp a)</div><input id="trigIn_AA" type="number" step="any" placeholder="" style="width:100%;padding:7px 9px;border:1.5px solid var(--gp-input-bdr);border-radius:7px;background:var(--gp-input-bg);color:var(--gp-text);font-size:12px;box-sizing:border-box;outline:none;"></div>',
+              '<div><div class="gp-label" style="font-size:10px;font-weight:600;margin-bottom:3px;">angle B (opp b)</div><input id="trigIn_AB" type="number" step="any" placeholder="" style="width:100%;padding:7px 9px;border:1.5px solid var(--gp-input-bdr);border-radius:7px;background:var(--gp-input-bg);color:var(--gp-text);font-size:12px;box-sizing:border-box;outline:none;"></div>',
+              '<div><div class="gp-label" style="font-size:10px;font-weight:600;margin-bottom:3px;">angle C (opp c)</div><input id="trigIn_AC" type="number" step="any" placeholder="" style="width:100%;padding:7px 9px;border:1.5px solid var(--gp-input-bdr);border-radius:7px;background:var(--gp-input-bg);color:var(--gp-text);font-size:12px;box-sizing:border-box;outline:none;"></div>',
+            '</div>',
           '</div>',
           '<div style="display:flex;gap:8px;margin-bottom:12px;">',
             '<button id="trigCalcBtn" style="flex:2;padding:11px;background:var(--gp-accent);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px;">Solve</button>',
@@ -433,7 +449,7 @@
             '<div style="font-size:10px;font-weight:700;color:var(--gp-accent);letter-spacing:0.5px;margin-bottom:7px;">RESULTS</div>',
             '<div id="trigSummaryRows" style="font-size:12px;display:flex;flex-direction:column;gap:3px;margin-bottom:8px;"></div>',
             '<div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--gp-res-bdr);padding-top:8px;">',
-              '<button id="trigToggleSteps" style="font-size:10px;color:var(--gp-accent);background:none;border:none;cursor:pointer;padding:0;font-weight:700;">Show steps \u25be</button>',
+              '<button id="trigToggleSteps" style="font-size:10px;color:var(--gp-accent);background:none;border:none;cursor:pointer;padding:0;font-weight:700;">Show steps ▾</button>',
               '<button id="trigCopyBtn" style="font-size:10px;padding:4px 10px;background:var(--gp-accent);color:#fff;border:none;border-radius:5px;cursor:pointer;font-weight:700;">Copy</button>',
             '</div>',
             '<div id="trigStepsWrap" style="display:none;margin-top:8px;">',
@@ -4499,10 +4515,7 @@
         get('panelTrig').style.display = 'block';
         // Close 3D panel if open
         if(mode3D) exit3DMode();
-        // Update deg/rad label
-        var lbl = get('trigDegRadLbl');
-        if(lbl) lbl.textContent = getDeg() ? 'degrees' : 'radians';
-        _trigDrawDiagram();
+        _trigSetMode(_trigMode); // refreshes hint text, button styles, diagram
         applyDark();
     }
 
@@ -4974,194 +4987,350 @@
     if(get('setMenuTitle')) get('setMenuTitle').addEventListener('click',function(e){e.stopPropagation();get('setMenu').style.display='none';openQuizMode();});
 
     // ═══════════════════════════════════════════════════════════════════
-    // TRIG SOLVER — embedded panel (mirrors 3D panel pattern)
+    // TRIG SOLVER — embedded panel
     // ═══════════════════════════════════════════════════════════════════
 
-    function _trigDrawDiagram() {
-        var c = get('trigCanvas'); if(!c) return;
-        var ctx2 = c.getContext('2d');
-        var W = c.width, H = c.height;
-        ctx2.clearRect(0, 0, W, H);
+    var _trigMode = 'right'; // 'right' or 'any'
+
+    function _trigSetMode(m) {
+        _trigMode = m;
+        var acc = 'var(--gp-accent)', neutral_bg = 'var(--gp-input-bg)', neutral_bdr = 'var(--gp-input-bdr)', neutral_txt = 'var(--gp-text)';
+        var mr = get('trigModeRight'), ma = get('trigModeAny');
+        var ri = get('trigInputsRight'), ai = get('trigInputsAny');
+        var hint = get('trigHint');
+        if(!mr||!ma||!ri||!ai) return;
+        if(m === 'right') {
+            mr.style.cssText = 'flex:1;padding:7px;border:1.5px solid var(--gp-accent);border-radius:7px;background:var(--gp-accent);color:#fff;font-size:11px;font-weight:700;cursor:pointer;';
+            ma.style.cssText = 'flex:1;padding:7px;border:1.5px solid var(--gp-input-bdr);border-radius:7px;background:var(--gp-input-bg);color:var(--gp-text);font-size:11px;font-weight:700;cursor:pointer;';
+            ri.style.display = 'block'; ai.style.display = 'none';
+            if(hint) hint.innerHTML = 'Enter any <strong>2 known values</strong>. Angles in '+(getDeg()?'degrees':'radians')+'.';
+        } else {
+            ma.style.cssText = 'flex:1;padding:7px;border:1.5px solid var(--gp-accent);border-radius:7px;background:var(--gp-accent);color:#fff;font-size:11px;font-weight:700;cursor:pointer;';
+            mr.style.cssText = 'flex:1;padding:7px;border:1.5px solid var(--gp-input-bdr);border-radius:7px;background:var(--gp-input-bg);color:var(--gp-text);font-size:11px;font-weight:700;cursor:pointer;';
+            ri.style.display = 'none'; ai.style.display = 'block';
+            if(hint) hint.innerHTML = 'Enter any <strong>3 known values</strong> (must include at least 1 side). Angles in '+(getDeg()?'degrees':'radians')+'.';
+        }
+        get('trigResults').style.display = 'none';
+        get('trigError').style.display = 'none';
+        _trigDrawDiagram();
+    }
+
+    // ── Right-triangle diagram ────────────────────────────────────────
+    function _trigDrawDiagramRight(ctx2, W, H, res) {
         var d = getDark(), bw = getBW();
-        var bg   = bw ? '#fff'    : (d ? '#181828' : '#fafbff');
-        var ln   = bw ? '#000'    : (d ? '#8888bb' : '#aab0cc');
-        var acc  = bw ? '#000'    : (d ? '#4a9eff' : '#1a73e8');
-        var lbl  = bw ? '#000'    : (d ? '#e0e0f0' : '#222');
-        var sub  = bw ? '#444'    : (d ? '#9090b0' : '#666');
-        ctx2.fillStyle = bg; ctx2.fillRect(0, 0, W, H);
+        var bg  = bw?'#fff':(d?'#181828':'#fafbff');
+        var ln  = bw?'#000':(d?'#8888bb':'#aab0cc');
+        var acc = bw?'#000':(d?'#4a9eff':'#1a73e8');
+        var lbl = bw?'#000':(d?'#e0e0f0':'#222');
+        var sub = bw?'#444':(d?'#9090b0':'#666');
+        ctx2.fillStyle=bg; ctx2.fillRect(0,0,W,H);
 
-        // Vertices: right-angle at bottom-LEFT (ox,oy), bottom-RIGHT (bx,by), top-LEFT (tx,ty)
-        // a = opposite = vertical left side (ox,oy)→(tx,ty)
-        // b = adjacent = horizontal bottom  (ox,oy)→(bx,by)
-        // α is at top-left  (tx,ty) — between hypotenuse and side a, opposite to b
-        // θ is at bottom-right (bx,by) — between hypotenuse and side b, opposite to a
-        var ox=52, oy=H-36, bx=W-36, by=H-36, tx=52, ty=32;
-
-        // right-angle marker
+        var ox=52,oy=H-36,bx=W-36,by=H-36,tx=52,ty=32;
         var rmk=13;
         ctx2.strokeStyle=ln; ctx2.lineWidth=1.2;
         ctx2.beginPath(); ctx2.moveTo(ox+rmk,oy); ctx2.lineTo(ox+rmk,oy-rmk); ctx2.lineTo(ox,oy-rmk); ctx2.stroke();
-
-        // triangle
         ctx2.strokeStyle=acc; ctx2.lineWidth=2.2;
         ctx2.beginPath(); ctx2.moveTo(ox,oy); ctx2.lineTo(bx,by); ctx2.lineTo(tx,ty); ctx2.closePath(); ctx2.stroke();
 
-        // angle arc θ at bottom-right (bx,by): sweep from direction→(tx,ty) to direction→(ox,oy), clockwise
-        var th_to_top  = Math.atan2(ty-by, tx-bx); // direction toward top-left vertex
-        var th_to_left = Math.atan2(oy-by, ox-bx); // direction toward bottom-left vertex (straight left)
-        ctx2.strokeStyle = bw?'#555':(d?'#f0a040':'#d97706'); ctx2.lineWidth=1.5;
+        // θ arc at bottom-right
+        var th_to_top  = Math.atan2(ty-by,tx-bx);
+        var th_to_left = Math.atan2(oy-by,ox-bx);
+        ctx2.strokeStyle=bw?'#555':(d?'#f0a040':'#d97706'); ctx2.lineWidth=1.5;
         ctx2.beginPath(); ctx2.arc(bx,by,22,th_to_top,th_to_left,false); ctx2.stroke();
-
-        // angle arc α at top-left (tx,ty): sweep from direction→(bx,by) to direction→(ox,oy), anticlockwise
-        // (tx==ox so al_to_bot=90°, al_to_right≈23° — need CCW to get the small inside arc)
-        var al_to_bot  = Math.atan2(oy-ty, ox-tx); // direction toward bottom-left (straight down = 90°)
-        var al_to_right= Math.atan2(by-ty, bx-tx); // direction toward bottom-right (~23°)
-        ctx2.strokeStyle = bw?'#888':(d?'#60c060':'#22a05a'); ctx2.lineWidth=1.5;
+        // α arc at top-left
+        var al_to_bot  = Math.atan2(oy-ty,ox-tx);
+        var al_to_right= Math.atan2(by-ty,bx-tx);
+        ctx2.strokeStyle=bw?'#888':(d?'#60c060':'#22a05a'); ctx2.lineWidth=1.5;
         ctx2.beginPath(); ctx2.arc(tx,ty,20,al_to_bot,al_to_right,true); ctx2.stroke();
 
-        var prec = getPrec();
-        var deg = getDeg();
-        var aLbl = deg ? '°' : 'r';
-
-        function fmtV(id, isAngle) {
-            var el = get('trigIn_'+id); var v = el ? parseFloat(el.value) : NaN;
-            if(isNaN(v)) return '?';
-            return isAngle ? v.toFixed(Math.min(prec,2))+aLbl : v.toFixed(Math.min(prec,3));
+        var prec=getPrec(), deg=getDeg(), aLbl=deg?'°':'r';
+        function fmtV(id,isAngle,fallback) {
+            var v = (res && res[id]!==undefined) ? res[id] : NaN;
+            if(isNaN(v)) { var el=get('trigIn_'+id); v=el?parseFloat(el.value):NaN; }
+            if(isNaN(v)) return fallback||'?';
+            return isAngle ? parseFloat(v.toFixed(Math.min(prec,2)))+aLbl : parseFloat(v.toFixed(Math.min(prec,3)))+'';
         }
-
         ctx2.textAlign='center';
-        // hypotenuse label (right side diagonal)
         ctx2.fillStyle=acc; ctx2.font='bold 11px system-ui,sans-serif';
         ctx2.save(); ctx2.translate((bx+tx)/2+16,(by+ty)/2); ctx2.rotate(-Math.atan2(bx-tx,by-ty)); ctx2.fillText('c = '+fmtV('hyp',false),0,0); ctx2.restore();
-        // opposite (left vertical)
         ctx2.fillStyle=lbl;
         ctx2.save(); ctx2.translate(ox-18,(oy+ty)/2); ctx2.rotate(-Math.PI/2); ctx2.fillText('a = '+fmtV('a',false),0,0); ctx2.restore();
-        // adjacent (bottom)
         ctx2.fillText('b = '+fmtV('b',false),(ox+bx)/2,oy+15);
-        // angle labels
         ctx2.font='11px system-ui,sans-serif';
-        ctx2.fillStyle=bw?'#555':(d?'#f0a040':'#d97706'); ctx2.fillText('\u03b8='+fmtV('B',true),bx-36,by-28);
-        ctx2.fillStyle=bw?'#888':(d?'#60c060':'#22a05a'); ctx2.fillText('\u03b1='+fmtV('A',true),tx+32,ty+22);
+        ctx2.fillStyle=bw?'#555':(d?'#f0a040':'#d97706'); ctx2.fillText('θ='+fmtV('B',true),bx-36,by-28);
+        ctx2.fillStyle=bw?'#888':(d?'#60c060':'#22a05a'); ctx2.fillText('α='+fmtV('A',true),tx+32,ty+22);
         ctx2.fillStyle=sub; ctx2.font='10px system-ui,sans-serif'; ctx2.fillText('90°',ox+24,oy-14);
     }
 
-    function _solveTrig() {
+    // ── Any-triangle diagram (with altitude) ─────────────────────────
+    function _trigDrawDiagramAny(ctx2, W, H, res) {
+        var d = getDark(), bw = getBW();
+        var bg  = bw?'#fff':(d?'#181828':'#fafbff');
+        var acc = bw?'#000':(d?'#4a9eff':'#1a73e8');
+        var ln  = bw?'#000':(d?'#8888bb':'#aab0cc');
+        var lbl = bw?'#000':(d?'#e0e0f0':'#222');
+        var alt_col = bw?'#888':(d?'#cc88ff':'#9333ea');
+        ctx2.fillStyle=bg; ctx2.fillRect(0,0,W,H);
+
+        // Reconstruct triangle geometry from result (or inputs)
+        var R = res || {};
+        var sa = R.sa, sb = R.sb, sc = R.sc;
+        var AA = R.AA, AB = R.AB, AC = R.AC;
         var deg = getDeg();
-        var toRad = function(x){ return deg ? x*Math.PI/180 : x; };
-        var toDeg = function(x){ return deg ? x*180/Math.PI : x; };
-        var R = {};
+        var toRad = function(x){ return deg?x*Math.PI/180:x; };
+
+        // Place triangle: A at bottom-left, B at bottom-right, C at top
+        // side a = BC (opp A), side b = AC (opp B), side c = AB (opp C)
+        // Use law of cosines to get angle A for positioning if we have all sides
+        var angleA_rad = null;
+        if(sa&&sb&&sc) {
+            // cos(A) = (b²+c²-a²) / 2bc
+            angleA_rad = Math.acos((sb*sb+sc*sc-sa*sa)/(2*sb*sc));
+        } else if(AA!==undefined) {
+            angleA_rad = toRad(AA);
+        }
+
+        var PAx=44, PAy=H-30, PBx=W-30, PBy=H-30;
+        var PCx=PAx, PCy=PAy;
+        if(sc && angleA_rad!==null) {
+            var scale = (PBx-PAx) / (sc||1);
+            PCx = PAx + Math.cos(angleA_rad)*sc*scale;
+            PCy = PAy - Math.sin(angleA_rad)*sc*scale;
+        } else {
+            PCx = PAx+60; PCy = PAy-90; // fallback shape
+        }
+
+        // Draw main triangle
+        ctx2.strokeStyle=acc; ctx2.lineWidth=2.2;
+        ctx2.beginPath(); ctx2.moveTo(PAx,PAy); ctx2.lineTo(PBx,PBy); ctx2.lineTo(PCx,PCy); ctx2.closePath(); ctx2.stroke();
+
+        // Altitude from C to AB (the base, which is horizontal PAy=PBy)
+        var PHx=PCx, PHy=PAy; // foot of altitude (since base is horizontal)
+        ctx2.strokeStyle=alt_col; ctx2.lineWidth=1.3; ctx2.setLineDash([4,3]);
+        ctx2.beginPath(); ctx2.moveTo(PCx,PCy); ctx2.lineTo(PHx,PHy); ctx2.stroke();
+        ctx2.setLineDash([]);
+        // right-angle marker at foot
+        var rmk=10;
+        var hDir = PHx>PAx?1:-1;
+        ctx2.strokeStyle=ln; ctx2.lineWidth=1;
+        ctx2.beginPath(); ctx2.moveTo(PHx-hDir*rmk,PHy); ctx2.lineTo(PHx-hDir*rmk,PHy-rmk); ctx2.lineTo(PHx,PHy-rmk); ctx2.stroke();
+
+        // Angle arcs
+        function drawArc(vx,vy,p1x,p1y,p2x,p2y,r,col,ccw) {
+            var a1=Math.atan2(p1y-vy,p1x-vx), a2=Math.atan2(p2y-vy,p2x-vx);
+            ctx2.strokeStyle=col; ctx2.lineWidth=1.5;
+            ctx2.beginPath(); ctx2.arc(vx,vy,r,a1,a2,ccw||false); ctx2.stroke();
+        }
+        var colA=bw?'#555':(d?'#f0a040':'#d97706');
+        var colB=bw?'#888':(d?'#60c060':'#22a05a');
+        var colC=bw?'#aaa':(d?'#60bbff':'#1a73e8');
+        // A at bottom-left: between B and C
+        drawArc(PAx,PAy,PBx,PBy,PCx,PCy,20,colA,false);
+        // B at bottom-right: between A and C — need CCW
+        drawArc(PBx,PBy,PAx,PAy,PCx,PCy,20,colB,true);
+        // C at top: between A and B
+        drawArc(PCx,PCy,PAx,PAy,PBx,PBy,16,colC,false);
+
+        // Labels
+        var prec=getPrec(), aLbl=deg?'°':'r';
+        function fv(val){ return val!==undefined?parseFloat(val.toFixed(Math.min(prec,3)))+'':'?'; }
+        function fa(val){ return val!==undefined?parseFloat(val.toFixed(Math.min(prec,2)))+aLbl:'?'; }
+        ctx2.font='bold 11px system-ui,sans-serif'; ctx2.textAlign='center';
+        // side c label (bottom, between A and B)
+        ctx2.fillStyle=acc; ctx2.fillText('c='+(sc!==undefined?fv(sc):'?'),(PAx+PBx)/2,PAy+15);
+        // side b label (left side, A to C)
+        ctx2.fillStyle=lbl;
+        ctx2.save(); ctx2.translate((PAx+PCx)/2-14,(PAy+PCy)/2); ctx2.rotate(-Math.atan2(PAx-PCx,PAy-PCy)); ctx2.fillText('b='+(sb!==undefined?fv(sb):'?'),0,0); ctx2.restore();
+        // side a label (right side, B to C)
+        ctx2.save(); ctx2.translate((PBx+PCx)/2+14,(PBy+PCy)/2); ctx2.rotate(-Math.atan2(PBx-PCx,PBy-PCy)); ctx2.fillText('a='+(sa!==undefined?fv(sa):'?'),0,0); ctx2.restore();
+        // Angle labels
+        ctx2.font='10px system-ui,sans-serif';
+        ctx2.fillStyle=colA; ctx2.fillText('A='+(AA!==undefined?fa(AA):'?'),PAx+28,PAy-8);
+        ctx2.fillStyle=colB; ctx2.fillText('B='+(AB!==undefined?fa(AB):'?'),PBx-28,PBy-8);
+        ctx2.fillStyle=colC; ctx2.fillText('C='+(AC!==undefined?fa(AC):'?'),PCx+(PCx<(PAx+PBx)/2?-28:28),PCy+16);
+        // Altitude label
+        ctx2.fillStyle=alt_col; ctx2.font='9px system-ui,sans-serif';
+        ctx2.fillText('h',PHx+10,PCy+(PHy-PCy)/2);
+    }
+
+    function _trigDrawDiagram(res) {
+        var c=get('trigCanvas'); if(!c) return;
+        var ctx2=c.getContext('2d');
+        var W=c.width, H=c.height;
+        ctx2.clearRect(0,0,W,H);
+        if(_trigMode==='right') _trigDrawDiagramRight(ctx2,W,H,res);
+        else _trigDrawDiagramAny(ctx2,W,H,res);
+    }
+
+    // ── Right-triangle solver ─────────────────────────────────────────
+    function _solveRight() {
+        var deg=getDeg();
+        var toRad=function(x){return deg?x*Math.PI/180:x;};
+        var toDeg=function(x){return deg?x*180/Math.PI:x;};
+        var R={};
         ['a','b','hyp','A','B'].forEach(function(k){
             var el=get('trigIn_'+k); if(!el) return;
             var v=parseFloat(el.value);
-            if(!isNaN(v) && el.value.trim()!=='') R[k]=v;
+            if(!isNaN(v)&&el.value.trim()!=='') R[k]=v;
         });
-        if(Object.keys(R).length < 2) return {error:'Enter at least 2 known values.'};
-
-        // Layout: right-angle at bottom-left
-        // a = opposite (vertical), b = adjacent (horizontal)
-        // α (angle A) at top-left  — opposite to b, adjacent to a  → sin(α)=b/c, cos(α)=a/c, tan(α)=b/a
-        // θ (angle B) at bottom-right — opposite to a, adjacent to b → sin(θ)=a/c, cos(θ)=b/c, tan(θ)=a/b
+        if(Object.keys(R).length<2) return {error:'Enter at least 2 known values.'};
         var steps=[];
         for(var pass=0;pass<6;pass++){
-            // Pythagoras
-            if(R.a!==undefined&&R.b!==undefined&&R.hyp===undefined){R.hyp=Math.sqrt(R.a*R.a+R.b*R.b);steps.push('c = \u221a(a\u00b2+b\u00b2) = '+R.hyp.toFixed(6));}
-            if(R.a!==undefined&&R.hyp!==undefined&&R.b===undefined){R.b=Math.sqrt(R.hyp*R.hyp-R.a*R.a);steps.push('b = \u221a(c\u00b2\u2212a\u00b2) = '+R.b.toFixed(6));}
-            if(R.b!==undefined&&R.hyp!==undefined&&R.a===undefined){R.a=Math.sqrt(R.hyp*R.hyp-R.b*R.b);steps.push('a = \u221a(c\u00b2\u2212b\u00b2) = '+R.a.toFixed(6));}
-            // α (angle A): sin(α)=b/c, cos(α)=a/c, tan(α)=b/a
-            if(R.A!==undefined&&R.hyp!==undefined&&R.b===undefined){R.b=R.hyp*Math.sin(toRad(R.A));steps.push('b = c\u00b7sin(\u03b1) = '+R.b.toFixed(6));}
-            if(R.A!==undefined&&R.hyp!==undefined&&R.a===undefined){R.a=R.hyp*Math.cos(toRad(R.A));steps.push('a = c\u00b7cos(\u03b1) = '+R.a.toFixed(6));}
-            if(R.A!==undefined&&R.b!==undefined&&R.a===undefined){R.a=R.b/Math.tan(toRad(R.A));steps.push('a = b/tan(\u03b1) = '+R.a.toFixed(6));}
-            if(R.A!==undefined&&R.a!==undefined&&R.b===undefined){R.b=R.a*Math.tan(toRad(R.A));steps.push('b = a\u00b7tan(\u03b1) = '+R.b.toFixed(6));}
-            // θ (angle B): sin(θ)=a/c, cos(θ)=b/c, tan(θ)=a/b
-            if(R.B!==undefined&&R.hyp!==undefined&&R.a===undefined){R.a=R.hyp*Math.sin(toRad(R.B));steps.push('a = c\u00b7sin(\u03b8) = '+R.a.toFixed(6));}
-            if(R.B!==undefined&&R.hyp!==undefined&&R.b===undefined){R.b=R.hyp*Math.cos(toRad(R.B));steps.push('b = c\u00b7cos(\u03b8) = '+R.b.toFixed(6));}
-            if(R.B!==undefined&&R.a!==undefined&&R.b===undefined){R.b=R.a/Math.tan(toRad(R.B));steps.push('b = a/tan(\u03b8) = '+R.b.toFixed(6));}
-            if(R.B!==undefined&&R.b!==undefined&&R.a===undefined){R.a=R.b*Math.tan(toRad(R.B));steps.push('a = b\u00b7tan(\u03b8) = '+R.a.toFixed(6));}
-            // Find angles from sides
-            // α: sin(α)=b/c, cos(α)=a/c, tan(α)=b/a
-            if(R.A===undefined&&R.b!==undefined&&R.hyp!==undefined){R.A=toDeg(Math.asin(R.b/R.hyp));steps.push('\u03b1 = arcsin(b/c) = '+R.A.toFixed(6));}
-            if(R.A===undefined&&R.a!==undefined&&R.hyp!==undefined){R.A=toDeg(Math.acos(R.a/R.hyp));steps.push('\u03b1 = arccos(a/c) = '+R.A.toFixed(6));}
-            if(R.A===undefined&&R.a!==undefined&&R.b!==undefined){R.A=toDeg(Math.atan2(R.b,R.a));steps.push('\u03b1 = arctan(b/a) = '+R.A.toFixed(6));}
-            // θ: sin(θ)=a/c, cos(θ)=b/c, tan(θ)=a/b
-            if(R.B===undefined&&R.a!==undefined&&R.hyp!==undefined){R.B=toDeg(Math.asin(R.a/R.hyp));steps.push('\u03b8 = arcsin(a/c) = '+R.B.toFixed(6));}
-            if(R.B===undefined&&R.b!==undefined&&R.hyp!==undefined){R.B=toDeg(Math.acos(R.b/R.hyp));steps.push('\u03b8 = arccos(b/c) = '+R.B.toFixed(6));}
-            if(R.B===undefined&&R.a!==undefined&&R.b!==undefined){R.B=toDeg(Math.atan2(R.a,R.b));steps.push('\u03b8 = arctan(a/b) = '+R.B.toFixed(6));}
-            // A + B = 90
-            if(R.A!==undefined&&R.B===undefined){R.B=(deg?90:Math.PI/2)-R.A;steps.push('\u03b8 = 90\u00b0\u2212\u03b1 = '+R.B.toFixed(6));}
-            if(R.B!==undefined&&R.A===undefined){R.A=(deg?90:Math.PI/2)-R.B;steps.push('\u03b1 = 90\u00b0\u2212\u03b8 = '+R.A.toFixed(6));}
+            if(R.a!==undefined&&R.b!==undefined&&R.hyp===undefined){R.hyp=Math.sqrt(R.a*R.a+R.b*R.b);steps.push('c = √(a²+b²) = '+R.hyp.toFixed(6));}
+            if(R.a!==undefined&&R.hyp!==undefined&&R.b===undefined){R.b=Math.sqrt(R.hyp*R.hyp-R.a*R.a);steps.push('b = √(c²−a²) = '+R.b.toFixed(6));}
+            if(R.b!==undefined&&R.hyp!==undefined&&R.a===undefined){R.a=Math.sqrt(R.hyp*R.hyp-R.b*R.b);steps.push('a = √(c²−b²) = '+R.a.toFixed(6));}
+            if(R.A!==undefined&&R.hyp!==undefined&&R.b===undefined){R.b=R.hyp*Math.sin(toRad(R.A));steps.push('b = c·sin(α) = '+R.b.toFixed(6));}
+            if(R.A!==undefined&&R.hyp!==undefined&&R.a===undefined){R.a=R.hyp*Math.cos(toRad(R.A));steps.push('a = c·cos(α) = '+R.a.toFixed(6));}
+            if(R.A!==undefined&&R.b!==undefined&&R.a===undefined){R.a=R.b/Math.tan(toRad(R.A));steps.push('a = b/tan(α) = '+R.a.toFixed(6));}
+            if(R.A!==undefined&&R.a!==undefined&&R.b===undefined){R.b=R.a*Math.tan(toRad(R.A));steps.push('b = a·tan(α) = '+R.b.toFixed(6));}
+            if(R.B!==undefined&&R.hyp!==undefined&&R.a===undefined){R.a=R.hyp*Math.sin(toRad(R.B));steps.push('a = c·sin(θ) = '+R.a.toFixed(6));}
+            if(R.B!==undefined&&R.hyp!==undefined&&R.b===undefined){R.b=R.hyp*Math.cos(toRad(R.B));steps.push('b = c·cos(θ) = '+R.b.toFixed(6));}
+            if(R.B!==undefined&&R.a!==undefined&&R.b===undefined){R.b=R.a/Math.tan(toRad(R.B));steps.push('b = a/tan(θ) = '+R.b.toFixed(6));}
+            if(R.B!==undefined&&R.b!==undefined&&R.a===undefined){R.a=R.b*Math.tan(toRad(R.B));steps.push('a = b·tan(θ) = '+R.a.toFixed(6));}
+            if(R.A===undefined&&R.b!==undefined&&R.hyp!==undefined){R.A=toDeg(Math.asin(R.b/R.hyp));steps.push('α = arcsin(b/c) = '+R.A.toFixed(6));}
+            if(R.A===undefined&&R.a!==undefined&&R.hyp!==undefined){R.A=toDeg(Math.acos(R.a/R.hyp));steps.push('α = arccos(a/c) = '+R.A.toFixed(6));}
+            if(R.A===undefined&&R.a!==undefined&&R.b!==undefined){R.A=toDeg(Math.atan2(R.b,R.a));steps.push('α = arctan(b/a) = '+R.A.toFixed(6));}
+            if(R.B===undefined&&R.a!==undefined&&R.hyp!==undefined){R.B=toDeg(Math.asin(R.a/R.hyp));steps.push('θ = arcsin(a/c) = '+R.B.toFixed(6));}
+            if(R.B===undefined&&R.b!==undefined&&R.hyp!==undefined){R.B=toDeg(Math.acos(R.b/R.hyp));steps.push('θ = arccos(b/c) = '+R.B.toFixed(6));}
+            if(R.B===undefined&&R.a!==undefined&&R.b!==undefined){R.B=toDeg(Math.atan2(R.a,R.b));steps.push('θ = arctan(a/b) = '+R.B.toFixed(6));}
+            if(R.A!==undefined&&R.B===undefined){R.B=(deg?90:Math.PI/2)-R.A;steps.push('θ = 90°−α = '+R.B.toFixed(6));}
+            if(R.B!==undefined&&R.A===undefined){R.A=(deg?90:Math.PI/2)-R.B;steps.push('α = 90°−θ = '+R.A.toFixed(6));}
         }
-        if(R.hyp!==undefined&&R.a!==undefined&&R.hyp<R.a-1e-8) return {error:'Hypotenuse must be \u2265 side a.'};
-        if(R.hyp!==undefined&&R.b!==undefined&&R.hyp<R.b-1e-8) return {error:'Hypotenuse must be \u2265 side b.'};
-
+        if(R.hyp!==undefined&&R.a!==undefined&&R.hyp<R.a-1e-8) return {error:'Hypotenuse must be ≥ side a.'};
+        if(R.hyp!==undefined&&R.b!==undefined&&R.hyp<R.b-1e-8) return {error:'Hypotenuse must be ≥ side b.'};
         var prec=getPrec(), aLbl=deg?'°':' rad';
-        function fv(v,isA){ return v!==undefined ? parseFloat(v.toFixed(prec))+(isA?aLbl:'') : '?'; }
+        function fv(v,isA){return v!==undefined?parseFloat(v.toFixed(prec))+(isA?aLbl:''):'?';}
         return {
-            result: R,
+            result:R,
             rows:[
-                {label:'a \u2014 opposite',  value:fv(R.a,false)},
-                {label:'b \u2014 adjacent',  value:fv(R.b,false)},
-                {label:'c \u2014 hypotenuse',value:fv(R.hyp,false)},
-                {label:'\u03b1 \u2014 angle A (top)', value:fv(R.A,true)},
-                {label:'\u03b8 \u2014 angle B (right)', value:fv(R.B,true)},
+                {label:'a — opposite',value:fv(R.a,false)},
+                {label:'b — adjacent',value:fv(R.b,false)},
+                {label:'c — hypotenuse',value:fv(R.hyp,false)},
+                {label:'α — angle A (top)',value:fv(R.A,true)},
+                {label:'θ — angle B (right)',value:fv(R.B,true)},
             ],
-            steps: steps
+            steps:steps
         };
     }
 
+    // ── Any-triangle solver (sine rule + cosine rule) ─────────────────
+    function _solveAny() {
+        var deg=getDeg();
+        var toRad=function(x){return deg?x*Math.PI/180:x;};
+        var toDeg=function(x){return deg?x*180/Math.PI:x;};
+        var full=deg?180:Math.PI;
+        var R={};
+        ['sa','sb','sc','AA','AB','AC'].forEach(function(k){
+            var el=get('trigIn_'+k); if(!el) return;
+            var v=parseFloat(el.value);
+            if(!isNaN(v)&&el.value.trim()!=='') R[k]=v;
+        });
+        var nKnown=Object.keys(R).length;
+        if(nKnown<3) return {error:'Enter at least 3 known values.'};
+        var hasSide=R.sa!==undefined||R.sb!==undefined||R.sc!==undefined;
+        if(!hasSide) return {error:'At least one side must be known.'};
+
+        var steps=[];
+        // Iterative passes: sine rule + cosine rule
+        for(var pass=0;pass<8;pass++){
+            // A+B+C = 180
+            if(R.AA!==undefined&&R.AB!==undefined&&R.AC===undefined){R.AC=full-R.AA-R.AB;steps.push('C = 180°−A−B = '+R.AC.toFixed(6));}
+            if(R.AA!==undefined&&R.AC!==undefined&&R.AB===undefined){R.AB=full-R.AA-R.AC;steps.push('B = 180°−A−C = '+R.AB.toFixed(6));}
+            if(R.AB!==undefined&&R.AC!==undefined&&R.AA===undefined){R.AA=full-R.AB-R.AC;steps.push('A = 180°−B−C = '+R.AA.toFixed(6));}
+            // Sine rule: a/sin(A) = b/sin(B) = c/sin(C)
+            if(R.sa!==undefined&&R.AA!==undefined&&R.AB!==undefined&&R.sb===undefined){R.sb=R.sa*Math.sin(toRad(R.AB))/Math.sin(toRad(R.AA));steps.push('b = a·sin(B)/sin(A) = '+R.sb.toFixed(6));}
+            if(R.sa!==undefined&&R.AA!==undefined&&R.AC!==undefined&&R.sc===undefined){R.sc=R.sa*Math.sin(toRad(R.AC))/Math.sin(toRad(R.AA));steps.push('c = a·sin(C)/sin(A) = '+R.sc.toFixed(6));}
+            if(R.sb!==undefined&&R.AB!==undefined&&R.AA!==undefined&&R.sa===undefined){R.sa=R.sb*Math.sin(toRad(R.AA))/Math.sin(toRad(R.AB));steps.push('a = b·sin(A)/sin(B) = '+R.sa.toFixed(6));}
+            if(R.sb!==undefined&&R.AB!==undefined&&R.AC!==undefined&&R.sc===undefined){R.sc=R.sb*Math.sin(toRad(R.AC))/Math.sin(toRad(R.AB));steps.push('c = b·sin(C)/sin(B) = '+R.sc.toFixed(6));}
+            if(R.sc!==undefined&&R.AC!==undefined&&R.AA!==undefined&&R.sa===undefined){R.sa=R.sc*Math.sin(toRad(R.AA))/Math.sin(toRad(R.AC));steps.push('a = c·sin(A)/sin(C) = '+R.sa.toFixed(6));}
+            if(R.sc!==undefined&&R.AC!==undefined&&R.AB!==undefined&&R.sb===undefined){R.sb=R.sc*Math.sin(toRad(R.AB))/Math.sin(toRad(R.AC));steps.push('b = c·sin(B)/sin(C) = '+R.sb.toFixed(6));}
+            // Sine rule: find angles
+            if(R.sa!==undefined&&R.AA===undefined&&R.sb!==undefined&&R.AB!==undefined){var v=R.sa*Math.sin(toRad(R.AB))/R.sb;if(Math.abs(v)<=1){R.AA=toDeg(Math.asin(v));steps.push('A = arcsin(a·sin(B)/b) = '+R.AA.toFixed(6));}}
+            if(R.sa!==undefined&&R.AA===undefined&&R.sc!==undefined&&R.AC!==undefined){var v=R.sa*Math.sin(toRad(R.AC))/R.sc;if(Math.abs(v)<=1){R.AA=toDeg(Math.asin(v));steps.push('A = arcsin(a·sin(C)/c) = '+R.AA.toFixed(6));}}
+            if(R.sb!==undefined&&R.AB===undefined&&R.sa!==undefined&&R.AA!==undefined){var v=R.sb*Math.sin(toRad(R.AA))/R.sa;if(Math.abs(v)<=1){R.AB=toDeg(Math.asin(v));steps.push('B = arcsin(b·sin(A)/a) = '+R.AB.toFixed(6));}}
+            if(R.sb!==undefined&&R.AB===undefined&&R.sc!==undefined&&R.AC!==undefined){var v=R.sb*Math.sin(toRad(R.AC))/R.sc;if(Math.abs(v)<=1){R.AB=toDeg(Math.asin(v));steps.push('B = arcsin(b·sin(C)/c) = '+R.AB.toFixed(6));}}
+            if(R.sc!==undefined&&R.AC===undefined&&R.sa!==undefined&&R.AA!==undefined){var v=R.sc*Math.sin(toRad(R.AA))/R.sa;if(Math.abs(v)<=1){R.AC=toDeg(Math.asin(v));steps.push('C = arcsin(c·sin(A)/a) = '+R.AC.toFixed(6));}}
+            if(R.sc!==undefined&&R.AC===undefined&&R.sb!==undefined&&R.AB!==undefined){var v=R.sc*Math.sin(toRad(R.AB))/R.sb;if(Math.abs(v)<=1){R.AC=toDeg(Math.asin(v));steps.push('C = arcsin(c·sin(B)/b) = '+R.AC.toFixed(6));}}
+            // Cosine rule: find sides
+            if(R.sb!==undefined&&R.sc!==undefined&&R.AA!==undefined&&R.sa===undefined){R.sa=Math.sqrt(R.sb*R.sb+R.sc*R.sc-2*R.sb*R.sc*Math.cos(toRad(R.AA)));steps.push('a = √(b²+c²−2bc·cos(A)) = '+R.sa.toFixed(6));}
+            if(R.sa!==undefined&&R.sc!==undefined&&R.AB!==undefined&&R.sb===undefined){R.sb=Math.sqrt(R.sa*R.sa+R.sc*R.sc-2*R.sa*R.sc*Math.cos(toRad(R.AB)));steps.push('b = √(a²+c²−2ac·cos(B)) = '+R.sb.toFixed(6));}
+            if(R.sa!==undefined&&R.sb!==undefined&&R.AC!==undefined&&R.sc===undefined){R.sc=Math.sqrt(R.sa*R.sa+R.sb*R.sb-2*R.sa*R.sb*Math.cos(toRad(R.AC)));steps.push('c = √(a²+b²−2ab·cos(C)) = '+R.sc.toFixed(6));}
+            // Cosine rule: find angles from 3 sides
+            if(R.sa!==undefined&&R.sb!==undefined&&R.sc!==undefined){
+                if(R.AA===undefined){R.AA=toDeg(Math.acos((R.sb*R.sb+R.sc*R.sc-R.sa*R.sa)/(2*R.sb*R.sc)));steps.push('A = arccos((b²+c²−a²)/2bc) = '+R.AA.toFixed(6));}
+                if(R.AB===undefined){R.AB=toDeg(Math.acos((R.sa*R.sa+R.sc*R.sc-R.sb*R.sb)/(2*R.sa*R.sc)));steps.push('B = arccos((a²+c²−b²)/2ac) = '+R.AB.toFixed(6));}
+                if(R.AC===undefined){R.AC=toDeg(Math.acos((R.sa*R.sa+R.sb*R.sb-R.sc*R.sc)/(2*R.sa*R.sb)));steps.push('C = arccos((a²+b²−c²)/2ab) = '+R.AC.toFixed(6));}
+            }
+        }
+        // Altitude from C to c (base AB): h = b·sin(A) = a·sin(B)
+        var altH = undefined;
+        if(R.sb!==undefined&&R.AA!==undefined) altH=R.sb*Math.sin(toRad(R.AA));
+        else if(R.sa!==undefined&&R.AB!==undefined) altH=R.sa*Math.sin(toRad(R.AB));
+        var area = (R.sa!==undefined&&R.sb!==undefined&&R.AC!==undefined) ? 0.5*R.sa*R.sb*Math.sin(toRad(R.AC)) : undefined;
+
+        var prec=getPrec(), aLbl=deg?'°':' rad';
+        function fv(v,isA){return v!==undefined?parseFloat(v.toFixed(prec))+(isA?aLbl:''):'?';}
+        var rows=[
+            {label:'a',value:fv(R.sa,false)},{label:'b',value:fv(R.sb,false)},{label:'c',value:fv(R.sc,false)},
+            {label:'A',value:fv(R.AA,true)},{label:'B',value:fv(R.AB,true)},{label:'C',value:fv(R.AC,true)},
+        ];
+        if(altH!==undefined) rows.push({label:'Altitude h (from C)',value:fv(altH,false)});
+        if(area!==undefined) rows.push({label:'Area',value:fv(area,false)+'²'});
+        return {result:R, rows:rows, steps:steps};
+    }
+
     function _trigDoSolve() {
-        var res = _solveTrig();
+        var res = _trigMode==='right' ? _solveRight() : _solveAny();
         var errEl=get('trigError'), resEl=get('trigResults');
         if(res.error){
             errEl.textContent=res.error; errEl.style.display='block';
             resEl.style.display='none';
-            _trigDrawDiagram(); return;
+            _trigDrawDiagram(null); return;
         }
         errEl.style.display='none';
-        // Write solved values back into inputs so diagram reflects them
-        var d=getDeg(), aLbl=d?'°':' rad';
-        ['a','b','hyp','A','B'].forEach(function(k){
-            var el=get('trigIn_'+k); if(!el) return;
-            if(el.value.trim()==='' && res.result[k]!==undefined) el.value=parseFloat(res.result[k].toFixed(getPrec()));
-        });
-        _trigDrawDiagram();
-        // Summary rows
-        var acc=getDark()?'#4a9eff':'#1a73e8', sub=getDark()?'#9090b0':'#666';
+        // Draw diagram with solved values — do NOT fill input boxes
+        _trigDrawDiagram(res.result);
         get('trigSummaryRows').innerHTML=res.rows.map(function(row){
             return '<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--gp-row-bdr);">'
                 +'<span style="color:var(--gp-subtext);">'+row.label+'</span>'
                 +'<strong style="color:var(--gp-accent);">'+row.value+'</strong></div>';
         }).join('');
-        get('trigSteps').textContent = res.steps.join('\n');
+        get('trigSteps').textContent=res.steps.join('\n');
         resEl.style.display='block';
     }
 
-    // Wire up trig panel buttons
-    get('trigCalcBtn').addEventListener('click', function(e){e.stopPropagation();_trigDoSolve();});
-    get('trigClearBtn').addEventListener('click', function(e){
-        e.stopPropagation();
-        ['a','b','hyp','A','B'].forEach(function(k){var el=get('trigIn_'+k);if(el)el.value='';});
+    function _trigClearAll() {
+        ['a','b','hyp','A','B','sa','sb','sc','AA','AB','AC'].forEach(function(k){
+            var el=get('trigIn_'+k); if(el) el.value='';
+        });
         get('trigResults').style.display='none';
         get('trigError').style.display='none';
-        _trigDrawDiagram();
-    });
-    get('toggleTrigBack').addEventListener('click', function(e){e.stopPropagation();exitTrigMode();});
+        _trigDrawDiagram(null);
+    }
+
+    // Wire buttons
+    get('trigModeRight').addEventListener('click',function(e){e.stopPropagation();_trigSetMode('right');});
+    get('trigModeAny').addEventListener('click',function(e){e.stopPropagation();_trigSetMode('any');});
+    get('trigCalcBtn').addEventListener('click',function(e){e.stopPropagation();_trigDoSolve();});
+    get('trigClearBtn').addEventListener('click',function(e){e.stopPropagation();_trigClearAll();});
+    get('toggleTrigBack').addEventListener('click',function(e){e.stopPropagation();exitTrigMode();});
 
     var _trigStepsVisible=false;
     get('trigToggleSteps').addEventListener('click',function(){
         _trigStepsVisible=!_trigStepsVisible;
         get('trigStepsWrap').style.display=_trigStepsVisible?'block':'none';
-        this.textContent=_trigStepsVisible?'Hide steps \u25b4':'Show steps \u25be';
+        this.textContent=_trigStepsVisible?'Hide steps ▴':'Show steps ▾';
     });
     get('trigCopyBtn').addEventListener('click',function(){
         var rows=get('trigSummaryRows'); if(!rows) return;
-        var text='Right Triangle Solution\n'+rows.innerText;
+        var text=(_trigMode==='right'?'Right':'Any')+' Triangle Solution\n'+rows.innerText;
         try{navigator.clipboard.writeText(text);}catch(e){}
-        var btn=this; btn.textContent='\u2713 Copied!';
+        var btn=this; btn.textContent='✓ Copied!';
         setTimeout(function(){btn.textContent='Copy';},1500);
     });
 
     // Enter key solves
-    ['a','b','hyp','A','B'].forEach(function(k){
+    ['a','b','hyp','A','B','sa','sb','sc','AA','AB','AC'].forEach(function(k){
         var el=get('trigIn_'+k);
         if(el) el.addEventListener('keydown',function(e){if(e.key==='Enter')_trigDoSolve();});
     });
