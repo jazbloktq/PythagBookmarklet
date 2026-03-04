@@ -542,6 +542,7 @@
     var currentUnit = initUnit;
     var currentOutputUnit = initOutputUnit;
     var lastCalcResult = null;
+    var lastCalcResult3D = null;
 
     get('prec').value          = initPrec;
     get('optSurd').checked     = initSurd;
@@ -912,9 +913,9 @@
         if(mode3D){ build3DShapeBtns(); buildGoalBtns3D(); buildMethodBtns3D(); }
         applyDiagramVisibility();
         applyResultVisibility();
-        // Redraw 3D diagram with new dark colours
-        if(mode3D && get('canvasBox3D') && get('canvasBox3D').style.display!=='none') {
-            calc3D();
+        // Redraw 3D diagram with new dark colours (use lastCalcResult3D to avoid recursion)
+        if(mode3D && get('canvasBox3D') && get('canvasBox3D').style.display!=='none' && lastCalcResult3D) {
+            draw3DShape(lastCalcResult3D.shape, lastCalcResult3D.dims);
         }
     }
 
@@ -3923,11 +3924,13 @@
         if(!getDiagram()) { cb3.style.display='none'; return; }
         cb3.style.display = 'block';
 
-        // Match canvas pixel size to its display size (like the triangle canvas)
-        cv.width  = cv.offsetWidth  || 340;
-        cv.height = cv.offsetHeight || 210;
-        var W = cv.width, H = cv.height;
-        var PAD = 28; // padding so labels don't clip
+        // Match canvas pixel size to its display size
+        // Must read offsetWidth AFTER setting display:block so it's non-zero
+        var W = cv.offsetWidth || 340;
+        var H = cv.offsetHeight || 210;
+        cv.width  = W;
+        cv.height = H;
+        var PAD = 28;
 
         var cx = cv.getContext('2d');
         cx.clearRect(0,0,W,H);
@@ -4303,6 +4306,7 @@
             get('surfaceAreaRes').innerText=(!isNaN(surfArea))?trimZ(surfArea.toFixed(pr)):'—';
             get('totalEdgesRes').innerText=(!isNaN(totalEdges))?trimZ(totalEdges.toFixed(pr)):'—';
             draw3DShape(current3DShape, dimsForDiag);
+            lastCalcResult3D = {shape: current3DShape, dims: dimsForDiag};
         }
     }
 
