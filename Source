@@ -1362,7 +1362,13 @@
             get('posToggle').style.display='none';
             get('res').style.display='none';
             var _ub=get('unitBox');if(_ub)_ub.style.display='none';
+            lastCalcResult = null;
             ctx.clearRect(0,0,canvas.width,canvas.height);
+            // Trigger auto-calc if values are present
+            clearTimeout(autoCalcTimer);
+            var _saHasVals = false;
+            fields.forEach(function(f){ var el=get(f.id); if(el && el.value.trim()) _saHasVals=true; });
+            if(_saHasVals && getAutoCalc()) autoCalcTimer = setTimeout(function(){ doCalculate(true); }, 50);
             return;
         }
 
@@ -1406,6 +1412,27 @@
         } else { tog.style.display='none'; }
         // Only reset result panel if there's nothing currently shown — don't wipe a live result
         if(!lastCalcResult) { get('res').style.display='none'; var _ub=get('unitBox');if(_ub)_ub.style.display='none'; ctx.clearRect(0,0,canvas.width,canvas.height); }
+        // If autoCalc is on and there are filled inputs, trigger an immediate silent recalculate to redraw
+        clearTimeout(autoCalcTimer);
+        var _hasVals = false;
+        cfg.inputs.forEach(function(_,i){ var el=get('v'+i); if(el && el.value.trim()) _hasVals=true; });
+        if(_hasVals) {
+            if(getAutoCalc()) {
+                autoCalcTimer = setTimeout(function(){ doCalculate(true); }, 50);
+            } else {
+                // Not auto-calc: just clear the old diagram since it's stale after method change
+                lastCalcResult = null;
+                get('res').style.display='none';
+                var _ub2=get('unitBox'); if(_ub2) _ub2.style.display='none';
+                ctx.clearRect(0,0,canvas.width,canvas.height);
+            }
+        } else {
+            // No values: clear stale result
+            lastCalcResult = null;
+            get('res').style.display='none';
+            var _ub3=get('unitBox'); if(_ub3) _ub3.style.display='none';
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+        }
     }
     function rebuildAll(){buildTriBtns();buildGoalBtns();buildMethodBtns();renderInputs();}
 
@@ -1645,7 +1672,7 @@
 
         lastCalcResult={res:angles[0],s1:drawS1,h:drawH,b:drawB,s2:drawS2,area:area,perim:perim,anglesForCanvas:angFC,isExt:false,goal:'angle',workingUnit:workingUnit,resOut:angles[0],effOutUnit:'none'};
         drawTri(drawS1,drawH,drawB,drawS2,false,angFC,'angle');
-        applyDark(); applyDiagramVisibility(); applyResultVisibility();
+        applyDiagramVisibility(); applyResultVisibility();
     }
 
     // ── doShowCircles: display inradius + circumradius prominently ────────────
@@ -1700,7 +1727,7 @@
         lastCalcResult={res:inR,s1:drawS1,h:drawH,b:drawB,s2:drawS2,area:area,perim:perim,anglesForCanvas:angFC,isExt:false,goal:'circles',workingUnit:workingUnit,resOut:inROut,effOutUnit:effOU,circleData:{inR:inROut,circumR:circumROut}};
         drawTri(drawS1,drawH,drawB,drawS2,false,angFC,'circles');
         drawCirclesOnDiag(s1,h,b,s2,inR,circumR);
-        applyDark(); applyDiagramVisibility(); applyResultVisibility();
+        applyDiagramVisibility(); applyResultVisibility();
     }
 
     // ── drawCirclesOnDiag: draw incircle + circumcircle on canvas ────────────
@@ -2087,7 +2114,7 @@
             if(currentTri==='right') drawHP=s1;
             lastCalcResult={res:res,s1:drawS1P,h:drawHP,b:drawBP,s2:drawS2P,area:area,perim:perim,anglesForCanvas:afP,isExt:false,goal:'perim',workingUnit:workingUnit,resOut:resOutP,effOutUnit:effOutUnitP};
             drawTri(drawS1P,drawHP,drawBP,drawS2P,false,afP,'perim');
-            applyDark(); applyDiagramVisibility(); applyResultVisibility();
+            applyDiagramVisibility(); applyResultVisibility();
             renderUnitConverter(resOutP);
             if(!silent){
                 var adv2P=getAdv();
@@ -2559,7 +2586,6 @@
         };
 
         drawTri(drawS1, drawH, drawB, drawS2, isExt, anglesForCanvas, currentGoal);
-        applyDark();
         applyDiagramVisibility();
         applyResultVisibility();
 
@@ -2587,7 +2613,7 @@
         }
     }
 
-    get('calc').onclick = function() { clearTimeout(autoCalcTimer); doCalculate(false); };
+    get('calc').addEventListener('click', function(e) { e.stopPropagation(); clearTimeout(autoCalcTimer); doCalculate(false); });
 
     function canvasToTriCoord(sx, sy) {
         return { x: (sx - diagOffX) / diagScale, y: (sy - diagOffY) / diagScale };
@@ -3849,13 +3875,10 @@
             drawTri(diagS1, diagH, diagB, isNaN(diagS2)?diagS1:diagS2, false, diagAngles, 'all');
             lastCalcResult={res:saArea,s1:diagS1,h:diagH,b:diagB,s2:isNaN(diagS2)?diagS1:diagS2,area:saArea,perim:saPerim,anglesForCanvas:diagAngles,isExt:false,goal:'all',workingUnit:'none',resOut:saArea,effOutUnit:'none'};
         }
-        applyDark(); applyDiagramVisibility(); applyResultVisibility();
+        applyDiagramVisibility(); applyResultVisibility();
     }
 
     get('setMenu').style.display = 'none';
-    get('histMenu').style.display = 'none';
-    get('miniCalc').style.display = 'none';
-    get('calcSettingsPanel').style.display = 'none';
 
     // ── 3D Shape Solver ────────────────────────────────────────────────────────
     var current3DShape = 'rect_prism';
