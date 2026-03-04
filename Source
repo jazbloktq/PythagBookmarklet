@@ -1406,13 +1406,6 @@
         } else { tog.style.display='none'; }
         // Only reset result panel if there's nothing currently shown — don't wipe a live result
         if(!lastCalcResult) { get('res').style.display='none'; var _ub=get('unitBox');if(_ub)_ub.style.display='none'; ctx.clearRect(0,0,canvas.width,canvas.height); }
-        // If autoCalc is on and there are filled inputs, trigger redraw for the new method
-        clearTimeout(autoCalcTimer);
-        var _hasVals = false;
-        cfg.inputs.forEach(function(_,i){ var el=get('v'+i); if(el && el.value.trim()) _hasVals=true; });
-        if(_hasVals && getAutoCalc()) {
-            autoCalcTimer = setTimeout(function(){ doCalculate(true); }, 50);
-        }
     }
     function rebuildAll(){buildTriBtns();buildGoalBtns();buildMethodBtns();renderInputs();}
 
@@ -1652,7 +1645,7 @@
 
         lastCalcResult={res:angles[0],s1:drawS1,h:drawH,b:drawB,s2:drawS2,area:area,perim:perim,anglesForCanvas:angFC,isExt:false,goal:'angle',workingUnit:workingUnit,resOut:angles[0],effOutUnit:'none'};
         drawTri(drawS1,drawH,drawB,drawS2,false,angFC,'angle');
-        applyDiagramVisibility(); applyResultVisibility();
+        applyDark(); applyDiagramVisibility(); applyResultVisibility();
     }
 
     // ── doShowCircles: display inradius + circumradius prominently ────────────
@@ -1707,7 +1700,7 @@
         lastCalcResult={res:inR,s1:drawS1,h:drawH,b:drawB,s2:drawS2,area:area,perim:perim,anglesForCanvas:angFC,isExt:false,goal:'circles',workingUnit:workingUnit,resOut:inROut,effOutUnit:effOU,circleData:{inR:inROut,circumR:circumROut}};
         drawTri(drawS1,drawH,drawB,drawS2,false,angFC,'circles');
         drawCirclesOnDiag(s1,h,b,s2,inR,circumR);
-        applyDiagramVisibility(); applyResultVisibility();
+        applyDark(); applyDiagramVisibility(); applyResultVisibility();
     }
 
     // ── drawCirclesOnDiag: draw incircle + circumcircle on canvas ────────────
@@ -2094,7 +2087,7 @@
             if(currentTri==='right') drawHP=s1;
             lastCalcResult={res:res,s1:drawS1P,h:drawHP,b:drawBP,s2:drawS2P,area:area,perim:perim,anglesForCanvas:afP,isExt:false,goal:'perim',workingUnit:workingUnit,resOut:resOutP,effOutUnit:effOutUnitP};
             drawTri(drawS1P,drawHP,drawBP,drawS2P,false,afP,'perim');
-            applyDiagramVisibility(); applyResultVisibility();
+            applyDark(); applyDiagramVisibility(); applyResultVisibility();
             renderUnitConverter(resOutP);
             if(!silent){
                 var adv2P=getAdv();
@@ -2566,6 +2559,7 @@
         };
 
         drawTri(drawS1, drawH, drawB, drawS2, isExt, anglesForCanvas, currentGoal);
+        applyDark();
         applyDiagramVisibility();
         applyResultVisibility();
 
@@ -2593,7 +2587,7 @@
         }
     }
 
-    get('calc').addEventListener('click', function(e) { e.stopPropagation(); clearTimeout(autoCalcTimer); doCalculate(false); });
+    get('calc').onclick = function() { clearTimeout(autoCalcTimer); doCalculate(false); };
 
     function canvasToTriCoord(sx, sy) {
         return { x: (sx - diagOffX) / diagScale, y: (sy - diagOffY) / diagScale };
@@ -3219,13 +3213,13 @@
                 ck_insertPendingCloses();
                 ck_tokens.push({ e:'**3', d:'\u00b3', kind:'pow' });
             }
-
         } else if(k === 'x\u02b8') {
             // Power operator: x^y — inserts ** ready for exponent input
             if(ck_lastIsNum()) {
                 ck_insertPendingCloses();
                 ck_tokens.push({ e:'**', d:'^', kind:'op' });
             }
+
 
         } else if(k === '.') {
             var lastNumTok = null;
@@ -3855,7 +3849,7 @@
             drawTri(diagS1, diagH, diagB, isNaN(diagS2)?diagS1:diagS2, false, diagAngles, 'all');
             lastCalcResult={res:saArea,s1:diagS1,h:diagH,b:diagB,s2:isNaN(diagS2)?diagS1:diagS2,area:saArea,perim:saPerim,anglesForCanvas:diagAngles,isExt:false,goal:'all',workingUnit:'none',resOut:saArea,effOutUnit:'none'};
         }
-        applyDiagramVisibility(); applyResultVisibility();
+        applyDark(); applyDiagramVisibility(); applyResultVisibility();
     }
 
     get('setMenu').style.display = 'none';
@@ -4460,6 +4454,7 @@
         get('res3D').style.display='none';
         var cb3=get('canvasBox3D');if(cb3)cb3.style.display='none';
     });
+
 
     // ── draw3DShape canvas size fix ────────────────────────────────────────────
     // (offsetWidth returns 0 if element was hidden; show first, then read size)
