@@ -4990,6 +4990,11 @@
         var sub  = bw ? '#444'    : (d ? '#9090b0' : '#666');
         ctx2.fillStyle = bg; ctx2.fillRect(0, 0, W, H);
 
+        // Vertices: right-angle at bottom-LEFT (ox,oy), bottom-RIGHT (bx,by), top-LEFT (tx,ty)
+        // a = opposite = vertical left side (ox,oy)→(tx,ty)
+        // b = adjacent = horizontal bottom  (ox,oy)→(bx,by)
+        // α is at top-left  (tx,ty) — between hypotenuse and side a, opposite to b
+        // θ is at bottom-right (bx,by) — between hypotenuse and side b, opposite to a
         var ox=52, oy=H-36, bx=W-36, by=H-36, tx=52, ty=32;
 
         // right-angle marker
@@ -5001,12 +5006,17 @@
         ctx2.strokeStyle=acc; ctx2.lineWidth=2.2;
         ctx2.beginPath(); ctx2.moveTo(ox,oy); ctx2.lineTo(bx,by); ctx2.lineTo(tx,ty); ctx2.closePath(); ctx2.stroke();
 
-        // angle arc θ at bottom-right
+        // angle arc θ at bottom-right (bx,by): between directions to (ox,oy) and to (tx,ty)
+        var th_start = Math.atan2(oy-by, ox-bx); // direction toward bottom-left (ox,oy)
+        var th_end   = Math.atan2(ty-by, tx-bx); // direction toward top (tx,ty)
         ctx2.strokeStyle = bw?'#555':(d?'#f0a040':'#d97706'); ctx2.lineWidth=1.5;
-        ctx2.beginPath(); ctx2.arc(bx,by,22,Math.PI,Math.PI+Math.atan2(ty-by,tx-bx),false); ctx2.stroke();
-        // angle arc α at top
+        ctx2.beginPath(); ctx2.arc(bx,by,22,th_end,th_start,false); ctx2.stroke();
+
+        // angle arc α at top-left (tx,ty): between directions to (ox,oy) and to (bx,by)
+        var al_start = Math.atan2(oy-ty, ox-tx); // direction toward bottom-left (ox,oy) = straight down
+        var al_end   = Math.atan2(by-ty, bx-tx); // direction toward bottom-right (bx,by)
         ctx2.strokeStyle = bw?'#888':(d?'#60c060':'#22a05a'); ctx2.lineWidth=1.5;
-        ctx2.beginPath(); ctx2.arc(tx,ty,20,Math.PI/2,Math.PI/2+Math.atan2(by-ty,bx-tx),false); ctx2.stroke();
+        ctx2.beginPath(); ctx2.arc(tx,ty,20,al_start,al_end,false); ctx2.stroke();
 
         var prec = getPrec();
         var deg = getDeg();
@@ -5029,8 +5039,8 @@
         ctx2.fillText('b = '+fmtV('b',false),(ox+bx)/2,oy+15);
         // angle labels
         ctx2.font='11px system-ui,sans-serif';
-        ctx2.fillStyle=bw?'#555':(d?'#f0a040':'#d97706'); ctx2.fillText('\u03b8='+fmtV('B',true),bx-34,by-26);
-        ctx2.fillStyle=bw?'#888':(d?'#60c060':'#22a05a'); ctx2.fillText('\u03b1='+fmtV('A',true),tx+30,ty+24);
+        ctx2.fillStyle=bw?'#555':(d?'#f0a040':'#d97706'); ctx2.fillText('\u03b8='+fmtV('B',true),bx-36,by-28);
+        ctx2.fillStyle=bw?'#888':(d?'#60c060':'#22a05a'); ctx2.fillText('\u03b1='+fmtV('A',true),tx+32,ty+22);
         ctx2.fillStyle=sub; ctx2.font='10px system-ui,sans-serif'; ctx2.fillText('90°',ox+24,oy-14);
     }
 
@@ -5046,25 +5056,36 @@
         });
         if(Object.keys(R).length < 2) return {error:'Enter at least 2 known values.'};
 
+        // Layout: right-angle at bottom-left
+        // a = opposite (vertical), b = adjacent (horizontal)
+        // α (angle A) at top-left  — opposite to b, adjacent to a  → sin(α)=b/c, cos(α)=a/c, tan(α)=b/a
+        // θ (angle B) at bottom-right — opposite to a, adjacent to b → sin(θ)=a/c, cos(θ)=b/c, tan(θ)=a/b
         var steps=[];
         for(var pass=0;pass<6;pass++){
+            // Pythagoras
             if(R.a!==undefined&&R.b!==undefined&&R.hyp===undefined){R.hyp=Math.sqrt(R.a*R.a+R.b*R.b);steps.push('c = \u221a(a\u00b2+b\u00b2) = '+R.hyp.toFixed(6));}
             if(R.a!==undefined&&R.hyp!==undefined&&R.b===undefined){R.b=Math.sqrt(R.hyp*R.hyp-R.a*R.a);steps.push('b = \u221a(c\u00b2\u2212a\u00b2) = '+R.b.toFixed(6));}
             if(R.b!==undefined&&R.hyp!==undefined&&R.a===undefined){R.a=Math.sqrt(R.hyp*R.hyp-R.b*R.b);steps.push('a = \u221a(c\u00b2\u2212b\u00b2) = '+R.a.toFixed(6));}
-            if(R.A!==undefined&&R.hyp!==undefined&&R.a===undefined){R.a=R.hyp*Math.sin(toRad(R.A));steps.push('a = c\u00b7sin(\u03b1) = '+R.a.toFixed(6));}
-            if(R.A!==undefined&&R.hyp!==undefined&&R.b===undefined){R.b=R.hyp*Math.cos(toRad(R.A));steps.push('b = c\u00b7cos(\u03b1) = '+R.b.toFixed(6));}
-            if(R.A!==undefined&&R.b!==undefined&&R.a===undefined){R.a=R.b*Math.tan(toRad(R.A));steps.push('a = b\u00b7tan(\u03b1) = '+R.a.toFixed(6));}
-            if(R.A!==undefined&&R.a!==undefined&&R.b===undefined){R.b=R.a/Math.tan(toRad(R.A));steps.push('b = a/tan(\u03b1) = '+R.b.toFixed(6));}
-            if(R.B!==undefined&&R.hyp!==undefined&&R.b===undefined){R.b=R.hyp*Math.sin(toRad(R.B));steps.push('b = c\u00b7sin(\u03b8) = '+R.b.toFixed(6));}
-            if(R.B!==undefined&&R.hyp!==undefined&&R.a===undefined){R.a=R.hyp*Math.cos(toRad(R.B));steps.push('a = c\u00b7cos(\u03b8) = '+R.a.toFixed(6));}
-            if(R.B!==undefined&&R.b!==undefined&&R.a===undefined){R.a=R.b/Math.tan(toRad(R.B));steps.push('a = b/tan(\u03b8) = '+R.a.toFixed(6));}
-            if(R.B!==undefined&&R.a!==undefined&&R.b===undefined){R.b=R.a*Math.tan(toRad(R.B));steps.push('b = a\u00b7tan(\u03b8) = '+R.b.toFixed(6));}
-            if(R.A===undefined&&R.a!==undefined&&R.hyp!==undefined){R.A=toDeg(Math.asin(R.a/R.hyp));steps.push('\u03b1 = arcsin(a/c) = '+R.A.toFixed(6));}
-            if(R.A===undefined&&R.b!==undefined&&R.hyp!==undefined){R.A=toDeg(Math.acos(R.b/R.hyp));steps.push('\u03b1 = arccos(b/c) = '+R.A.toFixed(6));}
-            if(R.A===undefined&&R.a!==undefined&&R.b!==undefined){R.A=toDeg(Math.atan2(R.a,R.b));steps.push('\u03b1 = arctan(a/b) = '+R.A.toFixed(6));}
-            if(R.B===undefined&&R.b!==undefined&&R.hyp!==undefined){R.B=toDeg(Math.asin(R.b/R.hyp));steps.push('\u03b8 = arcsin(b/c) = '+R.B.toFixed(6));}
-            if(R.B===undefined&&R.a!==undefined&&R.hyp!==undefined){R.B=toDeg(Math.acos(R.a/R.hyp));steps.push('\u03b8 = arccos(a/c) = '+R.B.toFixed(6));}
-            if(R.B===undefined&&R.a!==undefined&&R.b!==undefined){R.B=toDeg(Math.atan2(R.b,R.a));steps.push('\u03b8 = arctan(b/a) = '+R.B.toFixed(6));}
+            // α (angle A): sin(α)=b/c, cos(α)=a/c, tan(α)=b/a
+            if(R.A!==undefined&&R.hyp!==undefined&&R.b===undefined){R.b=R.hyp*Math.sin(toRad(R.A));steps.push('b = c\u00b7sin(\u03b1) = '+R.b.toFixed(6));}
+            if(R.A!==undefined&&R.hyp!==undefined&&R.a===undefined){R.a=R.hyp*Math.cos(toRad(R.A));steps.push('a = c\u00b7cos(\u03b1) = '+R.a.toFixed(6));}
+            if(R.A!==undefined&&R.b!==undefined&&R.a===undefined){R.a=R.b/Math.tan(toRad(R.A));steps.push('a = b/tan(\u03b1) = '+R.a.toFixed(6));}
+            if(R.A!==undefined&&R.a!==undefined&&R.b===undefined){R.b=R.a*Math.tan(toRad(R.A));steps.push('b = a\u00b7tan(\u03b1) = '+R.b.toFixed(6));}
+            // θ (angle B): sin(θ)=a/c, cos(θ)=b/c, tan(θ)=a/b
+            if(R.B!==undefined&&R.hyp!==undefined&&R.a===undefined){R.a=R.hyp*Math.sin(toRad(R.B));steps.push('a = c\u00b7sin(\u03b8) = '+R.a.toFixed(6));}
+            if(R.B!==undefined&&R.hyp!==undefined&&R.b===undefined){R.b=R.hyp*Math.cos(toRad(R.B));steps.push('b = c\u00b7cos(\u03b8) = '+R.b.toFixed(6));}
+            if(R.B!==undefined&&R.a!==undefined&&R.b===undefined){R.b=R.a/Math.tan(toRad(R.B));steps.push('b = a/tan(\u03b8) = '+R.b.toFixed(6));}
+            if(R.B!==undefined&&R.b!==undefined&&R.a===undefined){R.a=R.b*Math.tan(toRad(R.B));steps.push('a = b\u00b7tan(\u03b8) = '+R.a.toFixed(6));}
+            // Find angles from sides
+            // α: sin(α)=b/c, cos(α)=a/c, tan(α)=b/a
+            if(R.A===undefined&&R.b!==undefined&&R.hyp!==undefined){R.A=toDeg(Math.asin(R.b/R.hyp));steps.push('\u03b1 = arcsin(b/c) = '+R.A.toFixed(6));}
+            if(R.A===undefined&&R.a!==undefined&&R.hyp!==undefined){R.A=toDeg(Math.acos(R.a/R.hyp));steps.push('\u03b1 = arccos(a/c) = '+R.A.toFixed(6));}
+            if(R.A===undefined&&R.a!==undefined&&R.b!==undefined){R.A=toDeg(Math.atan2(R.b,R.a));steps.push('\u03b1 = arctan(b/a) = '+R.A.toFixed(6));}
+            // θ: sin(θ)=a/c, cos(θ)=b/c, tan(θ)=a/b
+            if(R.B===undefined&&R.a!==undefined&&R.hyp!==undefined){R.B=toDeg(Math.asin(R.a/R.hyp));steps.push('\u03b8 = arcsin(a/c) = '+R.B.toFixed(6));}
+            if(R.B===undefined&&R.b!==undefined&&R.hyp!==undefined){R.B=toDeg(Math.acos(R.b/R.hyp));steps.push('\u03b8 = arccos(b/c) = '+R.B.toFixed(6));}
+            if(R.B===undefined&&R.a!==undefined&&R.b!==undefined){R.B=toDeg(Math.atan2(R.a,R.b));steps.push('\u03b8 = arctan(a/b) = '+R.B.toFixed(6));}
+            // A + B = 90
             if(R.A!==undefined&&R.B===undefined){R.B=(deg?90:Math.PI/2)-R.A;steps.push('\u03b8 = 90\u00b0\u2212\u03b1 = '+R.B.toFixed(6));}
             if(R.B!==undefined&&R.A===undefined){R.A=(deg?90:Math.PI/2)-R.B;steps.push('\u03b1 = 90\u00b0\u2212\u03b8 = '+R.A.toFixed(6));}
         }
@@ -5079,8 +5100,8 @@
                 {label:'a \u2014 opposite',  value:fv(R.a,false)},
                 {label:'b \u2014 adjacent',  value:fv(R.b,false)},
                 {label:'c \u2014 hypotenuse',value:fv(R.hyp,false)},
-                {label:'\u03b1 \u2014 angle A', value:fv(R.A,true)},
-                {label:'\u03b8 \u2014 angle B', value:fv(R.B,true)},
+                {label:'\u03b1 \u2014 angle A (top)', value:fv(R.A,true)},
+                {label:'\u03b8 \u2014 angle B (right)', value:fv(R.B,true)},
             ],
             steps: steps
         };
