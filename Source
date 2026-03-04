@@ -260,6 +260,13 @@
         '  background: var(--gp-res-bg) !important; border-color: var(--gp-code-bdr) !important;',
         '}',
         '#geo-ultimate-vscroll .gp-sep { background: var(--gp-sep) !important; }',
+        '#geo-ultimate-vscroll .gp-pill-btn { background: var(--gp-tag-bg) !important; color: var(--gp-tag-txt) !important; }',
+        '#geo-ultimate-vscroll .gp-accent-txt { color: var(--gp-accent) !important; }',
+        '#geo-ultimate-vscroll #calc3D { background: var(--gp-accent) !important; }',
+        '#geo-ultimate-vscroll #res3D { border-color: var(--gp-res-bdr) !important; }',
+        '#geo-ultimate-vscroll .gp-res-bdr-top { border-top-color: var(--gp-res-bdr) !important; }',
+        '#geo-ultimate-vscroll #panel3D .gp-card { background: var(--gp-card-bg) !important; color: var(--gp-text) !important; }',
+        '#geo-ultimate-vscroll #surfaceAreaRes, #geo-ultimate-vscroll #totalEdgesRes { color: var(--gp-text) !important; }',
 
         '#geo-ultimate-vscroll.geo-dark #uiBody::-webkit-scrollbar,',
         '#geo-ultimate-vscroll.geo-dark #panel3D::-webkit-scrollbar,',
@@ -351,27 +358,27 @@
         '</div>',
         '<div id="panel3D" style="display:none;position:absolute;top:50px;left:0;right:0;bottom:0;overflow-y:auto;overflow-x:hidden;padding:16px;box-sizing:border-box;z-index:10001;">',
             '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">',
-              '<div style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;">3D SHAPE TYPE:</div>',
-              '<button id="toggle3DBack" style="padding:3px 9px;border:none;border-radius:5px;background:#e8f0fe;color:#1a73e8;font-size:10px;font-weight:700;cursor:pointer;">&#9664; Triangles</button>',
+              '<div class="gp-label" style="font-size:10px;font-weight:700;letter-spacing:0.8px;">3D SHAPE TYPE:</div>',
+              '<button id="toggle3DBack" class="gp-pill-btn" style="padding:3px 9px;border:none;border-radius:5px;font-size:10px;font-weight:700;cursor:pointer;">&#9664; Triangles</button>',
             '</div>',
             '<div id="shapeBtns3D" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px;"></div>',
-            '<div style="margin-bottom:14px;"><div style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;margin-bottom:7px;">FIND:</div><div id="goalBtns3D" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;"></div></div>',
-            '<div id="methodSection3D" style="margin-bottom:14px;display:none;"><div style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;margin-bottom:7px;">METHOD:</div><div id="methodBtns3D" style="display:flex;flex-direction:column;gap:5px;"></div></div>',
-            '<div id="canvasBox3D" style="position:relative;width:100%;margin-bottom:14px;border:1px solid #eee;border-radius:8px;overflow:hidden;background:#fafafa;display:none;">',
+            '<div style="margin-bottom:14px;"><div class="gp-label" style="font-size:10px;font-weight:700;letter-spacing:0.8px;margin-bottom:7px;">FIND:</div><div id="goalBtns3D" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;"></div></div>',
+            '<div id="methodSection3D" style="margin-bottom:14px;display:none;"><div class="gp-label" style="font-size:10px;font-weight:700;letter-spacing:0.8px;margin-bottom:7px;">METHOD:</div><div id="methodBtns3D" style="display:flex;flex-direction:column;gap:5px;"></div></div>',
+            '<div id="canvasBox3D" style="position:relative;width:100%;margin-bottom:14px;border:1px solid;border-radius:8px;overflow:hidden;display:none;">',
               '<canvas id="canvas3D" width="340" height="200" style="width:100%;display:block;"></canvas>',
-              '<button id="dlBtn3D" style="position:absolute;bottom:7px;right:7px;z-index:2;background:rgba(255,255,255,0.92);border:1px solid #ddd;padding:4px 9px;border-radius:4px;font-size:10px;cursor:pointer;font-weight:600;color:#555;">Save PNG</button>',
+              '<button id="dlBtn3D" style="position:absolute;bottom:7px;right:7px;z-index:2;padding:4px 9px;border-radius:4px;font-size:10px;cursor:pointer;font-weight:600;border:1px solid;">Save PNG</button>',
             '</div>',
             '<div id="inputs3D" style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px;"></div>',
             '<div style="display:flex;gap:8px;margin-bottom:14px;">',
-              '<button id="calc3D" style="flex:2;padding:11px;background:#1a73e8;color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px;">Calculate</button>',
-              '<button id="clear3D" style="flex:1;padding:11px;background:#f1f3f4;border:none;border-radius:8px;cursor:pointer;font-size:13px;color:#555;">Clear</button>',
+              '<button id="calc3D" style="flex:2;padding:11px;color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px;">Calculate</button>',
+              '<button id="clear3D" style="flex:1;padding:11px;border:none;border-radius:8px;cursor:pointer;font-size:13px;">Clear</button>',
             '</div>',
-            '<div id="res3D" style="padding:14px;background:#f0f6ff;border-radius:10px;display:none;border:1px solid #c5d8f8;">',
-              '<div style="font-size:10px;font-weight:700;color:#1a73e8;letter-spacing:0.5px;margin-bottom:10px;">RESULTS</div>',
+            '<div id="res3D" style="padding:14px;border-radius:10px;display:none;border:1px solid;">',
+              '<div class="gp-accent-txt" style="font-size:10px;font-weight:700;letter-spacing:0.5px;margin-bottom:10px;">RESULTS</div>',
               '<div id="res3DRows" style="font-size:12px;"></div>',
-              '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;border-top:1px solid #c5d8f8;padding-top:10px;">',
-                '<div style="background:#fff;padding:8px;border-radius:6px;"><div style="color:#888;font-size:10px;font-weight:600;">SURFACE AREA</div><div id="surfaceAreaRes" style="font-weight:700;color:#222;font-size:14px;"></div></div>',
-                '<div style="background:#fff;padding:8px;border-radius:6px;"><div style="color:#888;font-size:10px;font-weight:600;">TOTAL EDGES</div><div id="totalEdgesRes" style="font-weight:700;color:#222;font-size:14px;"></div></div>',
+              '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;border-top:1px solid;padding-top:10px;" class="gp-res-bdr-top">',
+                '<div class="gp-card" style="padding:8px;border-radius:6px;"><div class="gp-label" style="font-size:10px;font-weight:600;">SURFACE AREA</div><div id="surfaceAreaRes" style="font-weight:700;font-size:14px;"></div></div>',
+                '<div class="gp-card" style="padding:8px;border-radius:6px;"><div class="gp-label" style="font-size:10px;font-weight:600;">TOTAL EDGES</div><div id="totalEdgesRes" style="font-weight:700;font-size:14px;"></div></div>',
               '</div>',
             '</div>',
           '</div>',
@@ -876,10 +883,8 @@
         var mch=get('miniCalcHeader'); if(mch) mch.style.background = d ? '#3a4f63' : '#1a73e8';
         // Primary action buttons (blue — can't be overridden by token alone)
         var calc=get('calc'); if(calc){ calc.style.background=d?'#1a5090':'#1a73e8'; calc.style.color='#fff'; }
-        var c3d=get('calc3D'); if(c3d){ c3d.style.background=d?'#1a5090':'#1a73e8'; c3d.style.color='#fff'; }
         // 3D toggle button (blue pill)
         var t3btn=get('toggle3DBtn'); if(t3btn){ t3btn.style.background=d?'#1e2a3e':'#e8f0fe'; t3btn.style.color=d?'#4a9eff':'#1a73e8'; }
-        var t3bk=get('toggle3DBack'); if(t3bk){ t3bk.style.background=d?'#1e2a3e':'#e8f0fe'; t3bk.style.color=d?'#4a9eff':'#1a73e8'; }
         // Lock type button
         var lt=get('lockTypeBtn'); if(lt){ lt.style.background=d?'rgba(30,30,46,0.9)':'rgba(255,255,255,0.92)'; lt.style.borderColor=d?'#444466':'#ddd'; }
         // Calculator keys
@@ -4304,8 +4309,6 @@
         var htb=get('headerTriBtn');
         if(htb){htb.innerHTML='&#9650;';htb.title='Back to triangles';htb.style.transform='scale(1.15)';htb.style.opacity='1';}
         var p3=get('panel3D');
-        var bg=getDark()?'#12192b':'#fff';
-        p3.style.background=bg;
         p3.style.display='block';
         build3DShapeBtns(); buildGoalBtns3D(); buildMethodBtns3D(); render3DInputs();
         applyDiagramVisibility(); applyDark();
