@@ -4639,7 +4639,8 @@
     function _quizDrawDiagram(q) {
         var cv=document.getElementById('quizCanvas'); if(!cv) return;
         cv.style.display='block';
-        cv.width=cv.offsetWidth||280; cv.height=150;
+        var is3D=(q.qtype==='3d_vol_rect'||q.qtype==='3d_vol_cyl'||q.qtype==='3d_sa_sphere');
+        cv.width=cv.offsetWidth||280; cv.height=is3D?180:150;
         var W=cv.width,H=cv.height;
         var cx2=cv.getContext('2d');
         cx2.clearRect(0,0,W,H);
@@ -4682,56 +4683,105 @@
             }
         } else if(q.qtype==='3d_vol_rect') {
             var l=q.a,w=q.b,hv=q.c;
-            var sc2=Math.min(13,(W-90)/Math.max(l+w*0.45,1),(H-55)/Math.max(hv+w*0.25,1));
-            var ox=W/2-(l+w*0.4)*sc2/2,oy=H-26-hv*sc2;
-            function iX(lv,wv){return ox+lv*sc2+wv*0.44*sc2;}
-            function iY(lv,wv,hh){return oy+wv*(-0.22)*sc2-hh*sc2;}
-            cx2.strokeStyle=col; cx2.lineWidth=1.5;
-            var bf=[[0,0],[l,0],[l,w],[0,w]];
-            cx2.beginPath(); cx2.moveTo(iX(bf[0][0],bf[0][1]),iY(0,0,0));
-            for(var pi=1;pi<bf.length;pi++) cx2.lineTo(iX(bf[pi][0],bf[pi][1]),iY(0,0,0));
-            cx2.closePath(); cx2.stroke();
-            cx2.beginPath(); cx2.moveTo(iX(bf[0][0],bf[0][1]),iY(0,0,hv));
-            for(var pi2=1;pi2<bf.length;pi2++) cx2.lineTo(iX(bf[pi2][0],bf[pi2][1]),iY(0,0,hv));
-            cx2.closePath(); cx2.stroke();
-            bf.forEach(function(v){cx2.beginPath();cx2.moveTo(iX(v[0],v[1]),iY(v[0],v[1],0));cx2.lineTo(iX(v[0],v[1]),iY(v[0],v[1],hv));cx2.stroke();});
-            cx2.font='bold 11px system-ui,sans-serif'; cx2.textAlign='center';
-            cx2.fillStyle=lc;
-            cx2.fillText('l='+l,iX(l/2,0),iY(l/2,0,0)+15);
-            cx2.fillText('w='+w,iX(l,w/2)+22,iY(l,w/2,0)+2);
-            cx2.fillText('h='+hv,iX(0,0)-20,iY(0,0,hv/2)+2);
-            cx2.fillStyle=unk; cx2.font='bold 13px system-ui,sans-serif';
-            cx2.fillText('x=?',iX(l/2,w/2),iY(l/2,w/2,hv/2)+2);
+            var fill3=d?'rgba(30,50,90,0.75)':'rgba(220,235,255,0.75)';
+            var fillSide3=d?'rgba(15,25,55,0.75)':'rgba(190,210,245,0.6)';
+            var strokeDim3=d?'#334466':'#b0c8e8';
+            var PAD3=28;
+            var ISO_AX=0.866,ISO_AY=0.5,ISO_ZX=-0.866,ISO_ZY=0.5;
+            function iso3q(x,y,z){return[x*ISO_AX+z*ISO_ZX,x*ISO_AY+z*ISO_ZY-y];}
+            var verts3=[[0,0,0],[l,0,0],[l,0,w],[0,0,w],[0,hv,0],[l,hv,0],[l,hv,w],[0,hv,w]];
+            var raw3=verts3.map(function(v){return iso3q(v[0],v[1],v[2]);});
+            var mnX3=Infinity,mxX3=-Infinity,mnY3=Infinity,mxY3=-Infinity;
+            raw3.forEach(function(p){mnX3=Math.min(mnX3,p[0]);mxX3=Math.max(mxX3,p[0]);mnY3=Math.min(mnY3,p[1]);mxY3=Math.max(mxY3,p[1]);});
+            var spX3=mxX3-mnX3||1,spY3=mxY3-mnY3||1;
+            var sc3=Math.min((W-PAD3*2)/spX3,(H-PAD3*2)/spY3);
+            var oX3=PAD3+(W-PAD3*2-spX3*sc3)/2-mnX3*sc3;
+            var oY3=PAD3+(H-PAD3*2-spY3*sc3)/2-mnY3*sc3;
+            function pt3q(x,y,z){var p=iso3q(x,y,z);return[p[0]*sc3+oX3,p[1]*sc3+oY3];}
+            function seg3q(p1,p2,dim,dash){
+                cx2.beginPath();cx2.moveTo(p1[0],p1[1]);cx2.lineTo(p2[0],p2[1]);
+                cx2.strokeStyle=dim?strokeDim3:col;cx2.lineWidth=dim?1.2:2;
+                cx2.setLineDash(dash||(dim?[5,4]:[]));cx2.stroke();cx2.setLineDash([]);
+            }
+            function poly3q(pts,fs){
+                cx2.beginPath();cx2.moveTo(pts[0][0],pts[0][1]);
+                for(var i=1;i<pts.length;i++)cx2.lineTo(pts[i][0],pts[i][1]);
+                cx2.closePath();cx2.fillStyle=fs;cx2.fill();
+                cx2.strokeStyle=col;cx2.lineWidth=1.8;cx2.stroke();
+            }
+            function lbl3q(px,py,t,accent){
+                cx2.font='bold 10px system-ui,sans-serif';
+                var tw=cx2.measureText(t).width;
+                cx2.fillStyle=d?'rgba(8,12,28,0.82)':'rgba(255,255,255,0.88)';
+                cx2.beginPath();if(cx2.roundRect)cx2.roundRect(px-tw/2-3,py-7,tw+6,13,3);else cx2.rect(px-tw/2-3,py-7,tw+6,13);
+                cx2.fill();cx2.fillStyle=accent?unk:lc;cx2.fillText(t,px-tw/2,py+3);
+            }
+            var bp3=[pt3q(0,0,0),pt3q(l,0,0),pt3q(l,0,w),pt3q(0,0,w)];
+            var tp3=[pt3q(0,hv,0),pt3q(l,hv,0),pt3q(l,hv,w),pt3q(0,hv,w)];
+            seg3q(bp3[0],bp3[1],true);seg3q(bp3[0],bp3[3],true);seg3q(bp3[0],tp3[0],true);
+            poly3q([tp3[0],tp3[1],tp3[2],tp3[3]],fill3);
+            poly3q([bp3[3],bp3[2],tp3[2],tp3[3]],fillSide3);
+            poly3q([bp3[2],bp3[1],tp3[1],tp3[2]],fill3);
+            seg3q(bp3[1],bp3[2],false);seg3q(bp3[2],bp3[3],false);
+            seg3q(bp3[1],tp3[1],false);seg3q(bp3[2],tp3[2],false);seg3q(bp3[3],tp3[3],false);
+            for(var ti3=0;ti3<4;ti3++)seg3q(tp3[ti3],tp3[(ti3+1)%4],false);
+            var ml3=function(p1,p2,t,ox,oy,acc){lbl3q((p1[0]+p2[0])/2+(ox||0),(p1[1]+p2[1])/2+(oy||0),t,acc);};
+            ml3(bp3[2],bp3[3],'l='+l,0,12);ml3(bp3[1],bp3[2],'w='+w,10,6);ml3(bp3[2],tp3[2],'h='+hv,14,0);
+            lbl3q((tp3[0][0]+tp3[1][0]+tp3[2][0]+tp3[3][0])/4,(tp3[0][1]+tp3[1][1]+tp3[2][1]+tp3[3][1])/4,'x=?',true);
         } else if(q.qtype==='3d_sa_sphere') {
-            var r=q.a,rs=Math.min(W,H)/2-24;
-            cx2.strokeStyle=col; cx2.lineWidth=2;
-            cx2.beginPath(); cx2.arc(W/2,H/2,rs,0,2*Math.PI); cx2.stroke();
-            cx2.strokeStyle=bw?'#aaa':(d?'#334466':'#bad'); cx2.lineWidth=1;
+            var r=q.a,rs=Math.min(W,H)/2-20;
+            var fill3s=d?'rgba(30,50,90,0.45)':'rgba(220,235,255,0.55)';
+            cx2.beginPath(); cx2.arc(W/2,H/2,rs,0,2*Math.PI);
+            cx2.fillStyle=fill3s; cx2.fill();
+            cx2.strokeStyle=col; cx2.lineWidth=2; cx2.stroke();
+            cx2.strokeStyle=bw?'#aaa':(d?'#334466':'#9ab'); cx2.lineWidth=1;
             cx2.beginPath(); cx2.ellipse(W/2,H/2,rs,rs*0.28,0,0,2*Math.PI); cx2.stroke();
             cx2.strokeStyle=lc; cx2.lineWidth=1.5; cx2.setLineDash([3,3]);
             cx2.beginPath(); cx2.moveTo(W/2,H/2); cx2.lineTo(W/2+rs,H/2); cx2.stroke();
             cx2.setLineDash([]);
-            cx2.font='bold 11px system-ui,sans-serif'; cx2.textAlign='center';
-            cx2.fillStyle=lc; cx2.fillText('r='+r,W/2+rs*0.52,H/2-9);
-            cx2.fillStyle=unk; cx2.font='bold 13px system-ui,sans-serif';
-            cx2.fillText('x=?',W/2,H/2+rs*0.55+8);
+            cx2.font='bold 10px system-ui,sans-serif';
+            var rt='r='+r; var rtw=cx2.measureText(rt).width;
+            cx2.fillStyle=d?'rgba(8,12,28,0.82)':'rgba(255,255,255,0.88)';
+            cx2.fillRect(W/2+rs*0.42-rtw/2-3,H/2-18,rtw+6,13);
+            cx2.fillStyle=lc; cx2.fillText(rt,W/2+rs*0.42-rtw/2,H/2-9);
+            var xt='x=?'; var xtw=cx2.measureText(xt).width;
+            cx2.font='bold 11px system-ui,sans-serif';
+            cx2.fillStyle=d?'rgba(8,12,28,0.82)':'rgba(255,255,255,0.88)';
+            cx2.fillRect(W/2-xtw/2-3,H/2+rs*0.4-7,xtw+6,13);
+            cx2.fillStyle=unk; cx2.fillText(xt,W/2-xtw/2,H/2+rs*0.4+3);
         } else if(q.qtype==='3d_vol_cyl') {
             var r3=q.a,h3=q.b;
-            var sc3=Math.min(12,(W-80)/(r3*2+4),(H-46)/h3);
-            var rr=r3*sc3,hh3=h3*sc3,cxc=W/2,cyc=H/2;
-            cx2.strokeStyle=col; cx2.lineWidth=2;
-            cx2.strokeRect(cxc-rr,cyc-hh3/2,rr*2,hh3);
-            cx2.beginPath(); cx2.ellipse(cxc,cyc-hh3/2,rr,rr*0.28,0,0,2*Math.PI); cx2.stroke();
-            cx2.beginPath(); cx2.ellipse(cxc,cyc+hh3/2,rr,rr*0.28,0,Math.PI,false); cx2.stroke();
+            var PADc=22;
+            var maxRR=Math.min((W-PADc*2)/2,(H-PADc*2)/4);
+            var maxHH=H-PADc*2-maxRR*0.56;
+            var scC=Math.min(maxRR/Math.max(r3,1),maxHH/Math.max(h3,1));
+            var rr=r3*scC,hh3=h3*scC;
+            var cxc=W/2,cyc=H/2;
+            var fill3c=d?'rgba(30,50,90,0.45)':'rgba(220,235,255,0.55)';
+            var fillSideC=d?'rgba(15,25,55,0.55)':'rgba(190,210,245,0.7)';
+            // side rect
+            cx2.beginPath();cx2.rect(cxc-rr,cyc-hh3/2,rr*2,hh3);
+            cx2.fillStyle=fillSideC;cx2.fill();cx2.strokeStyle=col;cx2.lineWidth=2;cx2.stroke();
+            // bottom ellipse half (visible)
+            cx2.beginPath();cx2.ellipse(cxc,cyc+hh3/2,rr,rr*0.28,0,Math.PI,false);
+            cx2.fillStyle=fillSideC;cx2.fill();cx2.strokeStyle=col;cx2.lineWidth=2;cx2.stroke();
+            // top ellipse full
+            cx2.beginPath();cx2.ellipse(cxc,cyc-hh3/2,rr,rr*0.28,0,0,2*Math.PI);
+            cx2.fillStyle=fill3c;cx2.fill();cx2.strokeStyle=col;cx2.lineWidth=2;cx2.stroke();
+            // dashed radius
             cx2.strokeStyle=lc; cx2.lineWidth=1.2; cx2.setLineDash([3,3]);
             cx2.beginPath(); cx2.moveTo(cxc,cyc-hh3/2); cx2.lineTo(cxc+rr,cyc-hh3/2); cx2.stroke();
             cx2.setLineDash([]);
-            cx2.font='bold 11px system-ui,sans-serif'; cx2.textAlign='center';
-            cx2.fillStyle=lc;
-            cx2.fillText('r='+r3,cxc+rr/2,cyc-hh3/2-8);
-            cx2.fillText('h='+h3,cxc-rr-20,cyc+4);
-            cx2.fillStyle=unk; cx2.font='bold 13px system-ui,sans-serif';
-            cx2.fillText('x=?',cxc,cyc+6);
+            function lbl3c(px,py,t,accent){
+                cx2.font='bold 10px system-ui,sans-serif';
+                var tw=cx2.measureText(t).width;
+                cx2.fillStyle=d?'rgba(8,12,28,0.82)':'rgba(255,255,255,0.88)';
+                cx2.beginPath();if(cx2.roundRect)cx2.roundRect(px-tw/2-3,py-7,tw+6,13,3);else cx2.rect(px-tw/2-3,py-7,tw+6,13);
+                cx2.fill();cx2.fillStyle=accent?unk:lc;cx2.fillText(t,px-tw/2,py+3);
+            }
+            lbl3c(cxc+rr/2,cyc-hh3/2-10,'r='+r3,false);
+            lbl3c(cxc-rr-18,cyc,'h='+h3,false);
+            lbl3c(cxc,cyc,'x=?',true);
         }
     }
 
@@ -4752,7 +4802,7 @@
         qp.innerHTML=
             '<div style="font-size:10px;font-weight:700;color:'+sub+';letter-spacing:0.7px;margin-bottom:6px;">GIVEN: '+q.given+'</div>'
             +'<div style="font-size:13px;font-weight:700;color:'+txt+';margin-bottom:10px;">'+q.question+'</div>'
-            +'<canvas id="quizCanvas" style="width:100%;height:150px;border-radius:8px;display:block;margin-bottom:10px;"></canvas>'
+            +'<canvas id="quizCanvas" style="width:100%;height:180px;border-radius:8px;display:block;margin-bottom:10px;"></canvas>'
             +'<div style="display:flex;gap:8px;margin-bottom:8px;">'
             +'<input id="quizAnswer" type="number" step="any" placeholder="x = ?" style="flex:1;padding:8px 10px;border:1.5px solid '+bdr2+';border-radius:7px;font-size:14px;background:'+inpbg+';color:'+txt+';outline:none;">'
             +'<button id="quizSubmit" style="padding:8px 14px;background:'+acc+';color:#fff;border:none;border-radius:7px;font-weight:700;cursor:pointer;font-size:13px;">Check</button>'
