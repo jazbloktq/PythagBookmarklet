@@ -4896,12 +4896,8 @@
             if(hasVal) {
                 if(sb) sb.click();
             } else {
-                _quizState.answered=true; _quizState.total++; _quizState.streak=0;
-                var fb=document.getElementById('quizFeedback');
-                if(fb) fb.innerHTML='<span style="color:#c0392b;font-weight:700;">Skipped. x = '+parseFloat(q.answer.toPrecision(6))+'</span>';
-                if(document.getElementById('quizStreak')) document.getElementById('quizStreak').innerText=_quizState.streak;
-                if(document.getElementById('quizScore')) document.getElementById('quizScore').innerText=_quizState.correct+'/'+_quizState.total;
-                _updateNextLabel();
+                _quizState.total++; _quizState.streak=0;
+                _quizState.q=_quizGenQuestion(); _quizState.answered=false; _quizRenderQuestion();
             }
         });
     }
