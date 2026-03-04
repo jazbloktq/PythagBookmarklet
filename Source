@@ -1362,13 +1362,7 @@
             get('posToggle').style.display='none';
             get('res').style.display='none';
             var _ub=get('unitBox');if(_ub)_ub.style.display='none';
-            lastCalcResult = null;
             ctx.clearRect(0,0,canvas.width,canvas.height);
-            // Trigger auto-calc if values are present
-            clearTimeout(autoCalcTimer);
-            var _saHasVals = false;
-            fields.forEach(function(f){ var el=get(f.id); if(el && el.value.trim()) _saHasVals=true; });
-            if(_saHasVals && getAutoCalc()) autoCalcTimer = setTimeout(function(){ doCalculate(true); }, 50);
             return;
         }
 
@@ -1412,26 +1406,12 @@
         } else { tog.style.display='none'; }
         // Only reset result panel if there's nothing currently shown — don't wipe a live result
         if(!lastCalcResult) { get('res').style.display='none'; var _ub=get('unitBox');if(_ub)_ub.style.display='none'; ctx.clearRect(0,0,canvas.width,canvas.height); }
-        // If autoCalc is on and there are filled inputs, trigger an immediate silent recalculate to redraw
+        // If autoCalc is on and there are filled inputs, trigger redraw for the new method
         clearTimeout(autoCalcTimer);
         var _hasVals = false;
         cfg.inputs.forEach(function(_,i){ var el=get('v'+i); if(el && el.value.trim()) _hasVals=true; });
-        if(_hasVals) {
-            if(getAutoCalc()) {
-                autoCalcTimer = setTimeout(function(){ doCalculate(true); }, 50);
-            } else {
-                // Not auto-calc: just clear the old diagram since it's stale after method change
-                lastCalcResult = null;
-                get('res').style.display='none';
-                var _ub2=get('unitBox'); if(_ub2) _ub2.style.display='none';
-                ctx.clearRect(0,0,canvas.width,canvas.height);
-            }
-        } else {
-            // No values: clear stale result
-            lastCalcResult = null;
-            get('res').style.display='none';
-            var _ub3=get('unitBox'); if(_ub3) _ub3.style.display='none';
-            ctx.clearRect(0,0,canvas.width,canvas.height);
+        if(_hasVals && getAutoCalc()) {
+            autoCalcTimer = setTimeout(function(){ doCalculate(true); }, 50);
         }
     }
     function rebuildAll(){buildTriBtns();buildGoalBtns();buildMethodBtns();renderInputs();}
@@ -3879,6 +3859,9 @@
     }
 
     get('setMenu').style.display = 'none';
+    get('histMenu').style.display = 'none';
+    get('miniCalc').style.display = 'none';
+    get('calcSettingsPanel').style.display = 'none';
 
     // ── 3D Shape Solver ────────────────────────────────────────────────────────
     var current3DShape = 'rect_prism';
