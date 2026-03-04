@@ -144,7 +144,6 @@
         '}',
         '#geo-ultimate-vscroll input[type=number] { -moz-appearance: textfield; }',
 
-        /* ── Base (light) tokens ── */
         '#geo-ultimate-vscroll {',
         '  --gp-bg: #fff; --gp-body-bg: #fff; --gp-border: #ddd;',
         '  --gp-text: #222; --gp-subtext: #666; --gp-label: #888;',
@@ -166,7 +165,6 @@
         '  --gp-row-bdr: #eef2ff;',
         '}',
 
-        /* ── Dark tokens ── */
         '#geo-ultimate-vscroll.geo-dark {',
         '  --gp-bg: #1e1e2e; --gp-body-bg: #1e1e2e; --gp-border: #333350;',
         '  --gp-text: #e0e0f0; --gp-subtext: #9090b0; --gp-label: #7070a0;',
@@ -188,7 +186,6 @@
         '  --gp-row-bdr: #2a2a40;',
         '}',
 
-        /* ── Apply tokens to all elements ── */
         '#geo-ultimate-vscroll, #geo-ultimate-vscroll #uiBody, #geo-ultimate-vscroll #panel3D {',
         '  background: var(--gp-bg); color: var(--gp-text);',
         '}',
@@ -196,11 +193,9 @@
         '  background: var(--gp-input-bg) !important; border-color: var(--gp-input-bdr) !important;',
         '  color: var(--gp-text) !important;',
         '}',
-        /* Section labels */
         '#geo-ultimate-vscroll .secLabel, #geo-ultimate-vscroll .gp-label {',
         '  color: var(--gp-label) !important;',
         '}',
-        /* All plain buttons default */
         '#geo-ultimate-vscroll .gp-btn-base {',
         '  background: var(--gp-btn-base-bg) !important; color: var(--gp-btn-base-txt) !important;',
         '  border-color: var(--gp-btn-base-bdr) !important;',
@@ -217,7 +212,6 @@
         '  background: var(--gp-method-active-bg) !important; color: var(--gp-method-active-txt) !important;',
         '  border-color: var(--gp-method-active-bdr) !important;',
         '}',
-        /* Result panels */
         '#geo-ultimate-vscroll #res, #geo-ultimate-vscroll #res3D {',
         '  background: var(--gp-res-bg) !important; border-color: var(--gp-res-bdr) !important;',
         '}',
@@ -230,17 +224,14 @@
         '#geo-ultimate-vscroll .gp-result-val {',
         '  color: var(--gp-text) !important;',
         '}',
-        /* Row separators in 3D results */
         '#geo-ultimate-vscroll .gp-row {',
         '  border-bottom-color: var(--gp-row-bdr) !important;',
         '}',
         '#geo-ultimate-vscroll .gp-row-label { color: var(--gp-subtext) !important; font-weight:600; }',
         '#geo-ultimate-vscroll .gp-row-val   { color: var(--gp-text) !important;    font-weight:700; }',
-        /* Canvas boxes */
         '#geo-ultimate-vscroll #canvasBox, #geo-ultimate-vscroll #canvasBox3D {',
         '  background: var(--gp-canvas-bg) !important; border-color: var(--gp-canvas-bdr) !important;',
         '}',
-        /* Menus */
         '#geo-ultimate-vscroll #histMenu, #geo-ultimate-vscroll #setMenu,',
         '#geo-ultimate-vscroll #miniCalc {',
         '  background: var(--gp-menu-bg) !important; border-color: var(--gp-menu-bdr) !important;',
@@ -250,33 +241,26 @@
         '#geo-ultimate-vscroll #calcSettingsPanel label {',
         '  color: var(--gp-text) !important;',
         '}',
-        /* Steps / code block */
         '#geo-ultimate-vscroll #formulaText {',
         '  background: var(--gp-code-bg) !important; border-color: var(--gp-code-bdr) !important;',
         '  color: var(--gp-code-txt) !important;',
         '}',
-        /* Save PNG buttons */
         '#geo-ultimate-vscroll #dlBtn, #geo-ultimate-vscroll #dlBtn3D {',
         '  background: var(--gp-card-bg) !important; border-color: var(--gp-input-bdr) !important;',
         '  color: var(--gp-btn-txt) !important;',
         '}',
-        /* Clear / utility buttons */
         '#geo-ultimate-vscroll #clear, #geo-ultimate-vscroll #clear3D,',
         '#geo-ultimate-vscroll #closeHist {',
         '  background: var(--gp-btn-bg) !important; color: var(--gp-btn-txt) !important;',
         '}',
-        /* Pos toggle */
         '#geo-ultimate-vscroll #posToggle {',
         '  background: var(--gp-pos-bg) !important;',
         '}',
-        /* Unit box */
         '#geo-ultimate-vscroll #unitBox {',
         '  background: var(--gp-res-bg) !important; border-color: var(--gp-code-bdr) !important;',
         '}',
-        /* Separators in settings */
         '#geo-ultimate-vscroll .gp-sep { background: var(--gp-sep) !important; }',
 
-        /* Dark scrollbars */
         '#geo-ultimate-vscroll.geo-dark #uiBody::-webkit-scrollbar,',
         '#geo-ultimate-vscroll.geo-dark #panel3D::-webkit-scrollbar,',
         '#geo-ultimate-vscroll.geo-dark #setMenu ::-webkit-scrollbar,',
