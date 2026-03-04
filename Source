@@ -237,7 +237,8 @@
             '<div style="font-size:10px;font-weight:700;color:#1a73e8;letter-spacing:0.5px;margin-bottom:7px;">UNIT CONVERSIONS</div>',
             '<div id="unitRows" style="display:flex;flex-direction:column;gap:4px;font-size:12px;"></div>',
           '</div>',
-          '<div id="panel3D" style="display:none;">',
+        '</div>',
+        '<div id="panel3D" style="display:none;position:absolute;top:50px;left:0;right:0;bottom:0;overflow-y:auto;overflow-x:hidden;padding:16px;box-sizing:border-box;z-index:10001;">',
             '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">',
               '<div style="font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;">3D SHAPE TYPE:</div>',
               '<button id="toggle3DBack" style="padding:3px 9px;border:none;border-radius:5px;background:#e8f0fe;color:#1a73e8;font-size:10px;font-weight:700;cursor:pointer;">&#9664; Triangles</button>',
@@ -263,7 +264,6 @@
               '</div>',
             '</div>',
           '</div>',
-        '</div>',
         '<div id="histMenu" style="display:none;position:absolute;top:50px;left:16px;right:16px;background:#fff;border:1px solid #ddd;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.15);padding:14px;z-index:10005;font-size:12px;">',
           '<div style="font-weight:700;margin-bottom:8px;color:#333;">Recent Calculations</div>',
           '<div id="histList" style="color:#666;line-height:1.8;">No history yet.</div>',
@@ -800,6 +800,7 @@
         // 3D panel dark mode
         var p3d=get('panel3D');
         if(p3d){
+            p3d.style.background=d?'#12192b':'#fff';
             var r3d=get('res3D'); if(r3d){ r3d.style.background=dk('resBg'); r3d.style.borderColor=dk('resBdr'); }
             var sa3=get('surfaceAreaRes'), te3=get('totalEdgesRes');
             if(sa3) sa3.style.color=dk('text'); if(te3) te3.style.color=dk('text');
@@ -4245,17 +4246,10 @@
         mode3D=true;
         var htb=get('headerTriBtn');
         if(htb){htb.innerHTML='&#9650;';htb.title='Back to triangles';htb.style.transform='scale(1.15)';htb.style.opacity='1';}
-        var uiBody=get('uiBody');
-        _triModeWrappers=[];
-        var children=uiBody.children;
-        for(var ci=0;ci<children.length;ci++){
-            var ch=children[ci];
-            if(ch.id!=='panel3D'){_triModeWrappers.push({el:ch,prev:ch.style.display});ch.style.display='none';}
-        }
-        get('panel3D').style.display='block';
-        // Explicitly hide triangle-mode elements that might have been re-shown by JS
-        var _triHide=['methodSection','posToggle','unitContextBar','res','unitBox'];
-        _triHide.forEach(function(id){var el=get(id);if(el)el.style.display='none';});
+        var p3=get('panel3D');
+        var bg=getDark()?'#12192b':'#fff';
+        p3.style.background=bg;
+        p3.style.display='block';
         build3DShapeBtns(); buildGoalBtns3D(); buildMethodBtns3D(); render3DInputs();
         applyDiagramVisibility(); applyDark();
     }
@@ -4265,8 +4259,8 @@
         var htb=get('headerTriBtn');
         if(htb){htb.innerHTML='&#9651;';htb.title='Switch to 3D shapes';htb.style.transform='scale(1)';htb.style.opacity='0.9';}
         get('panel3D').style.display='none';
-        if(_triModeWrappers){_triModeWrappers.forEach(function(item){item.el.style.display=item.prev;});_triModeWrappers=null;}
         applyDiagramVisibility(); applyResultVisibility(); apply3DBtnVisibility(); applyDark();
+    }
     }
 
     get('toggle3DBtn').addEventListener('click', function(e){e.stopPropagation();enter3DMode();});
