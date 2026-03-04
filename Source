@@ -3257,8 +3257,8 @@
     document.addEventListener('keydown', function(e) {
         if(get('miniCalc').style.display === 'none') return;
         var active = document.activeElement;
-        if(active && active.closest && active.closest('#inputStack')) return;
-        if(active && active.id === 'prec') return;
+        // If the user is focused in ANY input/textarea, let them type normally
+        if(active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable)) return;
 
         var k = e.key;
 
@@ -4705,17 +4705,13 @@
             }
             var bpd=[pt3d(0,0,0),pt3d(ld,0,0),pt3d(ld,0,wd),pt3d(0,0,wd)];
             var tpd=[pt3d(0,hvd,0),pt3d(ld,hvd,0),pt3d(ld,hvd,wd),pt3d(0,hvd,wd)];
-            // hidden back edges dashed
             seg3d(bpd[0],bpd[1],true);seg3d(bpd[0],bpd[3],true);seg3d(bpd[0],tpd[0],true);
-            // shaded faces
             poly3d([tpd[0],tpd[1],tpd[2],tpd[3]],fill3d);
             poly3d([bpd[3],bpd[2],tpd[2],tpd[3]],fillSide3d);
             poly3d([bpd[2],bpd[1],tpd[1],tpd[2]],fill3d);
-            // visible edges
             seg3d(bpd[1],bpd[2],false);seg3d(bpd[2],bpd[3],false);
             seg3d(bpd[1],tpd[1],false);seg3d(bpd[2],tpd[2],false);seg3d(bpd[3],tpd[3],false);
             for(var tiid=0;tiid<4;tiid++)seg3d(tpd[tiid],tpd[(tiid+1)%4],false);
-            // space diagonal: front-bottom-right (l,0,0) to back-top-left (0,hv,w)
             var dA=pt3d(ld,0,0),dB=pt3d(0,hvd,wd);
             seg3d(dA,dB,false,unk,[7,4]);
             cx2.beginPath();cx2.arc(dA[0],dA[1],3,0,2*Math.PI);cx2.fillStyle=unk;cx2.fill();
@@ -4764,11 +4760,21 @@
         var nb=document.getElementById('quizNext');
         var hb=document.getElementById('quizHintBtn');
 
-        if(ai) ai.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();if(sb)sb.click();}});
+        // Update the Skip button label based on whether there's a value typed
+        function _updateNextLabel() {
+            if(!nb) return;
+            if(_quizState.answered) { nb.innerText='Next \u25b6'; return; }
+            nb.innerText = (ai && ai.value.trim()!=='') ? 'Check \u25b6' : 'Skip \u25b6';
+        }
+        if(ai) ai.addEventListener('input', _updateNextLabel);
+        _updateNextLabel();
+
+        if(ai) ai.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();nb&&nb.click();}});
         if(hb) hb.addEventListener('click',function(){
             var hbox=document.getElementById('quizHintBox');
             if(hbox) hbox.style.display=hbox.style.display==='none'?'block':'none';
         });
+        // Dedicated Check button (always checks, never skips)
         if(sb) sb.addEventListener('click',function(){
             if(_quizState.answered) return;
             var v=parseFloat(document.getElementById('quizAnswer').value);
@@ -4778,23 +4784,32 @@
             var ok=Math.abs(v-q.answer)<=tol;
             if(ok){_quizState.correct++;_quizState.streak++;}else{_quizState.streak=0;}
             document.getElementById('quizFeedback').innerHTML=ok
-                ?'<span style="color:#22a05a;font-weight:700;">✓ Correct! x = '+parseFloat(q.answer.toPrecision(6))+'</span>'
-                :'<span style="color:#c0392b;font-weight:700;">✗ Incorrect. x = '+parseFloat(q.answer.toPrecision(6))+'</span>';
+                ?'<span style="color:#22a05a;font-weight:700;">\u2713 Correct! x = '+parseFloat(q.answer.toPrecision(6))+'</span>'
+                :'<span style="color:#c0392b;font-weight:700;">\u2717 Incorrect. x = '+parseFloat(q.answer.toPrecision(6))+'</span>';
             if(document.getElementById('quizStreak')) document.getElementById('quizStreak').innerText=_quizState.streak;
             if(document.getElementById('quizScore')) document.getElementById('quizScore').innerText=_quizState.correct+'/'+_quizState.total;
-            if(nb) nb.innerText='Next ▶';
+            _updateNextLabel();
         });
+        // Skip/Check/Next combined button
         if(nb) nb.addEventListener('click',function(){
-            if(!_quizState.answered){
+            if(_quizState.answered) {
+                // Move to next question
+                _quizState.q=_quizGenQuestion(); _quizState.answered=false; _quizRenderQuestion();
+                return;
+            }
+            var hasVal = ai && ai.value.trim()!=='';
+            if(hasVal) {
+                // Act as Check
+                if(sb) sb.click();
+            } else {
+                // Act as Skip
                 _quizState.answered=true; _quizState.total++; _quizState.streak=0;
                 var fb=document.getElementById('quizFeedback');
                 if(fb) fb.innerHTML='<span style="color:#c0392b;font-weight:700;">Skipped. x = '+parseFloat(q.answer.toPrecision(6))+'</span>';
                 if(document.getElementById('quizStreak')) document.getElementById('quizStreak').innerText=_quizState.streak;
                 if(document.getElementById('quizScore')) document.getElementById('quizScore').innerText=_quizState.correct+'/'+_quizState.total;
-                if(nb) nb.innerText='Next ▶';
-                return;
+                _updateNextLabel();
             }
-            _quizState.q=_quizGenQuestion(); _quizState.answered=false; _quizRenderQuestion();
         });
     }
 
