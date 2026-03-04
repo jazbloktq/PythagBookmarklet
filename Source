@@ -176,7 +176,7 @@
     ui.style.cssText = 'position:fixed;top:20px;right:20px;width:380px;max-height:88vh;background:#fff;border:1px solid #ddd;border-radius:14px;z-index:10000;padding:0;font-family:system-ui,sans-serif;box-shadow:0 8px 32px rgba(0,0,0,0.18);color:#222;overflow:hidden;display:flex;flex-direction:column;box-sizing:border-box;';
     ui.innerHTML = [
         '<div id="uiHeader" style="padding:14px 18px;background:#1a73e8;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;border-radius:14px 14px 0 0;">',
-          '<h3 style="margin:0;font-size:15px;color:#fff;font-weight:700;letter-spacing:0.3px;">&#9651; Geometry Pro</h3>',
+          '<h3 style="margin:0;font-size:15px;color:#fff;font-weight:700;letter-spacing:0.3px;"><span id="headerTriBtn" title="Switch to 3D shapes" style="cursor:pointer;display:inline-block;transition:transform 0.2s;opacity:0.9;" onmouseover="this.style.opacity=\'1\';this.style.transform=\'scale(1.25)\'" onmouseout="this.style.opacity=\'0.9\';this.style.transform=\'scale(1)\'">&#9651;</span> Geometry Pro</h3>',
           '<div style="display:flex;gap:12px;align-items:center;">',
             '<span id="calcBtn"   title="Calculator" style="cursor:pointer;font-size:16px;opacity:0.9;">&#x1F5A9;</span>',
             '<span id="histBtn"   title="History" style="cursor:pointer;font-size:16px;opacity:0.9;">&#128337;</span>',
@@ -3840,6 +3840,8 @@
 
     function enter3DMode() {
         mode3D=true;
+        var htb=get('headerTriBtn');
+        if(htb){ htb.innerHTML='&#9650;'; htb.title='Back to triangles'; htb.style.transform='scale(1.15)'; htb.style.opacity='1'; }
         // Hide triangle UI
         ['triBtns','goalBtns','methodSection','posToggle','inputStack','canvasBox','res','unitBox'].forEach(function(id){
             var el=get(id); if(el) { el._prev3Ddisplay=el.style.display; el.style.display='none'; }
@@ -3855,6 +3857,8 @@
 
     function exit3DMode() {
         mode3D=false;
+        var htb=get('headerTriBtn');
+        if(htb){ htb.innerHTML='&#9651;'; htb.title='Switch to 3D shapes'; htb.style.transform='scale(1)'; htb.style.opacity='0.9'; }
         get('panel3D').style.display='none';
         var uiBody=get('uiBody');
         var sections=uiBody.querySelectorAll(':scope > div:not(#panel3D)');
@@ -3866,6 +3870,7 @@
 
     get('toggle3DBtn').addEventListener('click', function(e){ e.stopPropagation(); enter3DMode(); });
     get('toggle3DBack').addEventListener('click', function(e){ e.stopPropagation(); exit3DMode(); });
+    get('headerTriBtn').addEventListener('click', function(e){ e.stopPropagation(); if(mode3D) exit3DMode(); else enter3DMode(); });
     get('calc3D').addEventListener('click', function(e){ e.stopPropagation(); calc3D(); });
     get('clear3D').addEventListener('click', function(e){
         e.stopPropagation();
