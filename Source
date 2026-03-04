@@ -132,6 +132,9 @@
     var initCalcPin       = saved.calcPin       !== false;   // default true
     var initCalcInfer     = saved.calcInfer     !== false;   // default true
     var initShow3DBtn     = saved.show3DBtn     === true;    // default false
+    var initCalcResize    = saved.calcResize    === true;    // default false
+    var initFrameResize   = saved.frameResize   === true;    // default false
+    var initBW            = saved.bw            === true;    // default false
 
     var styleEl = document.getElementById('geo-ultimate-styles');
     if(styleEl) styleEl.remove();
@@ -184,6 +187,27 @@
         '  --gp-method-active-bg: #1e2e4e; --gp-method-active-txt: #4a9eff; --gp-method-active-bdr: #4a9eff;',
         '  --gp-method-base-bg: #2a2a3e; --gp-method-base-txt: #c0c0e0; --gp-method-base-bdr: #444466;',
         '  --gp-row-bdr: #2a2a40;',
+        '}',
+
+        '#geo-ultimate-vscroll.geo-bw {',
+        '  --gp-bg: #fff; --gp-body-bg: #fff; --gp-border: #000;',
+        '  --gp-text: #000; --gp-subtext: #333; --gp-label: #555;',
+        '  --gp-input-bg: #fff; --gp-input-bdr: #000;',
+        '  --gp-btn-bg: #fff; --gp-btn-txt: #000;',
+        '  --gp-res-bg: #f0f0f0; --gp-res-bdr: #000;',
+        '  --gp-card-bg: #fff;',
+        '  --gp-canvas-bg: #fff; --gp-canvas-bdr: #000;',
+        '  --gp-menu-bg: #fff; --gp-menu-bdr: #000;',
+        '  --gp-code-bg: #f0f0f0; --gp-code-bdr: #000; --gp-code-txt: #000;',
+        '  --gp-tag-bg: #e8e8e8; --gp-tag-txt: #000;',
+        '  --gp-pos-bg: #f0f0f0;',
+        '  --gp-sep: #000;',
+        '  --gp-accent: #000;',
+        '  --gp-btn-active-bg: #000; --gp-btn-active-txt: #fff; --gp-btn-active-bdr: #000;',
+        '  --gp-btn-base-bg: #fff; --gp-btn-base-txt: #000; --gp-btn-base-bdr: #000;',
+        '  --gp-method-active-bg: #000; --gp-method-active-txt: #fff; --gp-method-active-bdr: #000;',
+        '  --gp-method-base-bg: #fff; --gp-method-base-txt: #000; --gp-method-base-bdr: #000;',
+        '  --gp-row-bdr: #ccc;',
         '}',
 
         '#geo-ultimate-vscroll, #geo-ultimate-vscroll #uiBody, #geo-ultimate-vscroll #panel3D {',
@@ -438,6 +462,7 @@
             '<div id="setPanel-display" class="setPanel" style="display:none;">',
               '<div style="display:flex;flex-direction:column;gap:8px;">',
                 '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optDark"      style="accent-color:#1a73e8;width:14px;height:14px;flex-shrink:0;"> Dark mode</label>',
+                '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optBW"        style="accent-color:#000;width:14px;height:14px;flex-shrink:0;"> Black &amp; white mode</label>',
                 '<div style="height:1px;background:#eee;margin:2px 0;"></div>',
                 '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">',
                   '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optDiagram"   style="accent-color:#1a73e8;width:13px;height:13px;flex-shrink:0;"> Diagram</label>',
@@ -447,6 +472,12 @@
                 '</div>',
                 '<div style="height:1px;background:#eee;margin:2px 0;"></div>',
                 '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optShow3DBtn" style="accent-color:#1a73e8;width:14px;height:14px;flex-shrink:0;"> Show &#9656; 3D Shapes button <span style="font-size:10px;color:#aaa;margin-left:2px;">(use \u25b3 icon otherwise)</span></label>',
+                '<div style="height:1px;background:#eee;margin:2px 0;"></div>',
+                '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optCalcResize"  style="accent-color:#1a73e8;width:14px;height:14px;flex-shrink:0;"> Resizable calculator</label>',
+                '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optFrameResize" style="accent-color:#1a73e8;width:14px;height:14px;flex-shrink:0;"> Resizable main panel</label>',
+                '<div style="height:1px;background:#eee;margin:2px 0;"></div>',
+                '<button id="openFormulaRef" style="padding:6px 10px;border:1px solid #1a73e8;border-radius:7px;background:#e8f0fe;color:#1a73e8;font-size:12px;font-weight:700;cursor:pointer;text-align:left;">&#x1D453; Formula Reference</button>',
+                '<button id="openQuizMode"   style="padding:6px 10px;border:1px solid #888;border-radius:7px;background:#f1f3f4;color:#555;font-size:12px;font-weight:700;cursor:pointer;text-align:left;">&#x1F9E0; ??? <span style="font-size:10px;color:#aaa;">(secret)</span></button>',
               '</div>',
             '</div>',
 
@@ -503,9 +534,15 @@
             '<button class="ck" data-k=")"   style="padding:9px 4px;border:none;border-radius:7px;background:#e8f0fe;color:#1a73e8;font-weight:700;cursor:pointer;font-size:14px;">)</button>',
             '<button class="ck" data-k="\u232b" style="padding:9px 4px;border:none;border-radius:7px;background:#f1f3f4;color:#555;font-weight:700;cursor:pointer;font-size:14px;">\u232b</button>',
             '<button class="ck" data-k="\u221a"  style="padding:9px 4px;border:none;border-radius:7px;background:#e8f0fe;color:#1a73e8;font-weight:700;cursor:pointer;font-size:14px;">\u221a</button>',
+            '<button class="ck" data-k="sin" title="Sine" style="padding:9px 4px;border:none;border-radius:7px;background:#fef3e8;color:#d97706;font-weight:700;cursor:pointer;font-size:11px;">sin</button>',
+            '<button class="ck" data-k="cos" title="Cosine" style="padding:9px 4px;border:none;border-radius:7px;background:#fef3e8;color:#d97706;font-weight:700;cursor:pointer;font-size:11px;">cos</button>',
+            '<button class="ck" data-k="tan" title="Tangent" style="padding:9px 4px;border:none;border-radius:7px;background:#fef3e8;color:#d97706;font-weight:700;cursor:pointer;font-size:11px;">tan</button>',
+            '<button class="ck" data-k="asin" title="Inverse sine (arcsin)" style="padding:9px 4px;border:none;border-radius:7px;background:#fef3e8;color:#d97706;font-weight:700;cursor:pointer;font-size:9px;">sin\u207b\u00b9</button>',
+            '<button class="ck" data-k="acos" title="Inverse cosine (arccos)" style="padding:9px 4px;border:none;border-radius:7px;background:#fef3e8;color:#d97706;font-weight:700;cursor:pointer;font-size:9px;">cos\u207b\u00b9</button>',
             '<button class="ck" data-k="x\u00b2" title="Square  [Alt+2]" style="padding:9px 4px;border:none;border-radius:7px;background:#ede9fe;color:#7c3aed;font-weight:700;cursor:pointer;font-size:13px;">x\u00b2</button>',
             '<button class="ck" data-k="x\u00b3" title="Cube  [Alt+3]" style="padding:9px 4px;border:none;border-radius:7px;background:#ede9fe;color:#7c3aed;font-weight:700;cursor:pointer;font-size:13px;">x\u00b3</button>',
-            '<button class="ck" data-k="x\u02b8" title="Custom power  [^]" style="grid-column:span 3;padding:9px 4px;border:none;border-radius:7px;background:#ede9fe;color:#7c3aed;font-weight:700;cursor:pointer;font-size:13px;">x\u02b8 (power)</button>',
+            '<button class="ck" data-k="atan" title="Inverse tangent (arctan)" style="padding:9px 4px;border:none;border-radius:7px;background:#fef3e8;color:#d97706;font-weight:700;cursor:pointer;font-size:9px;">tan\u207b\u00b9</button>',
+            '<button class="ck" data-k="x\u02b8" title="Custom power  [^]" style="grid-column:span 2;padding:9px 4px;border:none;border-radius:7px;background:#ede9fe;color:#7c3aed;font-weight:700;cursor:pointer;font-size:13px;">x\u02b8 (power)</button>',
             '<button class="ck" data-k="7"   style="padding:9px 4px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">7</button>',
             '<button class="ck" data-k="8"   style="padding:9px 4px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">8</button>',
             '<button class="ck" data-k="9"   style="padding:9px 4px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">9</button>',
@@ -543,6 +580,8 @@
     var currentOutputUnit = initOutputUnit;
     var lastCalcResult = null;
     var lastCalcResult3D = null;
+    // Input memory: stores values by label name so they persist across method switches
+    var _inputMemory = {};
 
     get('prec').value          = initPrec;
     get('optSurd').checked     = initSurd;
@@ -561,12 +600,17 @@
     get('optColorCode').checked   = initColorCode;
     get('optShow3DBtn').checked   = initShow3DBtn;
     apply3DBtnVisibility();
+    // New settings
+    var _bwChk = get('optBW'); if(_bwChk) _bwChk.checked = initBW;
+    var _crChk = get('optCalcResize'); if(_crChk) _crChk.checked = initCalcResize;
+    var _frChk = get('optFrameResize'); if(_frChk) _frChk.checked = initFrameResize;
 
     function getAdv()      { return get('optAdvanced').checked; }
     function getSurd()     { return get('optSurd').checked; }
     function getSimplify() { return get('optSimplify').checked; }
     function getPrec()     { return parseInt(get('prec').value) || 2; }
     function getDark()     { return get('optDark').checked; }
+    function getBW()       { var el=get('optBW'); return el?el.checked:false; }
     function getDeg()      { return get('optDegrees').checked; }
     function getDiagram()      { return get('optDiagram').checked; }
     function getAutoCalc()     { return get('optAutoCalc').checked; }
@@ -603,7 +647,10 @@
                 outputUnit: currentOutputUnit,
                 calcPin:    get('calcPinOpen') ? get('calcPinOpen').checked : true,
                 calcInfer:  get('calcInferBrackets') ? get('calcInferBrackets').checked : true,
-                show3DBtn:  get('optShow3DBtn') ? get('optShow3DBtn').checked : false
+                show3DBtn:  get('optShow3DBtn') ? get('optShow3DBtn').checked : false,
+                bw:         get('optBW') ? get('optBW').checked : false,
+                calcResize: get('optCalcResize') ? get('optCalcResize').checked : false,
+                frameResize:get('optFrameResize') ? get('optFrameResize').checked : false
             };
             var _sStr = JSON.stringify(_sObj);
             // Write to localStorage (fast, same-origin)
@@ -643,6 +690,9 @@
         if(get('calcPinOpen') && s.calcPin !== undefined)        get('calcPinOpen').checked        = s.calcPin !== false;
         if(get('calcInferBrackets') && s.calcInfer !== undefined) get('calcInferBrackets').checked  = s.calcInfer !== false;
         if(get('optShow3DBtn') && s.show3DBtn !== undefined)      get('optShow3DBtn').checked       = !!s.show3DBtn;
+        if(get('optBW') && s.bw !== undefined)                    get('optBW').checked              = !!s.bw;
+        if(get('optCalcResize') && s.calcResize !== undefined)    get('optCalcResize').checked      = !!s.calcResize;
+        if(get('optFrameResize') && s.frameResize !== undefined)  get('optFrameResize').checked     = !!s.frameResize;
         rebuildAll();
         applyDark();
         updateUnitBtns();
@@ -876,34 +926,38 @@
 
     function applyDark() {
         var d = getDark();
-        ui.classList.toggle('geo-dark', d);
+        var bw = getBW();
+        ui.classList.toggle('geo-dark', d && !bw);
+        ui.classList.toggle('geo-bw', bw);
         // Header bg (not reachable by child CSS token)
         var hdr = get('uiHeader');
-        if(hdr) hdr.style.background = d ? '#3a4f63' : '#1a73e8';
+        if(hdr) hdr.style.background = bw ? '#000' : (d ? '#3a4f63' : '#1a73e8');
         // Mini-calc header
-        var mch=get('miniCalcHeader'); if(mch) mch.style.background = d ? '#3a4f63' : '#1a73e8';
+        var mch=get('miniCalcHeader'); if(mch) mch.style.background = bw ? '#000' : (d ? '#3a4f63' : '#1a73e8');
         // Primary action buttons (blue — can't be overridden by token alone)
-        var calc=get('calc'); if(calc){ calc.style.background=d?'#1a5090':'#1a73e8'; calc.style.color='#fff'; }
+        var calc=get('calc'); if(calc){ calc.style.background=bw?'#000':(d?'#1a5090':'#1a73e8'); calc.style.color='#fff'; }
         // 3D toggle button (blue pill)
-        var t3btn=get('toggle3DBtn'); if(t3btn){ t3btn.style.background=d?'#1e2a3e':'#e8f0fe'; t3btn.style.color=d?'#4a9eff':'#1a73e8'; }
+        var t3btn=get('toggle3DBtn'); if(t3btn){ t3btn.style.background=bw?'#e8e8e8':(d?'#1e2a3e':'#e8f0fe'); t3btn.style.color=bw?'#000':(d?'#4a9eff':'#1a73e8'); }
         // Lock type button
-        var lt=get('lockTypeBtn'); if(lt){ lt.style.background=d?'rgba(30,30,46,0.9)':'rgba(255,255,255,0.92)'; lt.style.borderColor=d?'#444466':'#ddd'; }
+        var lt=get('lockTypeBtn'); if(lt){ lt.style.background=bw?'rgba(255,255,255,0.92)':(d?'rgba(30,30,46,0.9)':'rgba(255,255,255,0.92)'); lt.style.borderColor=bw?'#000':(d?'#444466':'#ddd'); }
         // Calculator keys
         document.querySelectorAll('.ck').forEach(function(btn){
             var k=btn.getAttribute('data-k');
-            if(k==='C'){ btn.style.background=d?'#3a1a1a':'#fee2e2'; btn.style.color=d?'#ff8080':'#c0392b'; btn.style.borderColor=''; }
-            else if(k==='='){ btn.style.background=d?'#1a5090':'#1a73e8'; btn.style.color='#fff'; btn.style.borderColor=''; }
+            if(k==='C'){ btn.style.background=bw?'#e8e8e8':(d?'#3a1a1a':'#fee2e2'); btn.style.color=bw?'#000':(d?'#ff8080':'#c0392b'); btn.style.borderColor=''; }
+            else if(k==='='){ btn.style.background=bw?'#000':(d?'#1a5090':'#1a73e8'); btn.style.color='#fff'; btn.style.borderColor=''; }
             else if(k==='+' || k==='-' || k==='\u00d7' || k==='\u00f7' || k==='\u221a' || k==='\u03c0' || k==='(' || k===')'){
-                btn.style.background=d?'#1e2a3e':'#e8f0fe'; btn.style.color=d?'#4a9eff':'#1a73e8'; btn.style.borderColor='';
+                btn.style.background=bw?'#e8e8e8':(d?'#1e2a3e':'#e8f0fe'); btn.style.color=bw?'#000':(d?'#4a9eff':'#1a73e8'); btn.style.borderColor='';
             } else if(k==='x\u00b2'||k==='x\u00b3'||k==='x\u02b8'){
-                btn.style.background=d?'#2a1e4e':'#ede9fe'; btn.style.color=d?'#c084fc':'#7c3aed'; btn.style.borderColor='';
+                btn.style.background=bw?'#e8e8e8':(d?'#2a1e4e':'#ede9fe'); btn.style.color=bw?'#000':(d?'#c084fc':'#7c3aed'); btn.style.borderColor='';
+            } else if(k==='sin'||k==='cos'||k==='tan'||k==='asin'||k==='acos'||k==='atan'){
+                btn.style.background=bw?'#e8e8e8':(d?'#2a1e0e':'#fef3e8'); btn.style.color=bw?'#000':(d?'#fbbf24':'#d97706'); btn.style.borderColor='';
             } else {
                 btn.style.background=''; btn.style.borderColor=''; btn.style.color='';
             }
         });
         // Calc display
         var cd=get('calcDisplay');
-        if(cd){ cd.style.background=d?'#1a1a2e':'#f0f6ff'; cd.style.borderColor=d?'#3a3a5e':'#c5d8f8'; cd.style.color=d?'#4a9eff':'#1a73e8'; }
+        if(cd){ cd.style.background=bw?'#f0f0f0':(d?'#1a1a2e':'#f0f6ff'); cd.style.borderColor=bw?'#000':(d?'#3a3a5e':'#c5d8f8'); cd.style.color=bw?'#000':(d?'#4a9eff':'#1a73e8'); }
         // Unit buttons (need active state)
         updateUnitBtns();
         updateOutUnitBtns();
@@ -1276,6 +1330,17 @@
         if(mode3D) return;
         var d=getDark();
 
+        // ── Save current input values to memory before re-rendering ──
+        var _prevInputs = get('inputStack') ? get('inputStack').querySelectorAll('input[id^="v"]') : [];
+        _prevInputs.forEach(function(inp) {
+            if(inp.value.trim()) {
+                // Get the label for this input from its sibling
+                var lbl = inp.closest('div') && inp.closest('div').querySelector('[style*="letter-spacing"]');
+                var key = lbl ? lbl.innerText.trim().toLowerCase() : inp.id;
+                _inputMemory[key] = inp.value.trim();
+            }
+        });
+
         // ── Solve All: show solver-style fields (label + input side by side) ──
         if(currentGoal==='all') {
             var fields=solveAllFields[currentTri]||[];
@@ -1322,6 +1387,13 @@
                 clearTimeout(autoCalcTimer);
                 autoCalcTimer = setTimeout(function(){ doCalculate(true); }, 350);
             });
+        });
+        // ── Restore saved values for inputs whose label matches memory ──
+        cfg.inputs.forEach(function(lbl, i) {
+            var inp = get('v'+i);
+            if(!inp || inp.value.trim()) return; // skip if already filled
+            var key = lbl.trim().toLowerCase();
+            if(_inputMemory[key] !== undefined) { inp.value = _inputMemory[key]; updateInputUnitBadge(inp, inp.value); }
         });
         updateUnitContextBar();
         var tog=get('posToggle');
@@ -2953,8 +3025,20 @@
         var s = ck_buildStrings();
         var evalStr = s.e.replace(/\u03c0/g, '(' + Math.PI + ')');
 
+        // Trig helpers: use degrees if the main panel is set to degrees, else radians
+        var _useDeg = getDeg();
+        var _trigPre = _useDeg
+            ? 'var _geo_sin=function(x){return Math.sin(x*Math.PI/180)};'
+            + 'var _geo_cos=function(x){return Math.cos(x*Math.PI/180)};'
+            + 'var _geo_tan=function(x){return Math.tan(x*Math.PI/180)};'
+            + 'var _geo_asin=function(x){return Math.asin(x)*180/Math.PI};'
+            + 'var _geo_acos=function(x){return Math.acos(x)*180/Math.PI};'
+            + 'var _geo_atan=function(x){return Math.atan(x)*180/Math.PI};'
+            : 'var _geo_sin=Math.sin,_geo_cos=Math.cos,_geo_tan=Math.tan,'
+            + '_geo_asin=Math.asin,_geo_acos=Math.acos,_geo_atan=Math.atan;';
+
         try {
-            var result = Function('"use strict"; return (' + evalStr + ')')();
+            var result = Function('"use strict"; ' + _trigPre + ' return (' + evalStr + ')')();
             if(!isFinite(result)) { ck_showCalcError('Cannot divide by zero'); return; }
             if(isNaN(result))     { ck_showCalcError('Invalid expression'); return; }
             var rounded = parseFloat(result.toPrecision(12));
@@ -3101,6 +3185,21 @@
                 ck_tokens.push({ e:'*', d:'\u00d7', kind:'op' });
             }
             ck_tokens.push({ e:'\u03c0', d:'\u03c0', kind:'pi' });
+
+        } else if(k === 'sin' || k === 'cos' || k === 'tan' || k === 'asin' || k === 'acos' || k === 'atan') {
+            if(ck_lastIsNum()) {
+                ck_tokens.push({ e:'*', d:'\u00d7', kind:'op' });
+            }
+            var id = ck_newId();
+            var mathFn = k; // sin, cos, tan, asin, acos, atan
+            // All trig fns work in radians in Math.*; we convert degrees input via wrapper
+            var eStr = '_geo_'+k+'(';
+            ck_tokens.push({
+                e: eStr, d: k+'(',
+                kind: 'sqrt-open',
+                autoCloseId: id,
+                closingDeleted: false
+            });
 
         } else if(k === 'x\u00b2') {
             // Append ² as a postfix power token — evaluates on = or Enter
@@ -3253,7 +3352,18 @@
     get('optSimplify').addEventListener('change',saveSettings);
     get('optDegrees').addEventListener('change',saveSettings);
     get('optAdvanced').addEventListener('change',function(){rebuildAll();saveSettings();});
-    get('optDark').addEventListener('change',function(){applyDark();saveSettings();});
+    get('optDark').addEventListener('change',function(){
+        // Mutually exclusive: turning on dark turns off B&W
+        if(this.checked && get('optBW') && get('optBW').checked) get('optBW').checked=false;
+        applyDark();saveSettings();
+    });
+    if(get('optBW')) get('optBW').addEventListener('change',function(){
+        // Mutually exclusive: turning on B&W turns off dark
+        if(this.checked && get('optDark').checked) get('optDark').checked=false;
+        applyDark();saveSettings();
+    });
+    if(get('optCalcResize')) get('optCalcResize').addEventListener('change',function(){applyResizable();saveSettings();});
+    if(get('optFrameResize')) get('optFrameResize').addEventListener('change',function(){applyResizable();saveSettings();});
     get('optDiagram').addEventListener('change',function(){applyDiagramVisibility();saveSettings();});
     get('optShow3DBtn').addEventListener('change',function(){apply3DBtnVisibility();saveSettings();});
     get('optAutoCalc').addEventListener('change',function(){saveSettings();});
@@ -3405,7 +3515,7 @@
             lockBtn.style.color = diagTypeLocked ? (d?'#4a9eff':'#1a73e8') : (d?'#c0c0e0':'#555');
         };
     }
-    // Override the applyDark call to also update lockBtn
+    // Override the applyDark call to also update lockBtn (with re-entrancy guard)
     var _origApplyDark = applyDark;
     var _applyDarkRunning = false;
     applyDark = function() {
@@ -3924,13 +4034,12 @@
         if(!getDiagram()) { cb3.style.display='none'; return; }
         cb3.style.display = 'block';
 
-        // Match canvas pixel size to its display size
-        // Must read offsetWidth AFTER setting display:block so it's non-zero
+        // Read offsetWidth AFTER display:block so it's non-zero
         var W = cv.offsetWidth || 340;
         var H = cv.offsetHeight || 210;
         cv.width  = W;
         cv.height = H;
-        var PAD = 28;
+        var PAD = 28; // padding so labels don't clip
 
         var cx = cv.getContext('2d');
         cx.clearRect(0,0,W,H);
@@ -4347,5 +4456,258 @@
         get('res3D').style.display='none';
         var cb3=get('canvasBox3D');if(cb3)cb3.style.display='none';
     });
+
+    // ── draw3DShape canvas size fix ────────────────────────────────────────────
+    // (offsetWidth returns 0 if element was hidden; show first, then read size)
+
+    // ── Resizable panels ──────────────────────────────────────────────────────
+    function applyResizable() {
+        var calcRes  = get('optCalcResize')  && get('optCalcResize').checked;
+        var frameRes = get('optFrameResize') && get('optFrameResize').checked;
+        var mc = get('miniCalc');
+        var fr = get('geo-ultimate-vscroll') || ui;
+        if(mc)  mc.style.resize  = calcRes  ? 'both' : 'none';
+        if(mc)  mc.style.overflow = calcRes ? 'auto' : '';
+        if(mc)  mc.style.minWidth = calcRes ? '240px' : '';
+        if(mc)  mc.style.minHeight = calcRes ? '200px' : '';
+        if(fr)  fr.style.resize  = frameRes ? 'both' : 'none';
+        if(fr)  fr.style.overflow = frameRes ? 'auto' : '';
+        if(fr)  fr.style.minWidth  = frameRes ? '280px' : '';
+        if(fr)  fr.style.minHeight = frameRes ? '200px' : '';
+    }
+    applyResizable();
+
+    // ── Formula Reference Panel ────────────────────────────────────────────────
+    var _formulaPanel = null;
+    function openFormulaRef() {
+        if(_formulaPanel && document.body.contains(_formulaPanel)) {
+            _formulaPanel.remove(); _formulaPanel = null; return;
+        }
+        var d = getDark(), bw = getBW();
+        var bg  = bw ? '#fff'     : (d ? '#1e1e2e' : '#fff');
+        var txt = bw ? '#000'     : (d ? '#e0e0f0' : '#222');
+        var bdr = bw ? '#000'     : (d ? '#333350' : '#ddd');
+        var hdr = bw ? '#000'     : (d ? '#3a4f63' : '#1a73e8');
+        var sec = bw ? '#e8e8e8'  : (d ? '#2a2a3e' : '#f0f6ff');
+        var fp = document.createElement('div');
+        fp.id = 'geoFormulaPanel';
+        fp.style.cssText = 'position:fixed;top:60px;left:50%;transform:translateX(-50%);width:360px;max-height:80vh;overflow-y:auto;background:'+bg+';border:1.5px solid '+bdr+';border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.22);z-index:999999;font-family:system-ui,sans-serif;color:'+txt+';';
+        var formulas = [
+            {section:'Right Triangle',items:[
+                {name:'Pythagorean Theorem',f:'c² = a² + b²'},
+                {name:'Hypotenuse (legs)',f:'c = √(a² + b²)'},
+                {name:'Leg from hypotenuse',f:'a = √(c² − b²)'},
+                {name:'Area',f:'A = ½ × a × b'},
+                {name:'Perimeter',f:'P = a + b + c'},
+                {name:'Altitude to hyp.',f:'h = (a × b) / c'},
+                {name:'sin A',f:'sin A = opposite / hypotenuse'},
+                {name:'cos A',f:'cos A = adjacent / hypotenuse'},
+                {name:'tan A',f:'tan A = opposite / adjacent'},
+            ]},
+            {section:'Scalene Triangle',items:[
+                {name:'Area (Heron\'s)',f:'s=(a+b+c)/2 ; A=√(s(s-a)(s-b)(s-c))'},
+                {name:'Law of Cosines',f:'c² = a² + b² − 2ab·cos(C)'},
+                {name:'Law of Sines',f:'a/sin A = b/sin B = c/sin C'},
+                {name:'Perimeter',f:'P = a + b + c'},
+                {name:'Angle sum',f:'A + B + C = 180°'},
+            ]},
+            {section:'Isosceles Triangle',items:[
+                {name:'Height (from base)',f:'h = √(a² − (b/2)²)'},
+                {name:'Area',f:'A = ½ × b × h'},
+                {name:'Base angles',f:'B = arccos(b / 2a)'},
+                {name:'Apex angle',f:'α = 180° − 2B'},
+            ]},
+            {section:'Equilateral Triangle',items:[
+                {name:'Height',f:'h = (√3 / 2) × s'},
+                {name:'Area',f:'A = (√3 / 4) × s²'},
+                {name:'Perimeter',f:'P = 3s'},
+                {name:'All angles',f:'A = B = C = 60°'},
+            ]},
+            {section:'Trig Identities',items:[
+                {name:'sin² + cos²',f:'sin²θ + cos²θ = 1'},
+                {name:'tan',f:'tan θ = sin θ / cos θ'},
+                {name:'Double angle sin',f:'sin 2θ = 2 sin θ cos θ'},
+                {name:'Double angle cos',f:'cos 2θ = cos²θ − sin²θ'},
+            ]},
+        ];
+        var html = '<div style="padding:10px 14px;background:'+hdr+';border-radius:10px 10px 0 0;display:flex;justify-content:space-between;align-items:center;">'
+            +'<span style="font-weight:700;color:#fff;font-size:13px;">&#x1D453; Formula Reference</span>'
+            +'<span id="formulaPanelClose" style="cursor:pointer;color:#fff;font-size:20px;line-height:1;opacity:0.8;">&times;</span>'
+            +'</div>';
+        formulas.forEach(function(grp) {
+            html += '<div style="padding:8px 14px 2px;font-size:10px;font-weight:800;color:'+(bw?'#000':(d?'#7070a0':'#888'))+';letter-spacing:0.8px;text-transform:uppercase;border-top:1px solid '+bdr+';">'+grp.section+'</div>';
+            grp.items.forEach(function(item) {
+                html += '<div style="display:flex;justify-content:space-between;align-items:baseline;padding:4px 14px;gap:10px;">'
+                    +'<span style="font-size:11px;color:'+(bw?'#333':(d?'#9090b0':'#666'))+';">'+item.name+'</span>'
+                    +'<code style="font-size:11px;font-family:monospace;background:'+sec+';padding:2px 6px;border-radius:4px;color:'+(bw?'#000':(d?'#c0e0ff':'#1a3a70'))+';">'+item.f+'</code>'
+                    +'</div>';
+            });
+        });
+        html += '<div style="padding:10px;"></div>';
+        fp.innerHTML = html;
+        document.body.appendChild(fp);
+        _formulaPanel = fp;
+        fp.querySelector('#formulaPanelClose').addEventListener('click',function(){ fp.remove(); _formulaPanel=null; });
+    }
+    if(get('openFormulaRef')) get('openFormulaRef').addEventListener('click',function(e){e.stopPropagation();openFormulaRef();});
+
+    // ── Quiz Mode ─────────────────────────────────────────────────────────────
+    var _quizPanel = null;
+    var _quizState = { q:null, answered:false, streak:0, total:0, correct:0 };
+
+    function _quizRandInt(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+    function _quizGenQuestion() {
+        // Generate a Pythagorean question: find c, find a, or find angle
+        var type = _quizRandInt(0,2);
+        var a,b,c,angA,question,answer,hint;
+        if(type===0) {
+            // Find hypotenuse
+            a = _quizRandInt(3,15); b = _quizRandInt(3,15);
+            c = Math.sqrt(a*a+b*b);
+            question = 'Find the hypotenuse c.';
+            answer = parseFloat(c.toPrecision(6));
+            hint = 'c = √(a² + b²)';
+        } else if(type===1) {
+            // Find missing leg from Pythagorean triple style
+            a = _quizRandInt(3,12); b = _quizRandInt(3,12);
+            c = Math.sqrt(a*a+b*b);
+            question = 'Find the missing leg a, given c and b.';
+            answer = parseFloat(a.toPrecision(6));
+            // swap: show c, b — find a
+            var tmp=a; a=b; b=tmp; // a becomes unknown, b is known, c is known
+            hint = 'a = √(c² − b²)';
+        } else {
+            // Find angle A using trig
+            a = _quizRandInt(2,10); b = _quizRandInt(2,10);
+            c = Math.sqrt(a*a+b*b);
+            angA = Math.atan(a/b)*180/Math.PI;
+            question = 'Find angle A (in degrees) opposite leg a.';
+            answer = parseFloat(angA.toPrecision(5));
+            hint = 'A = arctan(a / b)';
+        }
+        return {type:type, a:a, b:b, c:c, question:question, answer:answer, hint:hint};
+    }
+
+    function _quizDrawDiagram(q) {
+        var cv = document.getElementById('quizCanvas'); if(!cv) return;
+        cv.style.display='block';
+        cv.width = cv.offsetWidth||260; cv.height = 140;
+        var W=cv.width,H=cv.height;
+        var cx2=cv.getContext('2d');
+        cx2.clearRect(0,0,W,H);
+        var d=getDark(),bw=getBW();
+        cx2.fillStyle=bw?'#fff':(d?'#181828':'#f8faff');
+        cx2.fillRect(0,0,W,H);
+
+        var a=q.a,b=q.b,c=q.c;
+        // Right triangle: A at top-left, B at bottom-left (right angle), C at bottom-right
+        var pad=32, ow=W-2*pad, oh=H-2*pad;
+        var sc=Math.min(ow/b, oh/a);
+        var bx=pad, by=H-pad;
+        var ax=pad, ay=H-pad-a*sc;
+        var ccx=pad+b*sc, ccy=H-pad;
+
+        var col=bw?'#000':(d?'#4a9eff':'#1a73e8');
+        cx2.strokeStyle=col; cx2.lineWidth=2;
+        cx2.beginPath(); cx2.moveTo(ax,ay); cx2.lineTo(bx,by); cx2.lineTo(ccx,ccy); cx2.closePath(); cx2.stroke();
+        // Right angle box
+        var sq=10;
+        cx2.strokeStyle=bw?'#000':(d?'#7090b0':'#aabbd0'); cx2.lineWidth=1.2;
+        cx2.strokeRect(bx,by-sq,sq,sq);
+
+        var lc=bw?'#000':(d?'#a0c0ff':'#1a4080');
+        cx2.font='bold 11px system-ui,sans-serif'; cx2.fillStyle=lc; cx2.textAlign='center';
+        // Label sides
+        var unknownCol=bw?'#000':'#e05010';
+        if(q.type===0) {
+            // unknown = c
+            cx2.fillStyle=lc; cx2.fillText('a='+a, (ax+bx)/2-10, (ay+by)/2);
+            cx2.fillText('b='+b, (bx+ccx)/2, by+14);
+            cx2.fillStyle=unknownCol; cx2.fillText('c=?', (ax+ccx)/2+5, (ay+ccy)/2-6);
+        } else if(q.type===1) {
+            cx2.fillStyle=unknownCol; cx2.fillText('a=?', (ax+bx)/2-10, (ay+by)/2);
+            cx2.fillStyle=lc; cx2.fillText('b='+b, (bx+ccx)/2, by+14);
+            cx2.fillText('c='+parseFloat(q.c.toPrecision(4)), (ax+ccx)/2+5, (ay+ccy)/2-6);
+        } else {
+            cx2.fillStyle=lc; cx2.fillText('a='+a, (ax+bx)/2-10, (ay+by)/2);
+            cx2.fillText('b='+b, (bx+ccx)/2, by+14);
+            cx2.fillText('c='+parseFloat(q.c.toPrecision(4)), (ax+ccx)/2+5, (ay+ccy)/2-6);
+            cx2.fillStyle=unknownCol; cx2.fillText('A=?', ax-18, ay+14);
+        }
+    }
+
+    function _quizRenderQuestion() {
+        var qp = document.getElementById('quizContent'); if(!qp) return;
+        var q = _quizState.q;
+        var d=getDark(),bw=getBW();
+        var txt=bw?'#000':(d?'#e0e0f0':'#222');
+        var sub=bw?'#333':(d?'#9090b0':'#666');
+        var acc=bw?'#000':(d?'#4a9eff':'#1a73e8');
+        var given = q.type===0 ? ('a = '+q.a+', b = '+q.b)
+                  : q.type===1 ? ('b = '+q.b+', c = '+parseFloat(q.c.toPrecision(4)))
+                  :               ('a = '+q.a+', b = '+q.b);
+        qp.innerHTML =
+            '<div style="font-size:10px;font-weight:700;color:'+sub+';letter-spacing:0.7px;margin-bottom:6px;">GIVEN: '+given+'</div>'
+            +'<div style="font-size:13px;font-weight:700;color:'+txt+';margin-bottom:10px;">'+q.question+'</div>'
+            +'<canvas id="quizCanvas" style="width:100%;height:140px;border-radius:8px;display:block;margin-bottom:10px;"></canvas>'
+            +'<div style="display:flex;gap:8px;margin-bottom:8px;">'
+            +'<input id="quizAnswer" type="number" step="any" placeholder="Your answer..." style="flex:1;padding:8px 10px;border:1.5px solid '+(bw?'#000':(d?'#444466':'#ddd'))+';border-radius:7px;font-size:14px;background:'+(bw?'#fff':(d?'#2a2a3e':'#fff'))+';color:'+txt+';outline:none;">'
+            +'<button id="quizSubmit" style="padding:8px 14px;background:'+acc+';color:#fff;border:none;border-radius:7px;font-weight:700;cursor:pointer;font-size:13px;">Check</button>'
+            +'</div>'
+            +'<div id="quizFeedback" style="min-height:24px;font-size:12px;margin-bottom:6px;"></div>'
+            +'<div style="display:flex;justify-content:space-between;align-items:center;">'
+            +'<span style="font-size:11px;color:'+sub+';">Streak: <b id="quizStreak">'+_quizState.streak+'</b> &nbsp; Score: <b id="quizScore">'+_quizState.correct+'/'+_quizState.total+'</b></span>'
+            +'<button id="quizNext" style="padding:6px 12px;background:'+(bw?'#e8e8e8':(d?'#2a2a3e':'#e8f0fe'))+';color:'+acc+';border:1px solid '+(bw?'#000':acc)+';border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;">Next ▶</button>'
+            +'</div>'
+            +'<div style="font-size:10px;color:'+sub+';margin-top:8px;padding-top:6px;border-top:1px solid '+(bw?'#ccc':(d?'#333350':'#eee'))+';"><b>Hint:</b> '+q.hint+'</div>';
+        setTimeout(function(){ _quizDrawDiagram(q); },20);
+        var ai=document.getElementById('quizAnswer');
+        var sb=document.getElementById('quizSubmit');
+        var nb=document.getElementById('quizNext');
+        if(ai) ai.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();if(sb)sb.click();}});
+        if(sb) sb.addEventListener('click',function(){
+            if(_quizState.answered) return;
+            var v=parseFloat(document.getElementById('quizAnswer').value);
+            if(isNaN(v)){document.getElementById('quizFeedback').innerHTML='<span style="color:#c0392b;">Enter a number first.</span>';return;}
+            _quizState.answered=true;
+            _quizState.total++;
+            var tol=Math.abs(q.answer)*0.005+0.01;
+            var ok=Math.abs(v-q.answer)<=tol;
+            if(ok){_quizState.correct++;_quizState.streak++;}else{_quizState.streak=0;}
+            var fb=document.getElementById('quizFeedback');
+            fb.innerHTML=ok
+                ?'<span style="color:#22a05a;font-weight:700;">✓ Correct! Answer: '+parseFloat(q.answer.toPrecision(5))+'</span>'
+                :'<span style="color:#c0392b;font-weight:700;">✗ Incorrect. Answer: '+parseFloat(q.answer.toPrecision(5))+'</span>';
+            if(document.getElementById('quizStreak')) document.getElementById('quizStreak').innerText=_quizState.streak;
+            if(document.getElementById('quizScore')) document.getElementById('quizScore').innerText=_quizState.correct+'/'+_quizState.total;
+        });
+        if(nb) nb.addEventListener('click',function(){
+            _quizState.q=_quizGenQuestion();_quizState.answered=false;_quizRenderQuestion();
+        });
+    }
+
+    function openQuizMode() {
+        if(_quizPanel && document.body.contains(_quizPanel)) {
+            _quizPanel.remove(); _quizPanel=null; return;
+        }
+        var d=getDark(),bw=getBW();
+        var bg=bw?'#fff':(d?'#1e1e2e':'#fff');
+        var bdr=bw?'#000':(d?'#333350':'#ddd');
+        var hdrBg=bw?'#000':(d?'#3a4f63':'#1a73e8');
+        var qp=document.createElement('div');
+        qp.id='geoQuizPanel';
+        qp.style.cssText='position:fixed;top:60px;right:30px;width:310px;background:'+bg+';border:1.5px solid '+bdr+';border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.22);z-index:999999;font-family:system-ui,sans-serif;';
+        qp.innerHTML='<div style="padding:10px 14px;background:'+hdrBg+';border-radius:10px 10px 0 0;display:flex;justify-content:space-between;align-items:center;">'
+            +'<span style="font-weight:700;color:#fff;font-size:13px;">&#x1F9E0; Pythag Quiz</span>'
+            +'<span id="quizPanelClose" style="cursor:pointer;color:#fff;font-size:20px;line-height:1;opacity:0.8;">&times;</span>'
+            +'</div>'
+            +'<div id="quizContent" style="padding:12px 14px;"></div>';
+        document.body.appendChild(qp);
+        _quizPanel=qp;
+        _quizState.q=_quizGenQuestion(); _quizState.answered=false;
+        _quizRenderQuestion();
+        qp.querySelector('#quizPanelClose').addEventListener('click',function(){qp.remove();_quizPanel=null;});
+    }
+    if(get('openQuizMode')) get('openQuizMode').addEventListener('click',function(e){e.stopPropagation();openQuizMode();});
 
 })();
