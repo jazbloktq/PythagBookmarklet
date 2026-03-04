@@ -5055,10 +5055,13 @@
         ctx2.beginPath(); ctx2.arc(tx,ty,20,al_to_bot,al_to_right,!outer); ctx2.stroke();
 
         var prec=getPrec(), deg=getDeg(), aLbl=deg?'°':'r';
+        var outer = getOuterAngles();
+        var extFull = deg ? 180 : Math.PI;
         function fmtV(id,isAngle,fallback) {
             var v = (res && res[id]!==undefined) ? res[id] : NaN;
             if(isNaN(v)) { var el=get('trigIn_'+id); v=el?parseFloat(el.value):NaN; }
             if(isNaN(v)) return fallback||'?';
+            if(isAngle && outer) v = extFull - v;
             return isAngle ? parseFloat(v.toFixed(Math.min(prec,2)))+aLbl : parseFloat(v.toFixed(Math.min(prec,3)))+'';
         }
         ctx2.textAlign='center';
@@ -5068,8 +5071,8 @@
         ctx2.save(); ctx2.translate(ox-18,(oy+ty)/2); ctx2.rotate(-Math.PI/2); ctx2.fillText('a = '+fmtV('a',false),0,0); ctx2.restore();
         ctx2.fillText('b = '+fmtV('b',false),(ox+bx)/2,oy+15);
         ctx2.font='11px system-ui,sans-serif';
-        ctx2.fillStyle=bw?'#555':(d?'#f0a040':'#d97706'); ctx2.fillText('θ='+fmtV('B',true),bx-36,by-28);
-        ctx2.fillStyle=bw?'#888':(d?'#60c060':'#22a05a'); ctx2.fillText('α='+fmtV('A',true),tx+32,ty+22);
+        ctx2.fillStyle=bw?'#555':(d?'#f0a040':'#d97706'); ctx2.fillText((outer?'ext-θ':'θ')+'='+fmtV('B',true),bx-36,by-28);
+        ctx2.fillStyle=bw?'#888':(d?'#60c060':'#22a05a'); ctx2.fillText((outer?'ext-α':'α')+'='+fmtV('A',true),tx+32,ty+22);
         ctx2.fillStyle=sub; ctx2.font='10px system-ui,sans-serif'; ctx2.fillText('90°',ox+24,oy-14);
     }
 
@@ -5210,15 +5213,22 @@
         if(R.hyp!==undefined&&R.a!==undefined&&R.hyp<R.a-1e-8) return {error:'Hypotenuse must be ≥ side a.'};
         if(R.hyp!==undefined&&R.b!==undefined&&R.hyp<R.b-1e-8) return {error:'Hypotenuse must be ≥ side b.'};
         var prec=getPrec(), aLbl=deg?'°':' rad';
-        function fv(v,isA){return v!==undefined?parseFloat(v.toFixed(prec))+(isA?aLbl:''):'?';}
+        var outer=getOuterAngles(), extFull=deg?180:Math.PI;
+        function fv(v,isA){
+            if(v===undefined) return '?';
+            var disp = (isA && outer) ? extFull-v : v;
+            return parseFloat(disp.toFixed(prec))+(isA?aLbl:'');
+        }
+        var aLblA = outer ? 'ext-α — exterior angle A (top)' : 'α — angle A (top)';
+        var aLblB = outer ? 'ext-θ — exterior angle B (right)' : 'θ — angle B (right)';
         return {
             result:R,
             rows:[
                 {label:'a — opposite',value:fv(R.a,false)},
                 {label:'b — adjacent',value:fv(R.b,false)},
                 {label:'c — hypotenuse',value:fv(R.hyp,false)},
-                {label:'α — angle A (top)',value:fv(R.A,true)},
-                {label:'θ — angle B (right)',value:fv(R.B,true)},
+                {label:aLblA,value:fv(R.A,true)},
+                {label:aLblB,value:fv(R.B,true)},
             ],
             steps:steps
         };
