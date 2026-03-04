@@ -1423,7 +1423,13 @@
     var diagLastParams = null;
 
     function drawTri(s1, h, b, s2, isExt, anglesData, highlightGoal) {
-        var W=canvas.width, H=canvas.height;
+        // Mirror draw3DShape: show container first, then read live size
+        var cb = get('canvasBox');
+        if(cb) cb.style.display = 'block';
+        var W = canvas.offsetWidth || canvas.width || 340;
+        var H = canvas.offsetHeight || canvas.height || 210;
+        if(W !== canvas.width)  canvas.width  = W;
+        if(H !== canvas.height) canvas.height = H;
         ctx.clearRect(0,0,W,H);
         var d=getDark();
         var triCol=d?'#4a9eff':'#1a73e8';
@@ -1713,6 +1719,8 @@
     // ── drawCirclesOnDiag: draw incircle + circumcircle on canvas ────────────
     function drawCirclesOnDiag(s1,h,b,s2,inR,circumR){
         if(!canvas||!ctx) return;
+        var cb = get('canvasBox');
+        if(cb) cb.style.display = 'block';
         var d=getDark();
         var raw;
         if(currentTri==='equilateral'||currentTri==='isosceles') raw=[[0,h],[b/2,0],[b,h]];
