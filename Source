@@ -242,6 +242,9 @@
               '<button id="toggle3DBack" style="padding:3px 9px;border:none;border-radius:5px;background:#e8f0fe;color:#1a73e8;font-size:10px;font-weight:700;cursor:pointer;">&#9664; Triangles</button>',
             '</div>',
             '<div id="shapeBtns3D" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px;"></div>',
+            '<div id="canvasBox3D" style="position:relative;width:100%;margin-bottom:14px;border:1px solid #eee;border-radius:8px;overflow:hidden;background:#fafafa;display:none;">',
+              '<canvas id="canvas3D" width="340" height="200" style="width:100%;display:block;"></canvas>',
+            '</div>',
             '<div id="inputs3D" style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px;"></div>',
             '<div style="display:flex;gap:8px;margin-bottom:14px;">',
               '<button id="calc3D" style="flex:2;padding:11px;background:#1a73e8;color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px;">Calculate</button>',
@@ -376,9 +379,9 @@
             '<button class="ck" data-k=")"   style="padding:9px 4px;border:none;border-radius:7px;background:#e8f0fe;color:#1a73e8;font-weight:700;cursor:pointer;font-size:14px;">)</button>',
             '<button class="ck" data-k="\u232b" style="padding:9px 4px;border:none;border-radius:7px;background:#f1f3f4;color:#555;font-weight:700;cursor:pointer;font-size:14px;">\u232b</button>',
             '<button class="ck" data-k="\u221a"  style="padding:9px 4px;border:none;border-radius:7px;background:#e8f0fe;color:#1a73e8;font-weight:700;cursor:pointer;font-size:14px;">\u221a</button>',
-            '<button class="ck" data-k="x\u00b2" title="Square (q)" style="padding:9px 4px;border:none;border-radius:7px;background:#ede9fe;color:#7c3aed;font-weight:700;cursor:pointer;font-size:13px;">x\u00b2</button>',
-            '<button class="ck" data-k="x\u00b3" title="Cube" style="padding:9px 4px;border:none;border-radius:7px;background:#ede9fe;color:#7c3aed;font-weight:700;cursor:pointer;font-size:13px;">x\u00b3</button>',
-            '<button class="ck" data-k="x\u02b8" title="Power (^)" style="grid-column:span 3;padding:9px 4px;border:none;border-radius:7px;background:#ede9fe;color:#7c3aed;font-weight:700;cursor:pointer;font-size:13px;">x\u02b8 (power)</button>',
+            '<button class="ck" data-k="x\u00b2" title="Square  [Alt+2]" style="padding:9px 4px;border:none;border-radius:7px;background:#ede9fe;color:#7c3aed;font-weight:700;cursor:pointer;font-size:13px;">x\u00b2</button>',
+            '<button class="ck" data-k="x\u00b3" title="Cube  [Alt+3]" style="padding:9px 4px;border:none;border-radius:7px;background:#ede9fe;color:#7c3aed;font-weight:700;cursor:pointer;font-size:13px;">x\u00b3</button>',
+            '<button class="ck" data-k="x\u02b8" title="Custom power  [^]" style="grid-column:span 3;padding:9px 4px;border:none;border-radius:7px;background:#ede9fe;color:#7c3aed;font-weight:700;cursor:pointer;font-size:13px;">x\u02b8 (power)</button>',
             '<button class="ck" data-k="7"   style="padding:9px 4px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">7</button>',
             '<button class="ck" data-k="8"   style="padding:9px 4px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">8</button>',
             '<button class="ck" data-k="9"   style="padding:9px 4px;border:none;border-radius:7px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;font-size:14px;font-weight:600;">9</button>',
@@ -786,6 +789,7 @@
             var cl3d=get('clear3D'); if(cl3d){ cl3d.style.background=dk('btnBg'); cl3d.style.color=dk('btnTxt'); }
         }
         var t3btn=get('toggle3DBtn'); if(t3btn){ t3btn.style.background=d?'#1e2a3e':'#e8f0fe'; t3btn.style.color=d?'#4a9eff':'#1a73e8'; }
+        var cb3d=get('canvasBox3D'); if(cb3d){ cb3d.style.background=dk('canvasBg'); cb3d.style.borderColor=dk('canvasBdr'); }
         var cd=get('calcDisplay');
         if(cd){ cd.style.background=dk('resBg'); cd.style.borderColor=dk('codeBdr'); cd.style.color=d?'#4a9eff':'#1a73e8'; }
         var ce=get('calcExpr'); if(ce) ce.style.color=dk('subtext');
@@ -2820,7 +2824,7 @@
     }
     function ck_lastIsNum() {
         var lk = ck_lastKind();
-        return lk === 'num' || lk === 'close' || lk === 'pi';
+        return lk === 'num' || lk === 'close' || lk === 'pi' || lk === 'pow';
     }
 
     function ck_clearCalcError() {
@@ -3006,17 +3010,17 @@
             ck_tokens.push({ e:'\u03c0', d:'\u03c0', kind:'pi' });
 
         } else if(k === 'x\u00b2') {
-            // Append ² as a postfix power token — does NOT auto-evaluate
+            // Append ² as a postfix power token — evaluates on = or Enter
             if(ck_lastIsNum()) {
                 ck_insertPendingCloses();
-                ck_tokens.push({ e:'**2', d:'\u00b2', kind:'op' });
+                ck_tokens.push({ e:'**2', d:'\u00b2', kind:'pow' });
             }
 
         } else if(k === 'x\u00b3') {
-            // Append ³ as a postfix power token — does NOT auto-evaluate
+            // Append ³ as a postfix power token
             if(ck_lastIsNum()) {
                 ck_insertPendingCloses();
-                ck_tokens.push({ e:'**3', d:'\u00b3', kind:'op' });
+                ck_tokens.push({ e:'**3', d:'\u00b3', kind:'pow' });
             }
 
         } else if(k === 'x\u02b8') {
@@ -3067,13 +3071,17 @@
         if(active && active.id === 'prec') return;
 
         var k = e.key;
+
+        // Alt+2 = square, Alt+3 = cube (works cross-platform without stealing normal keys)
+        if(e.altKey && k === '2') { e.preventDefault(); ck_handleKey('x\u00b2'); return; }
+        if(e.altKey && k === '3') { e.preventDefault(); ck_handleKey('x\u00b3'); return; }
+        if(e.altKey) return; // don't intercept other Alt combos
+
         var keyMap = {
             '0':'0','1':'1','2':'2','3':'3','4':'4',
             '5':'5','6':'6','7':'7','8':'8','9':'9',
             '.':'.', '+':'+', '-':'-',
             '*':'\u00d7',
-            'x':'\u00d7',
-            'X':'\u00d7',
             '/':'\u00f7',
             '`':'\u221a',
             'p':'\u03c0',
@@ -3082,8 +3090,6 @@
             'Enter':'=',
             'Backspace':'\u232b',
             'Escape':'C',
-            'q':'x\u00b2',
-            'Q':'x\u00b2',
             '^':'x\u02b8'
         };
 
@@ -3683,6 +3689,7 @@
             '</div>';
         }).join('');
         get('res3D').style.display='none';
+        var cb3=get('canvasBox3D'); if(cb3) cb3.style.display='none';
     }
 
     function saRow3D(label,val,unit) {
@@ -3692,6 +3699,155 @@
         return '<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid '+(d?'#2a2a40':'#eef2ff')+';font-size:12px;">'+
             '<span style="color:'+(d?'#9090b0':'#888')+';font-weight:600;">'+label+'</span>'+
             '<span style="font-weight:700;color:'+(d?'#e0e0f0':'#222')+'">'+(isNaN(val)?'—':vs)+'</span></div>';
+    }
+
+    function draw3DShape(shape, dims) {
+        var cv = get('canvas3D');
+        var cb3 = get('canvasBox3D');
+        if(!cv || !cb3) return;
+        cb3.style.display = 'block';
+        var cx = cv.getContext('2d');
+        var W = cv.width, H = cv.height;
+        cx.clearRect(0, 0, W, H);
+        var d = getDark();
+        var stroke = d ? '#4a9eff' : '#1a73e8';
+        var strokeDim = d ? '#2a4a7a' : '#93b8f0';
+        var fill = d ? 'rgba(30,46,78,0.7)' : 'rgba(232,240,254,0.7)';
+        var fillDark = d ? 'rgba(20,30,55,0.7)' : 'rgba(200,220,255,0.5)';
+        var labelCol = d ? '#c0d0ff' : '#1a73e8';
+        cx.font = 'bold 11px system-ui,sans-serif';
+
+        // Isometric projection helpers
+        var isoX = function(x,y,z){ return W/2 + (x - z) * 0.866; };
+        var isoY = function(x,y,z){ return H/2 - y * 0.9 + (x + z) * 0.5; };
+        function pt(x,y,z){ return [isoX(x,y,z), isoY(x,y,z)]; }
+        function line(p1,p2,dim){
+            cx.beginPath(); cx.moveTo(p1[0],p1[1]); cx.lineTo(p2[0],p2[1]);
+            cx.strokeStyle = dim ? strokeDim : stroke;
+            cx.lineWidth = dim ? 1 : 1.8;
+            cx.setLineDash(dim ? [4,3] : []);
+            cx.stroke(); cx.setLineDash([]);
+        }
+        function face(pts, fillStyle){
+            cx.beginPath(); cx.moveTo(pts[0][0],pts[0][1]);
+            for(var i=1;i<pts.length;i++) cx.lineTo(pts[i][0],pts[i][1]);
+            cx.closePath(); cx.fillStyle=fillStyle; cx.fill();
+            cx.strokeStyle=stroke; cx.lineWidth=1.8; cx.stroke();
+        }
+        function label(p, txt) {
+            cx.fillStyle = labelCol;
+            cx.font = 'bold 10px system-ui,sans-serif';
+            cx.fillText(txt, p[0]+3, p[1]-3);
+        }
+
+        var l = dims.l||1, w = dims.w||1, h = dims.h||1;
+        var sc = Math.min(80/(Math.max(l,w,h)), 50); // scale to fit
+        l*=sc; w*=sc; h*=sc;
+
+        if(shape === 'rect_prism') {
+            // 8 corners: bottom face then top face
+            var B = [[0,0,0],[l,0,0],[l,0,w],[0,0,w]];
+            var T = [[0,h,0],[l,h,0],[l,h,w],[0,h,w]];
+            var bp=B.map(function(v){return pt(v[0],v[1],v[2]);}),
+                tp=T.map(function(v){return pt(v[0],v[1],v[2]);});
+            // back hidden edges
+            line(bp[0],bp[1],true); line(bp[0],bp[3],true); line(bp[0],tp[0],true);
+            // visible faces
+            face([tp[0],tp[1],tp[2],tp[3]],fill);         // top
+            face([bp[3],bp[2],tp[2],tp[3]],fillDark);     // front
+            face([bp[2],bp[1],tp[1],tp[2]],fill);         // right
+            // visible base edges
+            line(bp[1],bp[2],false); line(bp[2],bp[3],false);
+            line(bp[1],tp[1],false); line(bp[2],tp[2],false); line(bp[3],tp[3],false);
+            // top edges
+            for(var i=0;i<4;i++) line(tp[i],tp[(i+1)%4],false);
+            // diagonal
+            var diag = [pt(0,0,0), pt(l,h,w)];
+            cx.beginPath(); cx.moveTo(diag[0][0],diag[0][1]); cx.lineTo(diag[1][0],diag[1][1]);
+            cx.strokeStyle='#e8430a'; cx.lineWidth=2; cx.setLineDash([5,3]); cx.stroke(); cx.setLineDash([]);
+            // labels
+            var mid=pt(l/2,h/2,w/2);
+            cx.fillStyle='#e8430a'; cx.font='bold 10px system-ui'; cx.fillText('d',mid[0]+2,mid[1]-2);
+            label(pt(l/2,0,w),'w'); label(pt(l,0,w/2),'l'); label(pt(l,h/2,w),'h');
+
+        } else if(shape === 'rect_pyramid') {
+            var B2 = [[0,0,0],[l,0,0],[l,0,w],[0,0,w]];
+            var apex = pt(l/2, h, w/2);
+            var bp2=B2.map(function(v){return pt(v[0],v[1],v[2]);});
+            // hidden base edges
+            line(bp2[0],bp2[1],true); line(bp2[0],bp2[3],true);
+            line(bp2[0],apex,true);
+            // visible base edges
+            line(bp2[1],bp2[2],false); line(bp2[2],bp2[3],false);
+            // visible lateral faces
+            face([bp2[3],bp2[2],apex],fillDark);
+            face([bp2[1],bp2[2],apex],fill);
+            face([bp2[3],bp2[0],apex],fill);
+            // diagonal from apex to far corner
+            cx.beginPath(); cx.moveTo(apex[0],apex[1]); cx.lineTo(bp2[2][0],bp2[2][1]);
+            cx.strokeStyle='#e8430a'; cx.lineWidth=2; cx.setLineDash([5,3]); cx.stroke(); cx.setLineDash([]);
+            cx.fillStyle='#e8430a'; cx.font='bold 10px system-ui';
+            var dm=pt(l*0.75,h/2,w*0.75); cx.fillText('d',dm[0]+2,dm[1]-2);
+            label(pt(l/2,0,w),'w'); label(pt(l,0,w/2),'l'); label(pt(l+2,h/2,w/2),'h');
+
+        } else if(shape === 'tri_prism') {
+            // Triangle at z=0 and z=dims.depth, dims: a,b,c sides, h=length
+            var da=dims.a*sc, db=dims.b*sc, dc=dims.c*sc, dh=dims.h*sc;
+            // Place triangle: vertex A at origin, B along x, C computed
+            var ax=0,ay=0, bx=dc,by=0;
+            var cosA=(dc*dc+db*db-da*da)/(2*dc*db); // actually use sides properly
+            // a=BC, b=AC, c=AB; place A,B on x axis with AB=c
+            var Ax=0,Az=0, Bx=dc,Bz=0;
+            var cosAng=(dc*dc+db*db-da*da)/(2*dc*db);
+            cosAng=Math.max(-1,Math.min(1,cosAng));
+            var Cx=db*cosAng, Cz=db*Math.sqrt(1-cosAng*cosAng);
+            var depth=dh;
+            function triPt(x,y,z){return pt(x-dc/2, y-Cz/2, z-depth/2);}
+            var f1=[triPt(Ax,0,0),triPt(Bx,0,0),triPt(Cx,Cz,0)];
+            var f2=[triPt(Ax,0,depth),triPt(Bx,0,depth),triPt(Cx,Cz,depth)];
+            // hidden edges
+            line(f1[0],f2[0],true); line(f1[0],f1[1],true);
+            // front triangular face
+            face(f2,fill);
+            // back triangle (partial)
+            face(f1,fillDark);
+            // rectangular sides
+            face([f1[1],f1[2],f2[2],f2[1]],fill);
+            face([f1[0],f1[2],f2[2],f2[0]],fillDark);
+            line(f1[0],f1[2],false); line(f1[1],f2[1],false); line(f1[2],f2[2],false);
+            var mid2=triPt((Ax+Bx)/2,0,depth/2); label(mid2,'c');
+            var mid3=triPt((Ax+Cx)/2,Cz/2,depth/2); label(mid3,'b');
+            var mid4=triPt((Bx+Cx)/2,Cz/2,depth/2); label(mid4,'a');
+            var midH=triPt(Ax-5,Cz/2,0); label(midH,'h');
+
+        } else if(shape === 'tri_pyramid') {
+            var da=dims.a*sc, db=dims.b*sc, dc=dims.c*sc;
+            var Ax=0,Az=0, Bx=dc,Bz=0;
+            var cosAng=(dc*dc+db*db-da*da)/(2*dc*db);
+            cosAng=Math.max(-1,Math.min(1,cosAng));
+            var Cx=db*cosAng, Cz=db*Math.sqrt(1-cosAng*cosAng);
+            var phSc=(dims.sh||1)*sc;
+            // centroid
+            var centX=(Ax+Bx+Cx)/3, centZ=(Az+Bz+Cz)/3;
+            function pyrPt(x,y,z){return pt(x-centX,-y-Cz*0.3,z-centZ);}
+            var pA=pyrPt(Ax,0,Az), pB=pyrPt(Bx,0,Bz), pC=pyrPt(Cx,0,Cz);
+            var apex2=pyrPt(centX,phSc,centZ);
+            // base hidden
+            line(pA,pB,true);
+            // faces
+            face([pB,pC,apex2],fill);
+            face([pA,pC,apex2],fillDark);
+            face([pA,pB,apex2],fill);
+            line(pA,pC,false); line(pB,pC,false);
+            var mb=[(pA[0]+pB[0])/2,(pA[1]+pB[1])/2]; label(mb,'c');
+            var mac=[(pA[0]+pC[0])/2,(pA[1]+pC[1])/2]; label(mac,'b');
+            var mbc=[(pB[0]+pC[0])/2,(pB[1]+pC[1])/2]; label(mbc,'a');
+            // slant height line from midpoint of base side to apex
+            cx.beginPath(); cx.moveTo(mbc[0],mbc[1]); cx.lineTo(apex2[0],apex2[1]);
+            cx.strokeStyle='#e8430a'; cx.lineWidth=1.5; cx.setLineDash([4,3]); cx.stroke(); cx.setLineDash([]);
+            var sm=[(mbc[0]+apex2[0])/2,(mbc[1]+apex2[1])/2];
+            cx.fillStyle='#e8430a'; cx.font='bold 10px system-ui'; cx.fillText('sh',sm[0]+3,sm[1]);
+        }
     }
 
     function calc3D() {
@@ -3805,11 +3961,22 @@
             rows.innerHTML='<div style="color:'+(d?'#ff7070':'#c0392b')+';font-weight:600;font-size:12px;">\u26a0 '+warn+'</div>';
             get('surfaceAreaRes').innerText='';
             get('totalEdgesRes').innerText='';
+            var cb3=get('canvasBox3D'); if(cb3) cb3.style.display='none';
         } else {
             rows.innerHTML=html;
             var pr=getPrec();
             get('surfaceAreaRes').innerText=isNaN(surfArea)?'':trimZ(surfArea.toFixed(pr));
             get('totalEdgesRes').innerText=isNaN(totalEdges)?'':trimZ(totalEdges.toFixed(pr));
+            // Draw diagram
+            var dims3 = {};
+            if(current3DShape==='rect_prism'||current3DShape==='rect_pyramid'){
+                dims3={l:get3D('s3_l'),w:get3D('s3_w'),h:get3D('s3_h')};
+            } else if(current3DShape==='tri_prism'){
+                dims3={a:get3D('s3_a'),b:get3D('s3_b'),c:get3D('s3_c'),h:get3D('s3_h')};
+            } else if(current3DShape==='tri_pyramid'){
+                dims3={a:get3D('s3_a'),b:get3D('s3_b'),c:get3D('s3_c'),sh:get3D('s3_sh')};
+            }
+            draw3DShape(current3DShape, dims3);
         }
         applyDark();
     }
