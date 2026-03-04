@@ -975,7 +975,6 @@
     var errTimer = null;
     function showError(title, msg) {
         get('errTitle').innerText = title; get('errMsg').innerText = msg;
-        get('res').style.display = 'none';
         errBox.style.opacity = '1'; errBox.style.display = 'block';
         if (errTimer) clearTimeout(errTimer);
         errTimer = setTimeout(dismissErr, 4000);
@@ -2587,7 +2586,7 @@
         }
     }
 
-    get('calc').onclick = function() { doCalculate(false); };
+    get('calc').onclick = function() { clearTimeout(autoCalcTimer); doCalculate(false); };
 
     function canvasToTriCoord(sx, sy) {
         return { x: (sx - diagOffX) / diagScale, y: (sy - diagOffY) / diagScale };
@@ -4581,7 +4580,7 @@
     // ── Quiz Mode ─────────────────────────────────────────────────────────────
     var _quizPanel = null;
     var _quizState = { q:null, answered:false, streak:0, total:0, correct:0 };
-    var _quizCats = { pythag2d:true, trig:true, vol3d:true, sa3d:true, diag3d:true };
+    var _quizCats = { pythag2d:true, trig:false, diag3d:true };
 
     function _quizRandInt(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
 
@@ -4589,10 +4588,8 @@
         var t=[];
         if(_quizCats.pythag2d){ t.push(0); t.push(1); }
         if(_quizCats.trig)    { t.push(2); }
-        if(_quizCats.vol3d)   { t.push(3); t.push(5); }
-        if(_quizCats.sa3d)    { t.push(4); }
         if(_quizCats.diag3d)  { t.push(6); }
-        return t.length ? t : [0,1,2,3,4,5,6];
+        return t.length ? t : [0,1,6];
     }
 
     function _quizGenQuestion() {
@@ -4602,43 +4599,24 @@
         if(type===0) {
             a=_quizRandInt(3,15); b=_quizRandInt(3,15); c=Math.sqrt(a*a+b*b);
             question='Find x, the length of the hypotenuse.';
-            answer=parseFloat(c.toPrecision(6)); hint='x = √(a² + b²)';
+            answer=parseFloat(c.toPrecision(6)); hint='x = \u221a(a\u00b2 + b\u00b2)';
             given='a = '+a+', b = '+b; qtype='pythag_c';
         } else if(type===1) {
             a=_quizRandInt(3,12); b=_quizRandInt(3,12); c=Math.sqrt(a*a+b*b);
             question='Find x, the missing leg, given the hypotenuse and the other leg.';
-            answer=parseFloat(a.toPrecision(6)); hint='x = √(c² − b²)';
+            answer=parseFloat(a.toPrecision(6)); hint='x = \u221a(c\u00b2 \u2212 b\u00b2)';
             given='b = '+b+', c = '+parseFloat(c.toPrecision(4)); qtype='pythag_a';
         } else if(type===2) {
             a=_quizRandInt(2,10); b=_quizRandInt(2,10); c=Math.sqrt(a*a+b*b);
             var angA=Math.atan(a/b)*180/Math.PI;
-            question='Find x°, the angle opposite the vertical leg. Give your answer in degrees to 2 dp.';
+            question='Find x\u00b0, the angle opposite the vertical leg. Give your answer in degrees to 2 dp.';
             answer=parseFloat(angA.toPrecision(5)); hint='x = arctan(opposite / adjacent)';
             given='a = '+a+', b = '+b; qtype='pythag_ang';
-        } else if(type===3) {
-            var l=_quizRandInt(2,12),w=_quizRandInt(2,12),h=_quizRandInt(2,12);
-            question='Find x, the volume of this rectangular prism.';
-            answer=l*w*h; hint='x = l × w × h';
-            given='l = '+l+', w = '+w+', h = '+h; qtype='3d_vol_rect';
-            a=l; b=w; c=h;
-        } else if(type===4) {
-            var r=_quizRandInt(2,10);
-            question='Find x, the surface area of this sphere. Round to 2 dp.';
-            answer=parseFloat((4*Math.PI*r*r).toFixed(2)); hint='x = 4πr²';
-            given='radius r = '+r; qtype='3d_sa_sphere';
-            a=r; b=0; c=0;
-        } else {
-            var r2=_quizRandInt(2,8),h2=_quizRandInt(3,12);
-            question='Find x, the volume of this cylinder. Round to 2 dp.';
-            answer=parseFloat((Math.PI*r2*r2*h2).toFixed(2)); hint='x = πr²h';
-            given='radius r = '+r2+', height h = '+h2; qtype='3d_vol_cyl';
-            a=r2; b=h2; c=0;
-        }
-        if(type===6) {
+        } else if(type===6) {
             var dl=_quizRandInt(2,10),dw=_quizRandInt(2,10),dh=_quizRandInt(2,10);
             var diag=Math.sqrt(dl*dl+dw*dw+dh*dh);
             question='Find x, the space diagonal of this rectangular prism. Round to 2 dp.';
-            answer=parseFloat(diag.toFixed(2)); hint='x = √(l² + w² + h²)';
+            answer=parseFloat(diag.toFixed(2)); hint='x = \u221a(l\u00b2 + w\u00b2 + h\u00b2)';
             given='l = '+dl+', w = '+dw+', h = '+dh; qtype='3d_diag_rect';
             a=dl; b=dw; c=dh;
         }
@@ -4648,7 +4626,8 @@
     function _quizDrawDiagram(q) {
         var cv=document.getElementById('quizCanvas'); if(!cv) return;
         cv.style.display='block';
-        cv.width=cv.offsetWidth||280; cv.height=150;
+        var is3D=(q.qtype==='3d_diag_rect');
+        cv.width=cv.offsetWidth||280; cv.height=is3D?180:150;
         var W=cv.width,H=cv.height;
         var cx2=cv.getContext('2d');
         cx2.clearRect(0,0,W,H);
@@ -4689,58 +4668,6 @@
                 cx2.strokeStyle=unk; cx2.lineWidth=1.5;
                 cx2.beginPath(); cx2.arc(ax2,ay,15,Math.PI/2,Math.PI/2+Math.atan2(b*sc,a*sc)); cx2.stroke();
             }
-        } else if(q.qtype==='3d_vol_rect') {
-            var l=q.a,w=q.b,hv=q.c;
-            var sc2=Math.min(13,(W-90)/Math.max(l+w*0.45,1),(H-55)/Math.max(hv+w*0.25,1));
-            var ox=W/2-(l+w*0.4)*sc2/2,oy=H-26-hv*sc2;
-            function iX(lv,wv){return ox+lv*sc2+wv*0.44*sc2;}
-            function iY(lv,wv,hh){return oy+wv*(-0.22)*sc2-hh*sc2;}
-            cx2.strokeStyle=col; cx2.lineWidth=1.5;
-            var bf=[[0,0],[l,0],[l,w],[0,w]];
-            cx2.beginPath(); cx2.moveTo(iX(bf[0][0],bf[0][1]),iY(0,0,0));
-            for(var pi=1;pi<bf.length;pi++) cx2.lineTo(iX(bf[pi][0],bf[pi][1]),iY(0,0,0));
-            cx2.closePath(); cx2.stroke();
-            cx2.beginPath(); cx2.moveTo(iX(bf[0][0],bf[0][1]),iY(0,0,hv));
-            for(var pi2=1;pi2<bf.length;pi2++) cx2.lineTo(iX(bf[pi2][0],bf[pi2][1]),iY(0,0,hv));
-            cx2.closePath(); cx2.stroke();
-            bf.forEach(function(v){cx2.beginPath();cx2.moveTo(iX(v[0],v[1]),iY(v[0],v[1],0));cx2.lineTo(iX(v[0],v[1]),iY(v[0],v[1],hv));cx2.stroke();});
-            cx2.font='bold 11px system-ui,sans-serif'; cx2.textAlign='center';
-            cx2.fillStyle=lc;
-            cx2.fillText('l='+l,iX(l/2,0),iY(l/2,0,0)+15);
-            cx2.fillText('w='+w,iX(l,w/2)+22,iY(l,w/2,0)+2);
-            cx2.fillText('h='+hv,iX(0,0)-20,iY(0,0,hv/2)+2);
-            cx2.fillStyle=unk; cx2.font='bold 13px system-ui,sans-serif';
-            cx2.fillText('x=?',iX(l/2,w/2),iY(l/2,w/2,hv/2)+2);
-        } else if(q.qtype==='3d_sa_sphere') {
-            var r=q.a,rs=Math.min(W,H)/2-24;
-            cx2.strokeStyle=col; cx2.lineWidth=2;
-            cx2.beginPath(); cx2.arc(W/2,H/2,rs,0,2*Math.PI); cx2.stroke();
-            cx2.strokeStyle=bw?'#aaa':(d?'#334466':'#bad'); cx2.lineWidth=1;
-            cx2.beginPath(); cx2.ellipse(W/2,H/2,rs,rs*0.28,0,0,2*Math.PI); cx2.stroke();
-            cx2.strokeStyle=lc; cx2.lineWidth=1.5; cx2.setLineDash([3,3]);
-            cx2.beginPath(); cx2.moveTo(W/2,H/2); cx2.lineTo(W/2+rs,H/2); cx2.stroke();
-            cx2.setLineDash([]);
-            cx2.font='bold 11px system-ui,sans-serif'; cx2.textAlign='center';
-            cx2.fillStyle=lc; cx2.fillText('r='+r,W/2+rs*0.52,H/2-9);
-            cx2.fillStyle=unk; cx2.font='bold 13px system-ui,sans-serif';
-            cx2.fillText('x=?',W/2,H/2+rs*0.55+8);
-        } else if(q.qtype==='3d_vol_cyl') {
-            var r3=q.a,h3=q.b;
-            var sc3=Math.min(12,(W-80)/(r3*2+4),(H-46)/h3);
-            var rr=r3*sc3,hh3=h3*sc3,cxc=W/2,cyc=H/2;
-            cx2.strokeStyle=col; cx2.lineWidth=2;
-            cx2.strokeRect(cxc-rr,cyc-hh3/2,rr*2,hh3);
-            cx2.beginPath(); cx2.ellipse(cxc,cyc-hh3/2,rr,rr*0.28,0,0,2*Math.PI); cx2.stroke();
-            cx2.beginPath(); cx2.ellipse(cxc,cyc+hh3/2,rr,rr*0.28,0,Math.PI,false); cx2.stroke();
-            cx2.strokeStyle=lc; cx2.lineWidth=1.2; cx2.setLineDash([3,3]);
-            cx2.beginPath(); cx2.moveTo(cxc,cyc-hh3/2); cx2.lineTo(cxc+rr,cyc-hh3/2); cx2.stroke();
-            cx2.setLineDash([]);
-            cx2.font='bold 11px system-ui,sans-serif'; cx2.textAlign='center';
-            cx2.fillStyle=lc;
-            cx2.fillText('r='+r3,cxc+rr/2,cyc-hh3/2-8);
-            cx2.fillText('h='+h3,cxc-rr-20,cyc+4);
-            cx2.fillStyle=unk; cx2.font='bold 13px system-ui,sans-serif';
-            cx2.fillText('x=?',cxc,cyc+6);
         } else if(q.qtype==='3d_diag_rect') {
             var ld=q.a,wd=q.b,hvd=q.c;
             var fill3d=d?'rgba(30,50,90,0.75)':'rgba(220,235,255,0.75)';
@@ -4778,15 +4705,18 @@
             }
             var bpd=[pt3d(0,0,0),pt3d(ld,0,0),pt3d(ld,0,wd),pt3d(0,0,wd)];
             var tpd=[pt3d(0,hvd,0),pt3d(ld,hvd,0),pt3d(ld,hvd,wd),pt3d(0,hvd,wd)];
+            // hidden back edges dashed
             seg3d(bpd[0],bpd[1],true);seg3d(bpd[0],bpd[3],true);seg3d(bpd[0],tpd[0],true);
+            // shaded faces
             poly3d([tpd[0],tpd[1],tpd[2],tpd[3]],fill3d);
             poly3d([bpd[3],bpd[2],tpd[2],tpd[3]],fillSide3d);
             poly3d([bpd[2],bpd[1],tpd[1],tpd[2]],fill3d);
+            // visible edges
             seg3d(bpd[1],bpd[2],false);seg3d(bpd[2],bpd[3],false);
             seg3d(bpd[1],tpd[1],false);seg3d(bpd[2],tpd[2],false);seg3d(bpd[3],tpd[3],false);
             for(var tiid=0;tiid<4;tiid++)seg3d(tpd[tiid],tpd[(tiid+1)%4],false);
             // space diagonal: front-bottom-right (l,0,0) to back-top-left (0,hv,w)
-            var dA=pt3d(ld,0,0), dB=pt3d(0,hvd,wd);
+            var dA=pt3d(ld,0,0),dB=pt3d(0,hvd,wd);
             seg3d(dA,dB,false,unk,[7,4]);
             cx2.beginPath();cx2.arc(dA[0],dA[1],3,0,2*Math.PI);cx2.fillStyle=unk;cx2.fill();
             cx2.beginPath();cx2.arc(dB[0],dB[1],3,0,2*Math.PI);cx2.fillStyle=unk;cx2.fill();
@@ -4879,8 +4809,6 @@
         var cats=[
             {key:'pythag2d', label:'Pythagoras — find hyp or leg'},
             {key:'trig',     label:'Trigonometry — find angle'},
-            {key:'vol3d',    label:'3D Volume (prism & cylinder)'},
-            {key:'sa3d',     label:'3D Surface area (sphere)'},
             {key:'diag3d',   label:'3D Space diagonal (rect. prism)'}
         ];
         sp.innerHTML='<div style="padding:8px 14px 6px;font-size:11px;color:'+sub+';font-weight:700;letter-spacing:0.5px;border-bottom:1px solid '+bdr2+';">QUESTION CATEGORIES</div>'
