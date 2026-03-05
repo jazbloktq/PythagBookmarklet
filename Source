@@ -213,6 +213,27 @@
         '  --gp-row-bdr: #ccc;',
         '}',
 
+        '#geo-ultimate-vscroll.geo-space {',
+        '  --gp-bg: #000c20; --gp-body-bg: #000c20; --gp-border: #1a3a6e;',
+        '  --gp-text: #a0c8ff; --gp-subtext: #4a70a0; --gp-label: #3a5a90;',
+        '  --gp-input-bg: #000c28; --gp-input-bdr: #1a3a6e;',
+        '  --gp-btn-bg: #0a1840; --gp-btn-txt: #7090c0;',
+        '  --gp-res-bg: #000820; --gp-res-bdr: #1a3a6e;',
+        '  --gp-card-bg: #000c28;',
+        '  --gp-canvas-bg: #000418; --gp-canvas-bdr: #1a3a6e;',
+        '  --gp-menu-bg: #000c28; --gp-menu-bdr: #1a3a6e;',
+        '  --gp-code-bg: #000820; --gp-code-bdr: #1a3a6e; --gp-code-txt: #60a0ff;',
+        '  --gp-tag-bg: #0a1840; --gp-tag-txt: #4a9eff;',
+        '  --gp-pos-bg: #000c28;',
+        '  --gp-sep: #1a3a6e;',
+        '  --gp-accent: #4a9eff;',
+        '  --gp-btn-active-bg: #0a2a60; --gp-btn-active-txt: #4a9eff; --gp-btn-active-bdr: #1a5aaa;',
+        '  --gp-btn-base-bg: #0a1840; --gp-btn-base-txt: #7090c0; --gp-btn-base-bdr: #1a3a6e;',
+        '  --gp-method-active-bg: #0a2a60; --gp-method-active-txt: #4a9eff; --gp-method-active-bdr: #1a5aaa;',
+        '  --gp-method-base-bg: #0a1840; --gp-method-base-txt: #7090c0; --gp-method-base-bdr: #1a3a6e;',
+        '  --gp-row-bdr: #0a2040;',
+        '}',
+
         '#geo-ultimate-vscroll, #geo-ultimate-vscroll #uiBody, #geo-ultimate-vscroll #panel3D {',
         '  background: var(--gp-bg); color: var(--gp-text);',
         '}',
@@ -517,6 +538,7 @@
               '<div style="display:flex;flex-direction:column;gap:8px;">',
                 '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optDark"      style="accent-color:#1a73e8;width:14px;height:14px;flex-shrink:0;"> Dark mode</label>',
                 '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optBW"        style="accent-color:#000;width:14px;height:14px;flex-shrink:0;"> Black &amp; white mode</label>',
+                '<label id="optSpaceLabel" style="display:none;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optSpace" style="accent-color:#1a73e8;width:14px;height:14px;flex-shrink:0;"> ✦ Space mode</label>',
                 '<div style="height:1px;background:#eee;margin:2px 0;"></div>',
                 '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">',
                   '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;color:#444;"><input type="checkbox" id="optDiagram"   style="accent-color:#1a73e8;width:13px;height:13px;flex-shrink:0;"> Diagram</label>',
@@ -644,6 +666,13 @@
     get('optSurd').checked     = initSurd;
     get('optSimplify').checked = initSimplify;
     get('optAdvanced').checked = initAdvanced;
+    // Space mode unlock
+    var _spaceUnlocked = false;
+    try { _spaceUnlocked = localStorage.getItem('geoPro_spaceUnlocked') === '1'; } catch(e) {}
+    if(_spaceUnlocked) {
+        var _sl = get('optSpaceLabel'); if(_sl) _sl.style.display = 'flex';
+    }
+
     get('optDark').checked        = initDark;
     get('optDegrees').checked     = initDegrees;
     get('optDiagram').checked     = initDiagram;
@@ -660,6 +689,16 @@
     apply3DBtnVisibility();
     // New settings
     var _bwChk = get('optBW'); if(_bwChk) _bwChk.checked = initBW;
+    // Space checkbox listener — just apply the theme
+    (function(){
+        var sc = get('optSpace'); if(!sc) return;
+        sc.addEventListener('change', function(){
+            _spaceModeActive = sc.checked;
+            applyDark();
+            if(_spaceModeActive) _spaceStartStars();
+            else _spaceStopStars();
+        });
+    })();
     var _crChk = get('optCalcResize'); if(_crChk) _crChk.checked = initCalcResize;
     var _frChk = get('optFrameResize'); if(_frChk) _frChk.checked = initFrameResize;
 
@@ -985,14 +1024,18 @@
     };
     function dk(key) { return DK[key][getDark()?1:0]; }
 
+    function getSpace()    { var el=get('optSpace'); return el?el.checked:false; }
+
     function applyDark() {
         var d = getDark();
         var bw = getBW();
-        ui.classList.toggle('geo-dark', d && !bw);
-        ui.classList.toggle('geo-bw', bw);
+        var sp = getSpace();
+        ui.classList.toggle('geo-dark',  d && !bw && !sp);
+        ui.classList.toggle('geo-bw',    bw && !sp);
+        ui.classList.toggle('geo-space', sp);
         // Header bg (not reachable by child CSS token)
         var hdr = get('uiHeader');
-        if(hdr) hdr.style.background = bw ? '#000' : (d ? '#3a4f63' : '#1a73e8');
+        if(hdr) hdr.style.background = sp ? 'linear-gradient(135deg,#050520,#0a1050)' : bw ? '#000' : (d ? '#3a4f63' : '#1a73e8');
         // Mini-calc header
         var mch=get('miniCalcHeader'); if(mch) mch.style.background = bw ? '#000' : (d ? '#3a4f63' : '#1a73e8');
         // Primary action buttons (blue — can't be overridden by token alone)
@@ -1858,6 +1901,11 @@
             angleFls.push(isAngleLbl(lbl));
         });
 
+        // ── Space mode easter egg ─────────────────────────────────────────
+        if(rawStrs.some(function(s){return s.toLowerCase()==='space';})){
+            if(!silent) _secretSpaceMode(); return;
+        }
+
         // ── Step 2: infer the working unit (first-input-wins when no global unit)
         var workingUnit = inferWorkingUnit(rawStrs, angleFls);
 
@@ -1875,6 +1923,7 @@
         if(missing.length){if(!silent)showError('Missing values','Please fill in: '+missing.join(', ')+'.');return;}
         for(var j=0;j<vals.length;j++){
             if(isAngleLbl(cfg.inputs[j])){
+                if(vals[j]===360){if(!silent)_secret360();return;}
                 if(vals[j]<=0||vals[j]>=180){if(!silent)showError('Invalid angle',cfg.inputs[j]+' must be between 0\u00b0 and 180\u00b0.');return;}
             } else {
                 if(vals[j]<=0){if(!silent)showError('Values must be positive',cfg.inputs[j]+' must be greater than zero.');return;}
@@ -4540,7 +4589,27 @@
 
     get('toggle3DBtn').addEventListener('click', function(e){e.stopPropagation();enter3DMode();});
     get('toggle3DBack').addEventListener('click', function(e){e.stopPropagation();exit3DMode();});
-    get('headerTriBtn').addEventListener('click', function(e){e.stopPropagation();if(mode3D)exit3DMode();else enter3DMode();});
+    // △ logo: 5 rapid clicks = confetti; normal click = 3D toggle
+    (function(){
+        var _triClicks=0, _triResetTimer=null;
+        get('headerTriBtn').addEventListener('mousedown',function(e){
+            e.preventDefault(); // prevent text selection on rapid clicks
+        });
+        get('headerTriBtn').addEventListener('click',function(e){
+            e.stopPropagation();
+            _triClicks++;
+            clearTimeout(_triResetTimer);
+            if(_triClicks>=5){
+                _triClicks=0;
+                _secretConfetti();
+                return;
+            }
+            // Fire 3D toggle immediately on first click
+            if(_triClicks===1){ if(mode3D) exit3DMode(); else enter3DMode(); }
+            // Reset count if no more rapid clicks within 600ms
+            _triResetTimer=setTimeout(function(){ _triClicks=0; }, 600);
+        });
+    })();
     get('calc3D').addEventListener('click', function(e){e.stopPropagation();calc3D();});
     get('dlBtn3D').addEventListener('click', function(){
         var cv=get('canvas3D'); if(!cv)return;
@@ -4884,7 +4953,21 @@
             document.getElementById('quizFeedback').innerHTML=ok
                 ?'<span style="color:#22a05a;font-weight:700;">\u2713 Correct! x = '+parseFloat(q.answer.toPrecision(6))+'</span>'
                 :'<span style="color:#c0392b;font-weight:700;">\u2717 Incorrect. x = '+parseFloat(q.answer.toPrecision(6))+'</span>';
-            if(document.getElementById('quizStreak')) document.getElementById('quizStreak').innerText=_quizState.streak;
+            var streakEl=document.getElementById('quizStreak');
+            if(streakEl){
+                streakEl.innerText=_quizState.streak;
+                if(ok && _quizState.streak>0 && _quizState.streak%10===0){
+                    streakEl.style.color='#f0c040';
+                    streakEl.style.textShadow='0 0 8px #f0c04088';
+                    streakEl.parentNode.insertAdjacentHTML('beforeend','<span id="quizTrophy" style="margin-left:4px;font-size:14px;animation:gpTrophyPop 0.4s ease">🏆</span>');
+                    setTimeout(function(){
+                        streakEl.style.color=''; streakEl.style.textShadow='';
+                        var t=document.getElementById('quizTrophy'); if(t) t.remove();
+                    }, 3000);
+                } else if(!ok){
+                    streakEl.style.color=''; streakEl.style.textShadow='';
+                }
+            }
             if(document.getElementById('quizScore')) document.getElementById('quizScore').innerText=_quizState.correct+'/'+_quizState.total;
             _updateNextLabel();
         });
@@ -5333,6 +5416,13 @@
     }
 
     function _trigDoSolve() {
+        // Easter eggs: check raw input values first
+        var _trigAllInputs = ['a','b','hyp','A','B','sa','sb','sc','AA','AB','AC'];
+        for(var _ti=0;_ti<_trigAllInputs.length;_ti++){
+            var _tel=get('trigIn_'+_trigAllInputs[_ti]);
+            if(_tel && _tel.value.trim().toLowerCase()==='space'){ _secretSpaceMode(); return; }
+            if(_tel && parseFloat(_tel.value)===360){ _secret360trig(); return; }
+        }
         var res = _trigMode==='right' ? _solveRight() : _solveAny();
         var errEl=get('trigError'), resEl=get('trigResults');
         if(res.error){
@@ -5768,5 +5858,384 @@
 
     get('examplesBtn').addEventListener('click',function(e){e.stopPropagation();_buildExamplesPanel();});
 
+
+
+    // ══════════════════════════════════════════════════════════════════
+    // ── Secret Features ───────────────────────────────────────────────
+    // ══════════════════════════════════════════════════════════════════
+
+    // ── Shared 360° spinning triangle (main canvas) ───────────────────
+    function _secret360() {
+        var c = get('triCanvas'), cb = get('canvasBox');
+        if(!c || !cb) return;
+        cb.style.display = 'block';
+        var W = c.offsetWidth || c.width || 340;
+        var H = c.offsetHeight || c.height || 210;
+        c.width = W; c.height = H;
+        var ctx2 = c.getContext('2d');
+        var d = getDark(), bw = getBW();
+        var bg  = bw?'#fff':(d?'#181828':'#fafbff');
+        var acc = bw?'#000':(d?'#4a9eff':'#1a73e8');
+        get('res').style.display = 'block';
+        get('final').style.display = 'block';
+        get('final').innerText = '360°';
+        var classTag = get('classTag'); if(classTag) classTag.style.display='none';
+        var angle = 0, spinTimer = null;
+        function spinFrame() {
+            ctx2.fillStyle = bg; ctx2.fillRect(0,0,W,H);
+            ctx2.save();
+            ctx2.translate(W/2, H/2);
+            ctx2.rotate(angle);
+            var r = Math.min(W,H)*0.32;
+            ctx2.beginPath();
+            for(var i=0;i<3;i++){
+                var a = (i*2*Math.PI/3) - Math.PI/2;
+                if(i===0) ctx2.moveTo(Math.cos(a)*r, Math.sin(a)*r);
+                else ctx2.lineTo(Math.cos(a)*r, Math.sin(a)*r);
+            }
+            ctx2.closePath();
+            ctx2.strokeStyle = acc; ctx2.lineWidth = 2.5; ctx2.stroke();
+            ctx2.fillStyle = d?'#5050aa':'#aac0ee';
+            ctx2.font = 'bold 11px system-ui,sans-serif';
+            ctx2.textAlign = 'center';
+            ctx2.fillText("that's a full rotation...", 0, r+22);
+            ctx2.restore();
+            angle += 0.04;
+            spinTimer = requestAnimationFrame(spinFrame);
+        }
+        spinFrame();
+        setTimeout(function(){
+            cancelAnimationFrame(spinTimer);
+            get('final').innerText = '';
+            get('res').style.display = 'none';
+            if(lastCalcResult) {
+                drawTri(lastCalcResult.s1, lastCalcResult.h, lastCalcResult.b, lastCalcResult.s2,
+                    lastCalcResult.isExt, lastCalcResult.anglesForCanvas, lastCalcResult.goal);
+            } else {
+                ctx2.fillStyle = bg; ctx2.fillRect(0,0,W,H);
+            }
+        }, 4000);
+    }
+
+    // ── 360° on trig canvas ───────────────────────────────────────────
+    function _secret360trig() {
+        var c = get('trigCanvas'), cb = get('trigCanvasBox');
+        if(!c) return;
+        var W = c.offsetWidth || c.width || 340;
+        var H = c.offsetHeight || c.height || 175;
+        c.width = W; c.height = H;
+        var ctx2 = c.getContext('2d');
+        var d = getDark(), bw = getBW();
+        var bg  = bw?'#fff':(d?'#181828':'#fafbff');
+        var acc = bw?'#000':(d?'#4a9eff':'#1a73e8');
+        get('trigResults').style.display = 'none';
+        get('trigError').style.display = 'none';
+        var angle = 0, spinTimer = null;
+        function spinFrame() {
+            ctx2.fillStyle = bg; ctx2.fillRect(0,0,W,H);
+            ctx2.save();
+            ctx2.translate(W/2, H/2);
+            ctx2.rotate(angle);
+            var r = Math.min(W,H)*0.32;
+            ctx2.beginPath();
+            for(var i=0;i<3;i++){
+                var a = (i*2*Math.PI/3) - Math.PI/2;
+                if(i===0) ctx2.moveTo(Math.cos(a)*r, Math.sin(a)*r);
+                else ctx2.lineTo(Math.cos(a)*r, Math.sin(a)*r);
+            }
+            ctx2.closePath();
+            ctx2.strokeStyle = acc; ctx2.lineWidth = 2.5; ctx2.stroke();
+            ctx2.fillStyle = d?'#5050aa':'#aac0ee';
+            ctx2.font = 'bold 11px system-ui,sans-serif';
+            ctx2.textAlign = 'center';
+            ctx2.fillText("that's a full rotation...", 0, r+22);
+            ctx2.restore();
+            angle += 0.04;
+            spinTimer = requestAnimationFrame(spinFrame);
+        }
+        spinFrame();
+        setTimeout(function(){
+            cancelAnimationFrame(spinTimer);
+            // Clear the 360 input then redraw with whatever is still valid
+            ['a','b','hyp','A','B','sa','sb','sc','AA','AB','AC'].forEach(function(k){
+                var el=get('trigIn_'+k); if(el&&parseFloat(el.value)===360) el.value='';
+            });
+            _trigDrawDiagram(null);
+        }, 4000);
+    }
+
+    // ── Space mode ────────────────────────────────────────────────────
+    var _spaceModeActive = false;
+    var _spaceTwinkTimer = null;
+    var _spaceShootTimer = null;
+    var _spaceStars      = [];
+    var _spaceStarCv     = null;
+    var _spaceStarCtx    = null;
+
+    function _spaceUnlock() {
+        if(_spaceUnlocked) return;
+        _spaceUnlocked = true;
+        try { localStorage.setItem('geoPro_spaceUnlocked','1'); } catch(e) {}
+        var sl = get('optSpaceLabel');
+        if(sl) sl.style.display = 'flex';
+    }
+
+    // Called with no args = "space" typed in input → just unlock, show setting, do nothing else
+    function _secretSpaceMode() {
+        _spaceUnlock();
+    }
+
+    function _spaceStartStars() {
+        _spaceStopStars();
+
+        // Canvas sized and positioned to exactly cover the panel
+        var panelEl = get('geo-ultimate-vscroll');
+        if(!panelEl) return;
+        var pr = panelEl.getBoundingClientRect();
+        var starCv = document.createElement('canvas');
+        starCv.id = 'gpStarfield';
+        // z-index above panel (10000) but pointer-events:none so clicks pass through
+        starCv.style.cssText = 'position:fixed;pointer-events:none;z-index:10001;border-radius:14px;overflow:hidden;';
+        starCv.style.left   = pr.left + 'px';
+        starCv.style.top    = pr.top  + 'px';
+        starCv.style.width  = pr.width + 'px';
+        starCv.style.height = pr.height + 'px';
+        starCv.width  = Math.round(pr.width);
+        starCv.height = Math.round(pr.height);
+        document.body.appendChild(starCv);
+        _spaceStarCv = starCv;
+
+        var W2 = starCv.width, H2 = starCv.height;
+        var sctx = starCv.getContext('2d');
+        _spaceStarCtx = sctx;
+
+        // Draw stars (transparent background — panel CSS handles bg colour)
+        _spaceStars = [];
+        for(var i=0;i<140;i++){
+            var sx=Math.random()*W2, sy=Math.random()*H2;
+            var sr=0.3+Math.random()*1.4, bright=0.3+Math.random()*0.7;
+            _spaceStars.push({x:sx,y:sy,r:sr,b:bright});
+            sctx.beginPath(); sctx.arc(sx,sy,sr,0,Math.PI*2);
+            sctx.fillStyle='rgba(255,255,255,'+bright+')'; sctx.fill();
+        }
+
+        // ── Continuous render loop ──────────────────────────────────────
+        // Give each star its animated alpha state
+        _spaceStars.forEach(function(s){
+            s.cur    = s.b;
+            s.target = s.b;
+            s.peak   = Math.min(1, s.b + 0.55);
+            s.phase  = 'idle'; // idle | up | down
+        });
+
+        // Kick off a random twinkle every ~400ms
+        var _twinkInterval = setInterval(function(){
+            if(!_spaceStarCv){ clearInterval(_twinkInterval); return; }
+            var s = _spaceStars[Math.floor(Math.random()*_spaceStars.length)];
+            if(s.phase === 'idle'){ s.phase = 'up'; }
+        }, 400);
+        _spaceTwinkTimer = _twinkInterval; // kept so _spaceStopStars can clear it
+
+        // Shooting stars queue
+        var _shooters = [];
+        function _spawnShooter(){
+            if(!_spaceStarCv) return;
+            var angle = Math.PI/6 + Math.random()*Math.PI/4;
+            var len   = 60 + Math.random()*80;
+            _shooters.push({
+                x: Math.random() * W2,
+                y: Math.random() * H2,
+                vx: Math.cos(angle),
+                vy: Math.sin(angle),
+                len: len,
+                t: 0,
+                dur: 600 + Math.random()*500
+            });
+            _spaceShootTimer = setTimeout(_spawnShooter, 4000 + Math.random()*6000);
+        }
+        _spaceShootTimer = setTimeout(_spawnShooter, 1200 + Math.random()*2000);
+
+        // Render loop
+        var _loopActive = true;
+        var _lastFrame  = null;
+        function _spaceRenderLoop(now){
+            if(!_loopActive || !_spaceStarCv) return;
+            var dt = _lastFrame ? Math.min(now - _lastFrame, 50) : 16;
+            _lastFrame = now;
+
+            sctx.clearRect(0, 0, W2, H2);
+
+            // Stars
+            var twinkSpeed = dt / 200; // 200ms per phase = 400ms full cycle
+            _spaceStars.forEach(function(s){
+                if(s.phase === 'up'){
+                    s.cur = Math.min(s.peak, s.cur + twinkSpeed * (s.peak - s.b + 0.01));
+                    if(s.cur >= s.peak - 0.01){ s.cur = s.peak; s.phase = 'down'; }
+                } else if(s.phase === 'down'){
+                    s.cur = Math.max(s.b, s.cur - twinkSpeed * (s.peak - s.b + 0.01));
+                    if(s.cur <= s.b + 0.01){ s.cur = s.b; s.phase = 'idle'; }
+                }
+                sctx.globalAlpha = s.cur;
+                sctx.fillStyle   = '#ffffff';
+                sctx.beginPath();
+                sctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+                sctx.fill();
+            });
+            sctx.globalAlpha = 1;
+
+            // Shooting stars
+            for(var i = _shooters.length - 1; i >= 0; i--){
+                var sh = _shooters[i];
+                sh.t = Math.min(1, sh.t + dt / sh.dur);
+                // Smooth fade in (0-20%) and fade out (80-100%)
+                var fade = sh.t < 0.2 ? sh.t / 0.2
+                         : sh.t > 0.8 ? (1 - sh.t) / 0.2
+                         : 1;
+                // Head position
+                var hx = sh.x + sh.vx * sh.len * sh.t;
+                var hy = sh.y + sh.vy * sh.len * sh.t;
+                // Tail trails 30% behind head
+                var tailT = Math.max(0, sh.t - 0.3);
+                var tx = sh.x + sh.vx * sh.len * tailT;
+                var ty = sh.y + sh.vy * sh.len * tailT;
+                // Only draw if head and tail differ
+                if(Math.abs(hx - tx) > 0.5 || Math.abs(hy - ty) > 0.5){
+                    var grd = sctx.createLinearGradient(tx, ty, hx, hy);
+                    grd.addColorStop(0, 'rgba(255,255,255,0)');
+                    grd.addColorStop(0.6, 'rgba(255,255,255,'+(fade*0.6).toFixed(3)+')');
+                    grd.addColorStop(1, 'rgba(255,255,255,'+fade.toFixed(3)+')');
+                    sctx.beginPath();
+                    sctx.moveTo(tx, ty);
+                    sctx.lineTo(hx, hy);
+                    sctx.strokeStyle = grd;
+                    sctx.lineWidth   = 1.5;
+                    sctx.stroke();
+                }
+                if(sh.t >= 1) _shooters.splice(i, 1);
+            }
+
+            requestAnimationFrame(_spaceRenderLoop);
+        }
+        requestAnimationFrame(_spaceRenderLoop);
+
+        // Expose stop hook
+        _spaceStarCv._stopLoop = function(){ _loopActive = false; };
+    }
+
+    function _spaceStopStars() {
+        clearInterval(_spaceTwinkTimer);
+        clearTimeout(_spaceShootTimer);
+        _spaceTwinkTimer=null; _spaceShootTimer=null;
+        if(_spaceStarCv && _spaceStarCv._stopLoop) _spaceStarCv._stopLoop();
+        var sc2=document.getElementById('gpStarfield'); if(sc2) sc2.remove();
+        _spaceStarCv=null; _spaceStarCtx=null; _spaceStars=[];
+    }
+
+        // ── Quiz: 10-streak gold trophy ───────────────────────────────────
+    // (handled inline in _quizRenderQuestion — already injected above)
+
+    // ── Confetti burst ────────────────────────────────────────────────
+    function _secretConfetti() {
+        var N = 90;
+        var particles = [];
+        var colors = ['#1a73e8','#22a05a','#e67e22','#e74c3c','#9b59b6','#f0c040','#1abc9c'];
+        for(var i=0;i<N;i++){
+            particles.push({
+                x: window.innerWidth/2, y: window.innerHeight/3,
+                vx: (Math.random()-0.5)*16,
+                vy: (Math.random()-1.8)*13,
+                r: 4+Math.random()*5,
+                col: colors[Math.floor(Math.random()*colors.length)],
+                rot: Math.random()*Math.PI*2,
+                rv: (Math.random()-0.5)*0.3,
+                shape: Math.random()>0.5?'rect':'circle'
+            });
+        }
+        var cv = document.createElement('canvas');
+        cv.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999999;';
+        cv.width = window.innerWidth; cv.height = window.innerHeight;
+        document.body.appendChild(cv);
+        var cx = cv.getContext('2d');
+        var start = performance.now();
+        function confettiFrame(now){
+            cx.clearRect(0,0,cv.width,cv.height);
+            var alive = false;
+            particles.forEach(function(p){
+                p.x+=p.vx; p.y+=p.vy; p.vy+=0.38; p.vx*=0.99; p.rot+=p.rv;
+                if(p.y<cv.height+20) alive=true;
+                cx.save(); cx.translate(p.x,p.y); cx.rotate(p.rot);
+                cx.fillStyle=p.col;
+                cx.globalAlpha=Math.max(0,1-(now-start)/2200);
+                if(p.shape==='rect'){ cx.fillRect(-p.r,-p.r/2,p.r*2,p.r); }
+                else{ cx.beginPath(); cx.arc(0,0,p.r,0,Math.PI*2); cx.fill(); }
+                cx.restore();
+            });
+            if(alive&&now-start<2500) requestAnimationFrame(confettiFrame);
+            else cv.remove();
+        }
+        requestAnimationFrame(confettiFrame);
+    }
+
+    // ── DVD screensaver (5 min idle) ──────────────────────────────────
+    (function(){
+        var _idleTimer=null, _dvdActive=false, _dvdAnim=null;
+        function _resetIdle(){
+            clearTimeout(_idleTimer);
+            if(_dvdActive) _stopDVD();
+            _idleTimer=setTimeout(_startDVD, 5*60*1000);
+        }
+        function _startDVD(){
+            var c=get('triCanvas'), cb=get('canvasBox');
+            if(!c||mode3D||modeTrig){_resetIdle();return;}
+            cb.style.display='block';
+            var W=c.offsetWidth||c.width||340, H=c.offsetHeight||c.height||210;
+            c.width=W; c.height=H;
+            _dvdActive=true;
+            var r=Math.min(W,H)*0.28;
+            var colors=['#1a73e8','#22a05a','#e67e22','#e74c3c','#9b59b6'];
+            var col=colors[0],colIdx=0,px=W/2,py=H/2,vx=1.4,vy=1.1;
+            var ctx2=c.getContext('2d'),d=getDark(),bw=getBW();
+            function dvdFrame(){
+                var bg=bw?'#fff':(d?'#181828':'#fafbff');
+                ctx2.fillStyle=bg; ctx2.fillRect(0,0,W,H);
+                px+=vx; py+=vy;
+                var bounced=false;
+                if(px-r<0){px=r;vx=Math.abs(vx);bounced=true;}
+                if(px+r>W){px=W-r;vx=-Math.abs(vx);bounced=true;}
+                if(py-r<0){py=r;vy=Math.abs(vy);bounced=true;}
+                if(py+r>H){py=H-r;vy=-Math.abs(vy);bounced=true;}
+                if(bounced){colIdx=(colIdx+1)%colors.length;col=colors[colIdx];}
+                ctx2.save(); ctx2.translate(px,py);
+                ctx2.strokeStyle=col; ctx2.lineWidth=2.5;
+                ctx2.beginPath();
+                for(var i=0;i<3;i++){
+                    var a=i*2*Math.PI/3-Math.PI/2;
+                    if(i===0) ctx2.moveTo(Math.cos(a)*r,Math.sin(a)*r);
+                    else ctx2.lineTo(Math.cos(a)*r,Math.sin(a)*r);
+                }
+                ctx2.closePath(); ctx2.stroke(); ctx2.restore();
+                _dvdAnim=requestAnimationFrame(dvdFrame);
+            }
+            dvdFrame();
+        }
+        function _stopDVD(){
+            _dvdActive=false;
+            cancelAnimationFrame(_dvdAnim);
+            // Restore last diagram
+            var c=get('triCanvas');
+            if(c&&lastCalcResult){
+                drawTri(lastCalcResult.s1,lastCalcResult.h,lastCalcResult.b,lastCalcResult.s2,
+                    lastCalcResult.isExt,lastCalcResult.anglesForCanvas,lastCalcResult.goal);
+            } else if(c){
+                var ctx2=c.getContext('2d'),d=getDark(),bw=getBW();
+                ctx2.fillStyle=bw?'#fff':(d?'#181828':'#fafbff');
+                ctx2.fillRect(0,0,c.width,c.height);
+            }
+        }
+        ['mousemove','mousedown','keydown','touchstart','scroll'].forEach(function(ev){
+            document.addEventListener(ev,_resetIdle,{passive:true});
+        });
+        _resetIdle();
+    })();
 
 })();
