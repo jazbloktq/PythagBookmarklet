@@ -5564,8 +5564,7 @@
             });
         }
         doCalculate(false);
-        _showExBanner(ex, function(){
-            // Reset: clear inputs and results, dismiss banner, stay on correct page
+        function _doMainReset(){
             _exDismissBanner();
             currentTri    = ex.tri;
             currentGoal   = ex.goal;
@@ -5581,8 +5580,9 @@
                 });
             }
             doCalculate(false);
-            _showExBanner(ex, arguments.callee);
-        });
+            _showExBanner(ex, _doMainReset);
+        }
+        _showExBanner(ex, _doMainReset);
     }
 
     function _exLoad3D(ex) {
@@ -5597,7 +5597,7 @@
                 var el=document.getElementById(id); if(el) el.value=ex.inputs3d[id];
             });
             calc3D();
-            _showExBanner(ex, function(){
+            function _do3DReset(){
                 _exDismissBanner();
                 current3DShape  = ex.shape;
                 current3DGoal   = ex.goal;
@@ -5608,9 +5608,10 @@
                         var el=document.getElementById(id); if(el) el.value=ex.inputs3d[id];
                     });
                     calc3D();
-                    _showExBanner(ex, arguments.callee);
+                    _showExBanner(ex, _do3DReset);
                 }, 30);
-            });
+            }
+            _showExBanner(ex, _do3DReset);
         }, 30);
     }
 
@@ -5625,8 +5626,7 @@
             var el=get('trigIn_'+k); if(el) el.value=ex.trigInputs[k];
         });
         _trigDoSolve();
-        _showExBanner(ex, function(){
-            // Reset: clear, refill original values, re-solve, show banner again
+        function _doTrigReset(){
             _exDismissBanner();
             _trigSetMode(ex.trigMode);
             ['a','b','hyp','A','B','sa','sb','sc','AA','AB','AC'].forEach(function(k){
@@ -5636,8 +5636,9 @@
                 var el=get('trigIn_'+k); if(el) el.value=ex.trigInputs[k];
             });
             _trigDoSolve();
-            _showExBanner(ex, arguments.callee);
-        });
+            _showExBanner(ex, _doTrigReset);
+        }
+        _showExBanner(ex, _doTrigReset);
     }
 
     function _exLoad(ex) {
