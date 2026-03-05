@@ -4897,12 +4897,8 @@
             if(hasVal) {
                 if(sb) sb.click();
             } else {
-                _quizState.answered=true; _quizState.total++; _quizState.streak=0;
-                var fb=document.getElementById('quizFeedback');
-                if(fb) fb.innerHTML='<span style="color:#c0392b;font-weight:700;">Skipped. x = '+parseFloat(q.answer.toPrecision(6))+'</span>';
-                if(document.getElementById('quizStreak')) document.getElementById('quizStreak').innerText=_quizState.streak;
-                if(document.getElementById('quizScore')) document.getElementById('quizScore').innerText=_quizState.correct+'/'+_quizState.total;
-                _updateNextLabel();
+                _quizState.total++; _quizState.streak=0;
+                _quizState.q=_quizGenQuestion(); _quizState.answered=false; _quizRenderQuestion();
             }
         });
     }
@@ -5036,25 +5032,6 @@
         var sub = bw?'#444':(d?'#9090b0':'#666');
         ctx2.fillStyle=bg; ctx2.fillRect(0,0,W,H);
 
-        var ox=52,oy=H-36,bx=W-36,by=H-36,tx=52,ty=32;
-        var rmk=13;
-        ctx2.strokeStyle=ln; ctx2.lineWidth=1.2;
-        ctx2.beginPath(); ctx2.moveTo(ox+rmk,oy); ctx2.lineTo(ox+rmk,oy-rmk); ctx2.lineTo(ox,oy-rmk); ctx2.stroke();
-        ctx2.strokeStyle=acc; ctx2.lineWidth=2.2;
-        ctx2.beginPath(); ctx2.moveTo(ox,oy); ctx2.lineTo(bx,by); ctx2.lineTo(tx,ty); ctx2.closePath(); ctx2.stroke();
-
-        // θ arc at bottom-right (bx,by): CCW=inside, CW=outside (exterior angle)
-        var th_to_top  = Math.atan2(ty-by,tx-bx);
-        var th_to_left = Math.atan2(oy-by,ox-bx);
-        var outer = getOuterAngles();
-        ctx2.strokeStyle=bw?'#555':(d?'#f0a040':'#d97706'); ctx2.lineWidth=1.5;
-        ctx2.beginPath(); ctx2.arc(bx,by,22,th_to_top,th_to_left,!outer); ctx2.stroke();
-        // α arc at top-left (tx,ty): CCW=inside, CW=outside (exterior angle)
-        var al_to_bot  = Math.atan2(oy-ty,ox-tx);
-        var al_to_right= Math.atan2(by-ty,bx-tx);
-        ctx2.strokeStyle=bw?'#888':(d?'#60c060':'#22a05a'); ctx2.lineWidth=1.5;
-        ctx2.beginPath(); ctx2.arc(tx,ty,20,al_to_bot,al_to_right,!outer); ctx2.stroke();
-
         var prec=getPrec(), deg=getDeg(), aLbl=deg?'°':'r';
         var outer = getOuterAngles();
         var extFull = deg ? 180 : Math.PI;
@@ -5065,107 +5042,161 @@
             if(isAngle && outer) v = extFull - v;
             return isAngle ? parseFloat(v.toFixed(Math.min(prec,2)))+aLbl : parseFloat(v.toFixed(Math.min(prec,3)))+'';
         }
+        var aVal = (res&&res.a!==undefined)?res.a:NaN;
+        var bVal = (res&&res.b!==undefined)?res.b:NaN;
+        if(isNaN(aVal)){var el=get('trigIn_a');if(el)aVal=parseFloat(el.value);}
+        if(isNaN(bVal)){var el=get('trigIn_b');if(el)bVal=parseFloat(el.value);}
+        if(isNaN(aVal)||isNaN(bVal)||aVal<=0||bVal<=0){aVal=3;bVal=4;}
+        var maxSide=Math.max(aVal,bVal), na=aVal/maxSide, nb=bVal/maxSide;
+        var pad={l:54,r:50,t:36,b:36};
+        var drawW=W-pad.l-pad.r, drawH=H-pad.t-pad.b;
+        var scale=Math.min(drawW/nb,drawH/na);
+        var bPx=nb*scale, aPx=na*scale;
+        var offX=pad.l+(drawW-bPx)/2, offY=pad.t+(drawH-aPx)/2;
+        var ox=offX, oy=offY+aPx, bx=offX+bPx, by=oy, tx=offX, ty=offY;
+        var rmk=Math.min(12,bPx*0.12,aPx*0.12);
+        ctx2.strokeStyle=ln; ctx2.lineWidth=1.2;
+        ctx2.beginPath(); ctx2.moveTo(ox+rmk,oy); ctx2.lineTo(ox+rmk,oy-rmk); ctx2.lineTo(ox,oy-rmk); ctx2.stroke();
+        ctx2.strokeStyle=acc; ctx2.lineWidth=2.2;
+        ctx2.beginPath(); ctx2.moveTo(ox,oy); ctx2.lineTo(bx,by); ctx2.lineTo(tx,ty); ctx2.closePath(); ctx2.stroke();
+        var th_to_top=Math.atan2(ty-by,tx-bx), th_to_left=Math.atan2(oy-by,ox-bx);
+        ctx2.strokeStyle=bw?'#555':(d?'#f0a040':'#d97706'); ctx2.lineWidth=1.5;
+        ctx2.beginPath(); ctx2.arc(bx,by,Math.min(22,bPx*0.18),th_to_top,th_to_left,!outer); ctx2.stroke();
+        var al_to_bot=Math.atan2(oy-ty,ox-tx), al_to_right=Math.atan2(by-ty,bx-tx);
+        ctx2.strokeStyle=bw?'#888':(d?'#60c060':'#22a05a'); ctx2.lineWidth=1.5;
+        ctx2.beginPath(); ctx2.arc(tx,ty,Math.min(20,aPx*0.18),al_to_bot,al_to_right,!outer); ctx2.stroke();
         ctx2.textAlign='center';
         ctx2.fillStyle=acc; ctx2.font='bold 11px system-ui,sans-serif';
-        ctx2.save(); ctx2.translate((bx+tx)/2+16,(by+ty)/2); ctx2.rotate(-Math.atan2(bx-tx,by-ty)); ctx2.fillText('c = '+fmtV('hyp',false),0,0); ctx2.restore();
+        var hypAngle=Math.atan2(ty-by,tx-bx);
+        var hypMx=(bx+tx)/2, hypMy=(by+ty)/2;
+        var hypNx=Math.sin(hypAngle), hypNy=-Math.cos(hypAngle);
+        ctx2.save(); ctx2.translate(hypMx+hypNx*16,hypMy+hypNy*16); ctx2.rotate(hypAngle); ctx2.fillText('c = '+fmtV('hyp',false),0,0); ctx2.restore();
         ctx2.fillStyle=lbl;
-        ctx2.save(); ctx2.translate(ox-18,(oy+ty)/2); ctx2.rotate(-Math.PI/2); ctx2.fillText('a = '+fmtV('a',false),0,0); ctx2.restore();
-        ctx2.fillText('b = '+fmtV('b',false),(ox+bx)/2,oy+15);
+        ctx2.save(); ctx2.translate(ox-16,(oy+ty)/2); ctx2.rotate(-Math.PI/2); ctx2.fillText('a = '+fmtV('a',false),0,0); ctx2.restore();
+        ctx2.fillText('b = '+fmtV('b',false),(ox+bx)/2,oy+16);
         ctx2.font='11px system-ui,sans-serif';
-        ctx2.fillStyle=bw?'#555':(d?'#f0a040':'#d97706'); ctx2.fillText((outer?'ext-θ':'θ')+'='+fmtV('B',true),bx-36,by-28);
-        ctx2.fillStyle=bw?'#888':(d?'#60c060':'#22a05a'); ctx2.fillText((outer?'ext-α':'α')+'='+fmtV('A',true),tx+32,ty+22);
-        ctx2.fillStyle=sub; ctx2.font='10px system-ui,sans-serif'; ctx2.fillText('90°',ox+24,oy-14);
+        ctx2.fillStyle=bw?'#555':(d?'#f0a040':'#d97706'); ctx2.fillText((outer?'ext-θ':'θ')+'='+fmtV('B',true),Math.min(bx-8,W-52),by-24);
+        ctx2.fillStyle=bw?'#888':(d?'#60c060':'#22a05a'); ctx2.fillText((outer?'ext-α':'α')+'='+fmtV('A',true),Math.max(tx+8,38),Math.max(ty+22,20));
+        ctx2.fillStyle=sub; ctx2.font='10px system-ui,sans-serif'; ctx2.fillText('90°',ox+rmk+14,oy-rmk-2);
     }
 
     // ── Any-triangle diagram (with altitude) ─────────────────────────
     function _trigDrawDiagramAny(ctx2, W, H, res) {
         var d = getDark(), bw = getBW();
-        var bg  = bw?'#fff':(d?'#181828':'#fafbff');
-        var acc = bw?'#000':(d?'#4a9eff':'#1a73e8');
-        var ln  = bw?'#000':(d?'#8888bb':'#aab0cc');
-        var lbl = bw?'#000':(d?'#e0e0f0':'#222');
+        var bg      = bw?'#fff':(d?'#181828':'#fafbff');
+        var acc     = bw?'#000':(d?'#4a9eff':'#1a73e8');
+        var ln      = bw?'#000':(d?'#8888bb':'#aab0cc');
+        var lbl     = bw?'#000':(d?'#e0e0f0':'#222');
         var alt_col = bw?'#888':(d?'#cc88ff':'#9333ea');
         ctx2.fillStyle=bg; ctx2.fillRect(0,0,W,H);
 
-        // Reconstruct triangle geometry from result (or inputs)
-        var R = res || {};
-        var sa = R.sa, sb = R.sb, sc = R.sc;
-        var AA = R.AA, AB = R.AB, AC = R.AC;
-        var deg = getDeg();
-        var toRad = function(x){ return deg?x*Math.PI/180:x; };
+        var R=res||{}, sa=R.sa, sb=R.sb, sc=R.sc, AA=R.AA, AB=R.AB, AC=R.AC;
+        var deg=getDeg(), toRad=function(x){return deg?x*Math.PI/180:x;};
+        var prec=getPrec(), aLbl=deg?'°':'r';
+        function fv(v){return v!==undefined?parseFloat(v.toFixed(Math.min(prec,3)))+'':'?';}
+        function fa(v){return v!==undefined?parseFloat(v.toFixed(Math.min(prec,2)))+aLbl:'?';}
 
-        // Place triangle: A at bottom-left, B at bottom-right, C at top
-        // side a = BC (opp A), side b = AC (opp B), side c = AB (opp C)
-        // Use law of cosines to get angle A for positioning if we have all sides
-        var angleA_rad = null;
-        if(sa&&sb&&sc) {
-            // cos(A) = (b²+c²-a²) / 2bc
-            angleA_rad = Math.acos((sb*sb+sc*sc-sa*sa)/(2*sb*sc));
-        } else if(AA!==undefined) {
-            angleA_rad = toRad(AA);
+        // Derive angle A in radians for vertex placement
+        var AA_rad=null;
+        if(AA!==undefined) AA_rad=toRad(AA);
+        else if(sa&&sb&&sc) AA_rad=Math.acos(Math.min(1,Math.max(-1,(sb*sb+sc*sc-sa*sa)/(2*sb*sc))));
+        if(AA_rad===null||isNaN(AA_rad)) AA_rad=Math.PI/3;
+
+        // Clamp to sane range so triangle is always visible
+        AA_rad=Math.max(0.12,Math.min(Math.PI-0.24,AA_rad));
+
+        // World coords: A=(0,0), B=(sc,0), C=(sb*cosA, sb*sinA)
+        var useC=(sc&&sc>0)?sc:10;
+        var useSB=(sb&&sb>0)?sb:useC*0.8;
+        var Ax=0, Ay=0, Bx=useC, By=0;
+        var Cx=Math.cos(AA_rad)*useSB, Cy=Math.sin(AA_rad)*useSB;
+        if(Cy<0.01*useC) Cy=0.01*useC;
+
+        // Fit to canvas with padding
+        var pad=44;
+        var pts=[[Ax,Ay],[Bx,By],[Cx,Cy]];
+        var minX=Ax,maxX=Ax,minY=Ay,maxY=Ay;
+        pts.forEach(function(p){
+            if(p[0]<minX)minX=p[0]; if(p[0]>maxX)maxX=p[0];
+            if(p[1]<minY)minY=p[1]; if(p[1]>maxY)maxY=p[1];
+        });
+        var rangeX=maxX-minX||1, rangeY=maxY-minY||1;
+        var sc2=Math.min((W-pad*2)/rangeX,(H-pad*2)/rangeY);
+        var drawW=rangeX*sc2, drawH=rangeY*sc2;
+        var ofsX=(W-drawW)/2-minX*sc2;
+        var ofsY=(H+drawH)/2+minY*sc2;
+        function toCanv(wx,wy){return [ofsX+wx*sc2, ofsY-wy*sc2];}
+
+        var PA=toCanv(Ax,Ay),PB=toCanv(Bx,By),PC=toCanv(Cx,Cy);
+        var PAx=PA[0],PAy=PA[1],PBx=PB[0],PBy=PB[1],PCx=PC[0],PCy=PC[1];
+
+        // Altitude from C perpendicular to AB (AB is horizontal after transform)
+        var PHx=PCx, PHy=PAy;
+        var altLen=Math.abs(PHy-PCy);
+        var rmk=Math.min(9,altLen*0.12);
+        if(altLen>15){
+            ctx2.strokeStyle=alt_col; ctx2.lineWidth=1.3; ctx2.setLineDash([4,3]);
+            ctx2.beginPath(); ctx2.moveTo(PCx,PCy); ctx2.lineTo(PHx,PHy); ctx2.stroke();
+            ctx2.setLineDash([]);
+            if(rmk>3){
+                var hDir=PHx>PAx+1?1:-1;
+                ctx2.strokeStyle=ln; ctx2.lineWidth=1;
+                ctx2.beginPath(); ctx2.moveTo(PHx-hDir*rmk,PHy); ctx2.lineTo(PHx-hDir*rmk,PHy-rmk); ctx2.lineTo(PHx,PHy-rmk); ctx2.stroke();
+            }
         }
 
-        var PAx=44, PAy=H-30, PBx=W-30, PBy=H-30;
-        var PCx=PAx, PCy=PAy;
-        if(sc && angleA_rad!==null) {
-            var scale = (PBx-PAx) / (sc||1);
-            PCx = PAx + Math.cos(angleA_rad)*sc*scale;
-            PCy = PAy - Math.sin(angleA_rad)*sc*scale;
-        } else {
-            PCx = PAx+60; PCy = PAy-90; // fallback shape
-        }
-
-        // Draw main triangle
+        // Main triangle
         ctx2.strokeStyle=acc; ctx2.lineWidth=2.2;
         ctx2.beginPath(); ctx2.moveTo(PAx,PAy); ctx2.lineTo(PBx,PBy); ctx2.lineTo(PCx,PCy); ctx2.closePath(); ctx2.stroke();
 
-        // Altitude from C to AB (the base, which is horizontal PAy=PBy)
-        var PHx=PCx, PHy=PAy; // foot of altitude (since base is horizontal)
-        ctx2.strokeStyle=alt_col; ctx2.lineWidth=1.3; ctx2.setLineDash([4,3]);
-        ctx2.beginPath(); ctx2.moveTo(PCx,PCy); ctx2.lineTo(PHx,PHy); ctx2.stroke();
-        ctx2.setLineDash([]);
-        // right-angle marker at foot
-        var rmk=10;
-        var hDir = PHx>PAx?1:-1;
-        ctx2.strokeStyle=ln; ctx2.lineWidth=1;
-        ctx2.beginPath(); ctx2.moveTo(PHx-hDir*rmk,PHy); ctx2.lineTo(PHx-hDir*rmk,PHy-rmk); ctx2.lineTo(PHx,PHy-rmk); ctx2.stroke();
-
         // Angle arcs
-        function drawArc(vx,vy,p1x,p1y,p2x,p2y,r,col,ccw) {
-            var a1=Math.atan2(p1y-vy,p1x-vx), a2=Math.atan2(p2y-vy,p2x-vx);
-            ctx2.strokeStyle=col; ctx2.lineWidth=1.5;
-            ctx2.beginPath(); ctx2.arc(vx,vy,r,a1,a2,ccw||false); ctx2.stroke();
-        }
         var colA=bw?'#555':(d?'#f0a040':'#d97706');
         var colB=bw?'#888':(d?'#60c060':'#22a05a');
         var colC=bw?'#aaa':(d?'#60bbff':'#1a73e8');
-        // A at bottom-left: between B and C
-        drawArc(PAx,PAy,PBx,PBy,PCx,PCy,20,colA,false);
-        // B at bottom-right: between A and C — need CCW
-        drawArc(PBx,PBy,PAx,PAy,PCx,PCy,20,colB,true);
-        // C at top: between A and B
-        drawArc(PCx,PCy,PAx,PAy,PBx,PBy,16,colC,false);
+        var arcR=Math.min(20,drawW*0.07,drawH*0.12);
+        function drawArc(vx,vy,p1x,p1y,p2x,p2y,r,col,ccw){
+            var a1=Math.atan2(p1y-vy,p1x-vx),a2=Math.atan2(p2y-vy,p2x-vx);
+            ctx2.strokeStyle=col; ctx2.lineWidth=1.5;
+            ctx2.beginPath(); ctx2.arc(vx,vy,r,a1,a2,ccw||false); ctx2.stroke();
+        }
+        drawArc(PAx,PAy,PBx,PBy,PCx,PCy,arcR,colA,false);
+        drawArc(PBx,PBy,PAx,PAy,PCx,PCy,arcR,colB,true);
+        drawArc(PCx,PCy,PAx,PAy,PBx,PBy,Math.min(arcR,14),colC,false);
 
-        // Labels
-        var prec=getPrec(), aLbl=deg?'°':'r';
-        function fv(val){ return val!==undefined?parseFloat(val.toFixed(Math.min(prec,3)))+'':'?'; }
-        function fa(val){ return val!==undefined?parseFloat(val.toFixed(Math.min(prec,2)))+aLbl:'?'; }
+        // Edge labels — offset away from opposite vertex
         ctx2.font='bold 11px system-ui,sans-serif'; ctx2.textAlign='center';
-        // side c label (bottom, between A and B)
-        ctx2.fillStyle=acc; ctx2.fillText('c='+(sc!==undefined?fv(sc):'?'),(PAx+PBx)/2,PAy+15);
-        // side b label (left side, A to C)
-        ctx2.fillStyle=lbl;
-        ctx2.save(); ctx2.translate((PAx+PCx)/2-14,(PAy+PCy)/2); ctx2.rotate(-Math.atan2(PAx-PCx,PAy-PCy)); ctx2.fillText('b='+(sb!==undefined?fv(sb):'?'),0,0); ctx2.restore();
-        // side a label (right side, B to C)
-        ctx2.save(); ctx2.translate((PBx+PCx)/2+14,(PBy+PCy)/2); ctx2.rotate(-Math.atan2(PBx-PCx,PBy-PCy)); ctx2.fillText('a='+(sa!==undefined?fv(sa):'?'),0,0); ctx2.restore();
-        // Angle labels
+        function edgeLbl(x1,y1,x2,y2,ox,oy,text,col){
+            var mx=(x1+x2)/2,my=(y1+y2)/2;
+            var nx=mx-ox,ny=my-oy,len=Math.sqrt(nx*nx+ny*ny)||1;
+            ctx2.fillStyle=col;
+            var ex=mx+nx/len*15, ey=my+ny/len*15;
+            ctx2.save(); ctx2.translate(ex,ey); ctx2.rotate(Math.atan2(y2-y1,x2-x1));
+            ctx2.fillText(text,0,0); ctx2.restore();
+        }
+        edgeLbl(PAx,PAy,PBx,PBy,PCx,PCy,'c='+(sc!==undefined?fv(sc):'?'),acc);
+        edgeLbl(PAx,PAy,PCx,PCy,PBx,PBy,'b='+(sb!==undefined?fv(sb):'?'),lbl);
+        edgeLbl(PBx,PBy,PCx,PCy,PAx,PAy,'a='+(sa!==undefined?fv(sa):'?'),lbl);
+
+        // Angle labels — along inward bisector from each vertex
         ctx2.font='10px system-ui,sans-serif';
-        ctx2.fillStyle=colA; ctx2.fillText('A='+(AA!==undefined?fa(AA):'?'),PAx+28,PAy-8);
-        ctx2.fillStyle=colB; ctx2.fillText('B='+(AB!==undefined?fa(AB):'?'),PBx-28,PBy-8);
-        ctx2.fillStyle=colC; ctx2.fillText('C='+(AC!==undefined?fa(AC):'?'),PCx+(PCx<(PAx+PBx)/2?-28:28),PCy+16);
+        function angleLbl(vx,vy,p1x,p1y,p2x,p2y,text,col){
+            var a1=Math.atan2(p1y-vy,p1x-vx),a2=Math.atan2(p2y-vy,p2x-vx);
+            var bisect=(a1+a2)/2;
+            var cx=(PAx+PBx+PCx)/3,cy=(PAy+PBy+PCy)/3;
+            if(Math.cos(bisect)*(cx-vx)+Math.sin(bisect)*(cy-vy)<0) bisect+=Math.PI;
+            var off=arcR+14;
+            ctx2.fillStyle=col;
+            ctx2.fillText(text,vx+Math.cos(bisect)*off,vy+Math.sin(bisect)*off);
+        }
+        angleLbl(PAx,PAy,PBx,PBy,PCx,PCy,'A='+(AA!==undefined?fa(AA):'?'),colA);
+        angleLbl(PBx,PBy,PAx,PAy,PCx,PCy,'B='+(AB!==undefined?fa(AB):'?'),colB);
+        angleLbl(PCx,PCy,PAx,PAy,PBx,PBy,'C='+(AC!==undefined?fa(AC):'?'),colC);
+
         // Altitude label
-        ctx2.fillStyle=alt_col; ctx2.font='9px system-ui,sans-serif';
-        ctx2.fillText('h',PHx+10,PCy+(PHy-PCy)/2);
+        if(altLen>15){
+            ctx2.fillStyle=alt_col; ctx2.font='9px system-ui,sans-serif'; ctx2.textAlign='left';
+            ctx2.fillText('h',PHx+(PHx>(PAx+PBx)/2?-12:5),PCy+altLen*0.45);
+        }
     }
 
     function _trigDrawDiagram(res) {
@@ -5328,7 +5359,7 @@
         get('trigResults').style.display='none';
         get('trigError').style.display='none';
         _trigDrawDiagram(null);
-        if(_exampleBanner && _exampleBanner.parentNode){ _exampleBanner.parentNode.removeChild(_exampleBanner); _exampleBanner=null; }
+        if(_exampleBanner&&_exampleBanner.parentNode){_exampleBanner.parentNode.removeChild(_exampleBanner);_exampleBanner=null;}
     }
 
     // Wire buttons
@@ -5361,217 +5392,119 @@
     // Header button
     get('trigSolverBtn').addEventListener('click',function(e){e.stopPropagation();if(modeTrig)exitTrigMode();else enterTrigMode();});
 
-    // ══════════════════════════════════════════════════════════════════════════
-    // ── Worked Examples Library ───────────────────────────────────────────────
-    // ══════════════════════════════════════════════════════════════════════════
+    // ══════════════════════════════════════════════════════════════════
+    // ── Worked Examples Library ───────────────────────────────────────
+    // ══════════════════════════════════════════════════════════════════
 
     var _examplesPanel = null;
     var _exampleBanner = null;
-    var _examplesSnap  = null; // snapshot of state for reset
 
     var _ALL_EXAMPLES = [
-        // ── 2D Triangles ──────────────────────────────────────────────────────
-        {
-            category:'2D Triangles', difficulty:'Beginner',
-            title:'3-4-5 Right Triangle',
-            blurb:'The classic Pythagorean triple. Find the hypotenuse from the two legs.',
-            tip:'Try doubling both legs — the hypotenuse doubles too.',
-            type:'main', tri:'right', goal:'hypo', method:0, inputs:['3','4']
-        },
-        {
-            category:'2D Triangles', difficulty:'Beginner',
-            title:'Equilateral Triangle — Height',
-            blurb:'All sides equal. Find the altitude from the side length using √3/2 × s.',
-            tip:'Double the side — does the height double exactly?',
-            type:'main', tri:'equilateral', goal:'height', method:0, inputs:['10']
-        },
-        {
-            category:'2D Triangles', difficulty:'Beginner',
-            title:"Isosceles Triangle — Heron's Area",
-            blurb:'Two equal legs of 7, base of 6. Find the area using Heron\'s formula.',
-            tip:'What happens to the area if the base gets very close to 14 (the sum of the legs)?',
-            type:'main', tri:'isosceles', goal:'area', method:0, inputs:['7','7','6']
-        },
-        {
-            category:'2D Triangles', difficulty:'Intermediate',
-            title:'Scalene — SAS Area',
-            blurb:'Two sides and the included angle. Area = ½ × a × b × sin(C).',
-            tip:'Set C to 90° — does the result match ½ × base × height?',
-            type:'main', tri:'scalene', goal:'area', method:1, inputs:['8','55','6']
-        },
-        {
-            category:'2D Triangles', difficulty:'Intermediate',
-            title:'Right Triangle — Leg from Hypotenuse + Angle',
-            blurb:'A ladder 10m long leans at 65°. How high does it reach?',
-            tip:'Lower the angle toward 0° and watch the height drop to zero.',
-            type:'main', tri:'right', goal:'side', method:2, inputs:['10','65']
-        },
-        {
-            category:'2D Triangles', difficulty:'Intermediate',
-            title:'Scalene — Angle-Side-Angle (ASA)',
-            blurb:'Two angles and the side between them. Finds the base via the sine rule.',
-            tip:'What if both angles are equal? You\'ve made an isosceles triangle.',
-            type:'main', tri:'scalene', goal:'base', method:2, inputs:['40','12','65']
-        },
-        {
-            category:'2D Triangles', difficulty:'Advanced',
-            title:'Right Triangle — Pythagorean Triple Check',
-            blurb:'Enter 5, 12, 13 — a valid Pythagorean triple. Try 5, 12, 14 to see it fail.',
-            tip:'Try any multiple of (5,12,13) like (10,24,26) — still a triple!',
-            type:'main', tri:'right', goal:'triple', method:0, inputs:['5','12','13']
-        },
-        {
-            category:'2D Triangles', difficulty:'Advanced',
-            title:'Isosceles — Solve All from Leg + Base',
-            blurb:'Leg = 9, Base = 10. Calculates every property at once.',
-            tip:'Make the base longer than twice the leg and see what breaks.',
-            type:'main', tri:'isosceles', goal:'all', method:0,
-            allInputs:{'all_is_leg':'9','all_is_base':'10'}
-        },
-        // ── 3D Shapes ─────────────────────────────────────────────────────────
-        {
-            category:'3D Shapes', difficulty:'Beginner',
-            title:'Rectangular Prism — Solve All',
-            blurb:'A box 4 × 3 × 5. Finds volume, surface area, diagonal, and edge total.',
-            tip:'Make it a cube (all sides equal) — does the formula simplify?',
-            type:'3d', shape:'rect_prism', goal:'all', method:0,
-            inputs3d:{'s3_l':'4','s3_w':'3','s3_h':'5'}
-        },
-        {
-            category:'3D Shapes', difficulty:'Intermediate',
-            title:'Rectangular Pyramid — Volume',
-            blurb:'Base 6 × 4, height 9. Volume = ⅓ × base area × height.',
-            tip:'Double the height — does the volume double?',
-            type:'3d', shape:'rect_pyramid', goal:'volume', method:0,
-            inputs3d:{'s3_l':'6','s3_w':'4','s3_h':'9'}
-        },
-        {
-            category:'3D Shapes', difficulty:'Intermediate',
-            title:'Triangular Prism — Surface Area',
-            blurb:'Equilateral cross-section (sides 5,5,5), length 12. Finds total surface area.',
-            tip:'What if the cross-section were a right triangle (3,4,5)?',
-            type:'3d', shape:'tri_prism', goal:'surface', method:0,
-            inputs3d:{'s3_a':'5','s3_b':'5','s3_c':'5','s3_h':'12'}
-        },
-        {
-            category:'3D Shapes', difficulty:'Advanced',
-            title:'Triangular Pyramid — Solve All',
-            blurb:'Base triangle with sides 6,6,6, slant height 7. Finds all properties.',
-            tip:'Increase slant height — how does it affect surface area vs volume?',
-            type:'3d', shape:'tri_pyramid', goal:'all', method:0,
-            inputs3d:{'s3_a':'6','s3_b':'6','s3_c':'6','s3_sh':'7'}
-        },
-        // ── Trig Solver ───────────────────────────────────────────────────────
-        {
-            category:'Trig Solver', difficulty:'Beginner',
-            title:'30-60-90 Right Triangle',
-            blurb:'Hypotenuse 10, angle α = 30°. Finds all sides and the second angle.',
-            tip:'Change α to 45° — both legs should become equal.',
-            type:'trig', trigMode:'right', trigInputs:{'A':30,'hyp':10}
-        },
-        {
-            category:'Trig Solver', difficulty:'Beginner',
-            title:'45-45-90 Isosceles Right Triangle',
-            blurb:'Both legs equal 7. The hypotenuse is always leg × √2.',
-            tip:'What\'s √2? Confirm by squaring the hypotenuse.',
-            type:'trig', trigMode:'right', trigInputs:{'a':7,'b':7}
-        },
-        {
-            category:'Trig Solver', difficulty:'Intermediate',
-            title:'Any Triangle — SAS (Cosine Rule)',
-            blurb:'Sides 7 and 9 with included angle 60°. Uses the cosine rule for the third side.',
-            tip:'Set the angle to 90° — the result should match Pythagoras exactly.',
-            type:'trig', trigMode:'any', trigInputs:{'sa':7,'sb':9,'AC':60}
-        },
-        {
-            category:'Trig Solver', difficulty:'Intermediate',
-            title:'Real World — Angle of Elevation',
-            blurb:'50m from a building, looking up at 38°. Finds the building height.',
-            tip:'Try 45° — the height should equal the horizontal distance.',
-            type:'trig', trigMode:'right', trigInputs:{'b':50,'A':38}
-        },
-        {
-            category:'Trig Solver', difficulty:'Advanced',
-            title:'Any Triangle — Three Sides (SSS)',
-            blurb:'All three sides known: 5, 7, 9. Finds all angles via the cosine rule.',
-            tip:'Try sides 3, 4, 5 — does one angle come out to exactly 90°?',
-            type:'trig', trigMode:'any', trigInputs:{'sa':5,'sb':7,'sc':9}
-        },
-        {
-            category:'Trig Solver', difficulty:'Advanced',
-            title:'Two Ships Problem',
-            blurb:'Ship A travels 12km, ship B travels 18km, angle between courses = 75°. Find distance apart.',
-            tip:'Set equal distances and 60° — you should get an equilateral triangle.',
-            type:'trig', trigMode:'any', trigInputs:{'sa':12,'sb':18,'AC':75}
-        }
+        {category:'2D Triangles',difficulty:'Beginner',
+         title:'3-4-5 Right Triangle',
+         blurb:'The classic Pythagorean triple. Find the hypotenuse from the two legs.',
+         tip:'Try doubling both legs — the hypotenuse doubles too.',
+         type:'main',tri:'right',goal:'hypo',method:0,inputs:['3','4']},
+        {category:'2D Triangles',difficulty:'Beginner',
+         title:'Equilateral Triangle — Height',
+         blurb:'All sides equal. Find the altitude from the side length using √3/2 × s.',
+         tip:'Double the side — does the height double exactly?',
+         type:'main',tri:'equilateral',goal:'height',method:0,inputs:['10']},
+        {category:'2D Triangles',difficulty:'Beginner',
+         title:"Isosceles Triangle — Heron's Area",
+         blurb:"Two equal legs of 7, base of 6. Area via Heron's formula.",
+         tip:'What happens to area if the base approaches 14 (sum of legs)?',
+         type:'main',tri:'isosceles',goal:'area',method:0,inputs:['7','7','6']},
+        {category:'2D Triangles',difficulty:'Intermediate',
+         title:'Scalene — SAS Area',
+         blurb:'Two sides and the included angle. Area = ½ × a × b × sin(C).',
+         tip:'Set C to 90° — does the result match ½ × base × height?',
+         type:'main',tri:'scalene',goal:'area',method:1,inputs:['8','55','6']},
+        {category:'2D Triangles',difficulty:'Intermediate',
+         title:'Right Triangle — Leg from Hypotenuse + Angle',
+         blurb:'A 10m ladder leans at 65°. How high does it reach?',
+         tip:'Lower the angle toward 0° and watch the height drop to zero.',
+         type:'main',tri:'right',goal:'side',method:2,inputs:['10','65']},
+        {category:'2D Triangles',difficulty:'Intermediate',
+         title:'Scalene — Angle-Side-Angle (ASA)',
+         blurb:'Two angles and the side between them. Finds the base via the sine rule.',
+         tip:'Make both angles equal — you have an isosceles triangle.',
+         type:'main',tri:'scalene',goal:'base',method:2,inputs:['40','12','65']},
+        {category:'2D Triangles',difficulty:'Advanced',
+         title:'Right Triangle — Pythagorean Triple Check',
+         blurb:'Enter 5, 12, 13 — a valid triple. Try 5, 12, 14 to see it fail.',
+         tip:'Any multiple of (5,12,13) like (10,24,26) is still a triple.',
+         type:'main',tri:'right',goal:'triple',method:0,inputs:['5','12','13']},
+        {category:'2D Triangles',difficulty:'Advanced',
+         title:'Isosceles — Solve All from Leg + Base',
+         blurb:'Leg = 9, Base = 10. Calculates every property at once.',
+         tip:'Make the base longer than 18 and see what breaks.',
+         type:'main',tri:'isosceles',goal:'all',method:0,
+         allInputs:{'all_is_leg':'9','all_is_base':'10'}},
+        {category:'3D Shapes',difficulty:'Beginner',
+         title:'Rectangular Prism — Solve All',
+         blurb:'A box 4 × 3 × 5. Finds volume, surface area, diagonal and edge total.',
+         tip:'Make all sides equal — you have a cube.',
+         type:'3d',shape:'rect_prism',goal:'all',method:0,
+         inputs3d:{'s3_l':'4','s3_w':'3','s3_h':'5'}},
+        {category:'3D Shapes',difficulty:'Intermediate',
+         title:'Rectangular Pyramid — Volume',
+         blurb:'Base 6 × 4, height 9. Volume = ⅓ × base area × height.',
+         tip:'Double the height — does the volume double?',
+         type:'3d',shape:'rect_pyramid',goal:'volume',method:0,
+         inputs3d:{'s3_l':'6','s3_w':'4','s3_h':'9'}},
+        {category:'3D Shapes',difficulty:'Intermediate',
+         title:'Triangular Prism — Surface Area',
+         blurb:'Equilateral cross-section (sides 5,5,5), length 12.',
+         tip:'What if the cross-section were a right triangle (3,4,5)?',
+         type:'3d',shape:'tri_prism',goal:'surface',method:0,
+         inputs3d:{'s3_a':'5','s3_b':'5','s3_c':'5','s3_h':'12'}},
+        {category:'3D Shapes',difficulty:'Advanced',
+         title:'Triangular Pyramid — Solve All',
+         blurb:'Base triangle sides 6,6,6, slant height 7.',
+         tip:'Increase slant height — how does it affect surface vs volume?',
+         type:'3d',shape:'tri_pyramid',goal:'all',method:0,
+         inputs3d:{'s3_a':'6','s3_b':'6','s3_c':'6','s3_sh':'7'}},
+        {category:'Trig Solver',difficulty:'Beginner',
+         title:'30-60-90 Right Triangle',
+         blurb:'Hypotenuse 10, angle α = 30°. Finds all sides and the second angle.',
+         tip:"Change α to 45° — both legs should become equal.",
+         type:'trig',trigMode:'right',trigInputs:{'A':30,'hyp':10}},
+        {category:'Trig Solver',difficulty:'Beginner',
+         title:'45-45-90 Isosceles Right Triangle',
+         blurb:'Both legs equal 7. The hypotenuse is always leg × √2.',
+         tip:"Confirm: square the hypotenuse — does it equal 2 × 49?",
+         type:'trig',trigMode:'right',trigInputs:{'a':7,'b':7}},
+        {category:'Trig Solver',difficulty:'Intermediate',
+         title:'Any Triangle — SAS (Cosine Rule)',
+         blurb:'Sides 7 and 9 with included angle 60°.',
+         tip:"Set angle to 90° — result should match Pythagoras.",
+         type:'trig',trigMode:'any',trigInputs:{'sa':7,'sb':9,'AC':60}},
+        {category:'Trig Solver',difficulty:'Intermediate',
+         title:'Angle of Elevation',
+         blurb:'50m from a building, looking up at 38°. Finds height.',
+         tip:"Try 45° — height should equal horizontal distance.",
+         type:'trig',trigMode:'right',trigInputs:{'b':50,'A':38}},
+        {category:'Trig Solver',difficulty:'Advanced',
+         title:'Any Triangle — Three Sides (SSS)',
+         blurb:'Sides 5, 7, 9 — finds all angles via cosine rule.',
+         tip:"Try 3, 4, 5 — does one angle come out to exactly 90°?",
+         type:'trig',trigMode:'any',trigInputs:{'sa':5,'sb':7,'sc':9}},
+        {category:'Trig Solver',difficulty:'Advanced',
+         title:'Two Ships Problem',
+         blurb:'Ship A: 12km, Ship B: 18km, angle between = 75°. Find distance.',
+         tip:"Equal distances at 60° should give an equilateral triangle.",
+         type:'trig',trigMode:'any',trigInputs:{'sa':12,'sb':18,'AC':75}}
     ];
 
-    // ── Loaders ──────────────────────────────────────────────────────────────
-
-    function _exLoadMain(ex) {
-        // Exit other modes first
-        if(modeTrig) exitTrigMode();
-        if(mode3D)   exit3DMode();
-        // Set state
-        currentTri    = ex.tri;
-        currentGoal   = ex.goal;
-        currentMethod = ex.method || 0;
-        rebuildAll();
-        // Fill inputs
-        var snap = {type:'main', tri:ex.tri, goal:ex.goal, method:ex.method||0, inputs:ex.inputs, allInputs:ex.allInputs};
-        if(ex.goal === 'all' && ex.allInputs) {
-            Object.keys(ex.allInputs).forEach(function(id){
-                var el = document.getElementById(id); if(el) el.value = ex.allInputs[id];
-            });
-        } else if(ex.inputs) {
-            ex.inputs.forEach(function(val,i){
-                var el = get('v'+i); if(el) el.value = val;
-            });
-        }
-        doCalculate(false);
-        _showExBanner(ex, function(){ _exLoadMain(snap); });
-    }
-
-    function _exLoad3D(ex) {
-        if(modeTrig) exitTrigMode();
-        if(!mode3D)  enter3DMode();
-        current3DShape  = ex.shape;
-        current3DGoal   = ex.goal;
-        current3DMethod = ex.method || 0;
-        build3DShapeBtns(); buildGoalBtns3D(); buildMethodBtns3D(); render3DInputs();
-        setTimeout(function(){
-            Object.keys(ex.inputs3d).forEach(function(id){
-                var el = document.getElementById(id); if(el) el.value = ex.inputs3d[id];
-            });
-            calc3D();
-            _showExBanner(ex, function(){ _exLoad3D(ex); });
-        }, 30);
-    }
-
-    function _exLoadTrig(ex) {
-        if(mode3D) exit3DMode();
-        if(!modeTrig) enterTrigMode();
-        _trigSetMode(ex.trigMode);
-        ['a','b','hyp','A','B','sa','sb','sc','AA','AB','AC'].forEach(function(k){
-            var el = get('trigIn_'+k); if(el) el.value = '';
-        });
-        Object.keys(ex.trigInputs).forEach(function(k){
-            var el = get('trigIn_'+k); if(el) el.value = ex.trigInputs[k];
-        });
-        _trigDoSolve();
-        _showExBanner(ex, function(){ _exLoadTrig(ex); });
-    }
-
-    function _exLoad(ex) {
-        if(ex.type === 'main')   _exLoadMain(ex);
-        else if(ex.type === '3d') _exLoad3D(ex);
-        else if(ex.type === 'trig') _exLoadTrig(ex);
-    }
-
-    // ── Banner ────────────────────────────────────────────────────────────────
+    // ── Banner ────────────────────────────────────────────────────────
 
     function _showExBanner(ex, resetFn) {
-        if(_exampleBanner && _exampleBanner.parentNode) _exampleBanner.parentNode.removeChild(_exampleBanner);
+        // Remove any existing banner
+        if(_exampleBanner && _exampleBanner.parentNode) {
+            _exampleBanner.parentNode.removeChild(_exampleBanner);
+            _exampleBanner = null;
+        }
         var d=getDark(), bw=getBW();
         var bg  = bw?'#f0f0f0':(d?'#2a2a3e':'#fff8e1');
         var bdr = bw?'#000'   :(d?'#555577':'#ffe082');
@@ -5584,63 +5517,166 @@
             +'<div><b style="font-size:12px;">'+ex.title+'</b><br>'+ex.blurb
             +(ex.tip?'<br><span style="opacity:0.75;">💡 '+ex.tip+'</span>':'')
             +'</div>'
-            +'<button id="exResetBtn" style="flex-shrink:0;padding:3px 8px;border:1px solid '+bdr+';border-radius:5px;background:none;color:'+txt+';font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">↺ Reset</button>'
+            +'<div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;">'
+            +'<button id="exResetBtn" style="padding:3px 8px;border:1px solid '+bdr+';border-radius:5px;background:none;color:'+txt+';font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">↺ Reset</button>'
+            +'<button id="exCloseBtn" style="padding:3px 8px;border:1px solid '+bdr+';border-radius:5px;background:none;color:'+txt+';font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">✕ Close</button>'
+            +'</div>'
             +'</div>';
         _exampleBanner = banner;
-        // Find the right panel to inject into
-        var target = null;
-        if(ex.type === 'trig') {
-            target = get('panelTrig');
-        } else if(ex.type === '3d') {
-            target = get('panel3D');
-        } else {
-            target = get('uiBody');
-        }
+
+        // Inject into the right panel
+        var target = (ex.type==='trig') ? get('panelTrig') : (ex.type==='3d') ? get('panel3D') : get('uiBody');
         if(target) target.insertBefore(banner, target.firstChild);
+
         document.getElementById('exResetBtn').addEventListener('click', function(e){
-            e.stopPropagation(); resetFn();
+            e.stopPropagation();
+            resetFn();
+        });
+        document.getElementById('exCloseBtn').addEventListener('click', function(e){
+            e.stopPropagation();
+            _exDismissBanner();
         });
     }
 
-    // ── Panel ─────────────────────────────────────────────────────────────────
+    function _exDismissBanner() {
+        if(_exampleBanner && _exampleBanner.parentNode) {
+            _exampleBanner.parentNode.removeChild(_exampleBanner);
+            _exampleBanner = null;
+        }
+    }
+
+    // ── Loaders ───────────────────────────────────────────────────────
+
+    function _exLoadMain(ex) {
+        if(modeTrig) exitTrigMode();
+        if(mode3D)   exit3DMode();
+        currentTri    = ex.tri;
+        currentGoal   = ex.goal;
+        currentMethod = ex.method || 0;
+        rebuildAll();
+        if(ex.goal==='all' && ex.allInputs) {
+            Object.keys(ex.allInputs).forEach(function(id){
+                var el=document.getElementById(id); if(el) el.value=ex.allInputs[id];
+            });
+        } else if(ex.inputs) {
+            ex.inputs.forEach(function(val,i){
+                var el=get('v'+i); if(el) el.value=val;
+            });
+        }
+        doCalculate(false);
+        _showExBanner(ex, function(){
+            // Reset: clear inputs and results, dismiss banner, stay on correct page
+            _exDismissBanner();
+            currentTri    = ex.tri;
+            currentGoal   = ex.goal;
+            currentMethod = ex.method || 0;
+            rebuildAll();
+            if(ex.goal==='all' && ex.allInputs) {
+                Object.keys(ex.allInputs).forEach(function(id){
+                    var el=document.getElementById(id); if(el) el.value=ex.allInputs[id];
+                });
+            } else if(ex.inputs) {
+                ex.inputs.forEach(function(val,i){
+                    var el=get('v'+i); if(el) el.value=val;
+                });
+            }
+            doCalculate(false);
+            _showExBanner(ex, arguments.callee);
+        });
+    }
+
+    function _exLoad3D(ex) {
+        if(modeTrig) exitTrigMode();
+        if(!mode3D)  enter3DMode();
+        current3DShape  = ex.shape;
+        current3DGoal   = ex.goal;
+        current3DMethod = ex.method || 0;
+        build3DShapeBtns(); buildGoalBtns3D(); buildMethodBtns3D(); render3DInputs();
+        setTimeout(function(){
+            Object.keys(ex.inputs3d).forEach(function(id){
+                var el=document.getElementById(id); if(el) el.value=ex.inputs3d[id];
+            });
+            calc3D();
+            _showExBanner(ex, function(){
+                _exDismissBanner();
+                current3DShape  = ex.shape;
+                current3DGoal   = ex.goal;
+                current3DMethod = ex.method || 0;
+                build3DShapeBtns(); buildGoalBtns3D(); buildMethodBtns3D(); render3DInputs();
+                setTimeout(function(){
+                    Object.keys(ex.inputs3d).forEach(function(id){
+                        var el=document.getElementById(id); if(el) el.value=ex.inputs3d[id];
+                    });
+                    calc3D();
+                    _showExBanner(ex, arguments.callee);
+                }, 30);
+            });
+        }, 30);
+    }
+
+    function _exLoadTrig(ex) {
+        if(mode3D) exit3DMode();
+        if(!modeTrig) enterTrigMode();
+        _trigSetMode(ex.trigMode);
+        ['a','b','hyp','A','B','sa','sb','sc','AA','AB','AC'].forEach(function(k){
+            var el=get('trigIn_'+k); if(el) el.value='';
+        });
+        Object.keys(ex.trigInputs).forEach(function(k){
+            var el=get('trigIn_'+k); if(el) el.value=ex.trigInputs[k];
+        });
+        _trigDoSolve();
+        _showExBanner(ex, function(){
+            // Reset: clear, refill original values, re-solve, show banner again
+            _exDismissBanner();
+            _trigSetMode(ex.trigMode);
+            ['a','b','hyp','A','B','sa','sb','sc','AA','AB','AC'].forEach(function(k){
+                var el=get('trigIn_'+k); if(el) el.value='';
+            });
+            Object.keys(ex.trigInputs).forEach(function(k){
+                var el=get('trigIn_'+k); if(el) el.value=ex.trigInputs[k];
+            });
+            _trigDoSolve();
+            _showExBanner(ex, arguments.callee);
+        });
+    }
+
+    function _exLoad(ex) {
+        if(ex.type==='main')       _exLoadMain(ex);
+        else if(ex.type==='3d')    _exLoad3D(ex);
+        else if(ex.type==='trig')  _exLoadTrig(ex);
+    }
+
+    // ── Panel ─────────────────────────────────────────────────────────
 
     function _buildExamplesPanel() {
         if(_examplesPanel && document.body.contains(_examplesPanel)){
-            _examplesPanel.remove(); _examplesPanel = null; return;
+            _examplesPanel.remove(); _examplesPanel=null; return;
         }
         var d=getDark(), bw=getBW();
-        var bg   = bw?'#fff'     :(d?'#1e1e2e':'#fff');
-        var bdr  = bw?'#000'     :(d?'#333350':'#ddd');
-        var hbg  = bw?'#000'     :(d?'#3a4f63':'#1a73e8');
-        var txt  = bw?'#000'     :(d?'#e0e0f0':'#222');
-        var sub  = bw?'#444'     :(d?'#aaa':'#666');
-        var row  = bw?'#e8e8e8'  :(d?'#2a2a3e':'#f0f4ff');
-        var ibdr = bw?'#000'     :(d?'#444466':'#c5d8f8');
+        var bg   = bw?'#fff'    :(d?'#1e1e2e':'#fff');
+        var bdr  = bw?'#000'    :(d?'#333350':'#ddd');
+        var hbg  = bw?'#000'    :(d?'#3a4f63':'#1a73e8');
+        var txt  = bw?'#000'    :(d?'#e0e0f0':'#222');
+        var sub  = bw?'#444'    :(d?'#aaa':'#666');
+        var row  = bw?'#e8e8e8' :(d?'#2a2a3e':'#f0f4ff');
+        var ibdr = bw?'#000'    :(d?'#444466':'#c5d8f8');
         var acc  = '#1a73e8';
         var diffColor = {'Beginner':'#22a05a','Intermediate':'#e67e22','Advanced':'#c0392b'};
         var typeIcon  = {'2D Triangles':'△','3D Shapes':'⬡','Trig Solver':'📐'};
 
-        // Group by category
         var cats = {};
         _ALL_EXAMPLES.forEach(function(ex){
             if(!cats[ex.category]) cats[ex.category]=[];
             cats[ex.category].push(ex);
         });
 
-        var itemsHtml = '';
-        // Search bar
-        itemsHtml += '<div style="padding:8px 12px;border-bottom:1px solid '+ibdr+';flex-shrink:0;">'
-            +'<input id="exSearch" type="text" placeholder="🔍 Search examples…" style="width:100%;padding:6px 10px;border:1.5px solid '+ibdr+';border-radius:7px;font-size:12px;box-sizing:border-box;background:'+bg+';color:'+txt+';outline:none;">'
-            +'</div>';
-        itemsHtml += '<div id="exList" style="overflow-y:auto;flex:1;">';
-
+        var listHtml = '';
         Object.keys(cats).forEach(function(cat){
-            var icon = typeIcon[cat] || '•';
-            itemsHtml += '<div class="ex-cat-hdr" style="font-size:9px;font-weight:700;color:'+sub+';letter-spacing:0.9px;padding:10px 14px 4px;text-transform:uppercase;background:'+bg+';position:sticky;top:0;z-index:1;">'+icon+' '+cat+'</div>';
+            listHtml += '<div class="ex-cat-hdr" style="font-size:9px;font-weight:700;color:'+sub+';letter-spacing:0.9px;padding:10px 14px 4px;text-transform:uppercase;background:'+bg+';position:sticky;top:0;z-index:1;">'+(typeIcon[cat]||'•')+' '+cat+'</div>';
             cats[cat].forEach(function(ex){
-                var idx = _ALL_EXAMPLES.indexOf(ex);
-                var dc = diffColor[ex.difficulty]||'#888';
-                itemsHtml +=
+                var idx=_ALL_EXAMPLES.indexOf(ex);
+                var dc=diffColor[ex.difficulty]||'#888';
+                listHtml +=
                     '<div class="ex-item" data-idx="'+idx+'" style="padding:9px 14px;border-bottom:1px solid '+ibdr+';cursor:pointer;">'
                     +'<div style="display:flex;justify-content:space-between;align-items:center;gap:6px;">'
                     +'<span style="font-size:12px;font-weight:700;color:'+txt+';">'+ex.title+'</span>'
@@ -5650,62 +5686,55 @@
                     +'</div>';
             });
         });
-        itemsHtml += '</div>';
 
-        var ep = document.createElement('div');
-        ep.id = 'geoExamplesPanel';
-        ep.style.cssText = 'position:fixed;top:60px;right:410px;width:310px;max-height:82vh;background:'+bg+';border:1.5px solid '+bdr+';border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.22);z-index:999999;font-family:system-ui,sans-serif;display:flex;flex-direction:column;overflow:hidden;';
-        ep.innerHTML =
+        var ep=document.createElement('div');
+        ep.id='geoExamplesPanel';
+        ep.style.cssText='position:fixed;top:60px;right:410px;width:310px;max-height:82vh;background:'+bg+';border:1.5px solid '+bdr+';border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.22);z-index:999999;font-family:system-ui,sans-serif;display:flex;flex-direction:column;overflow:hidden;';
+        ep.innerHTML=
             '<div style="padding:10px 14px;background:'+hbg+';border-radius:10px 10px 0 0;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">'
             +'<span style="font-weight:700;color:#fff;font-size:13px;">📚 Worked Examples</span>'
             +'<span id="exPanelClose" style="cursor:pointer;color:#fff;font-size:20px;line-height:1;opacity:0.8;">&times;</span>'
             +'</div>'
-            +'<div style="padding:6px 14px 6px;border-bottom:1px solid '+ibdr+';flex-shrink:0;font-size:11px;color:'+sub+';">Click an example to load it — all inputs stay editable.</div>'
-            + itemsHtml;
+            +'<div style="padding:8px 12px;border-bottom:1px solid '+ibdr+';flex-shrink:0;">'
+            +'<input id="exSearch" type="text" placeholder="🔍 Search examples…" style="width:100%;padding:6px 10px;border:1.5px solid '+ibdr+';border-radius:7px;font-size:12px;box-sizing:border-box;background:'+bg+';color:'+txt+';outline:none;">'
+            +'</div>'
+            +'<div style="padding:4px 14px 4px;border-bottom:1px solid '+ibdr+';flex-shrink:0;font-size:11px;color:'+sub+';">Click an example to load it — all inputs stay editable.</div>'
+            +'<div id="exList" style="overflow-y:auto;flex:1;">'+listHtml+'</div>';
         document.body.appendChild(ep);
-        _examplesPanel = ep;
+        _examplesPanel=ep;
 
-        ep.querySelector('#exPanelClose').addEventListener('click', function(e){
+        ep.querySelector('#exPanelClose').addEventListener('click',function(e){
             e.stopPropagation(); ep.remove(); _examplesPanel=null;
         });
-
         ep.querySelectorAll('.ex-item').forEach(function(el){
-            el.addEventListener('mouseenter',function(){ el.style.background=row; });
-            el.addEventListener('mouseleave',function(){ el.style.background=''; });
+            el.addEventListener('mouseenter',function(){el.style.background=row;});
+            el.addEventListener('mouseleave',function(){el.style.background='';});
             el.addEventListener('click',function(e){
                 e.stopPropagation();
-                var idx = parseInt(el.getAttribute('data-idx'));
+                var idx=parseInt(el.getAttribute('data-idx'));
                 _exLoad(_ALL_EXAMPLES[idx]);
-                ep.querySelectorAll('.ex-item').forEach(function(x){ x.style.background=''; x.style.borderLeft=''; });
-                el.style.background = row;
-                el.style.borderLeft = '3px solid '+acc;
+                ep.querySelectorAll('.ex-item').forEach(function(x){x.style.background='';x.style.borderLeft='';});
+                el.style.background=row; el.style.borderLeft='3px solid '+acc;
             });
         });
-
-        // Search filter
-        var searchEl = ep.querySelector('#exSearch');
-        if(searchEl) searchEl.addEventListener('input', function(){
-            var q = this.value.toLowerCase().trim();
+        var srch=ep.querySelector('#exSearch');
+        if(srch) srch.addEventListener('input',function(){
+            var q=this.value.toLowerCase().trim();
             ep.querySelectorAll('.ex-item').forEach(function(el){
-                var txt = el.textContent.toLowerCase();
-                el.style.display = (!q || txt.indexOf(q)>=0) ? '' : 'none';
+                el.style.display=(!q||el.textContent.toLowerCase().indexOf(q)>=0)?'':'none';
             });
-            // Hide/show category headers if all items in them are hidden
             ep.querySelectorAll('.ex-cat-hdr').forEach(function(hdr){
-                var sib = hdr.nextElementSibling;
-                var anyVis = false;
-                while(sib && !sib.classList.contains('ex-cat-hdr')){
-                    if(sib.style.display !== 'none') anyVis = true;
-                    sib = sib.nextElementSibling;
+                var sib=hdr.nextElementSibling, anyVis=false;
+                while(sib&&!sib.classList.contains('ex-cat-hdr')){
+                    if(sib.style.display!=='none') anyVis=true;
+                    sib=sib.nextElementSibling;
                 }
-                hdr.style.display = anyVis ? '' : 'none';
+                hdr.style.display=anyVis?'':'none';
             });
         });
     }
 
-    get('examplesBtn').addEventListener('click', function(e){ e.stopPropagation(); _buildExamplesPanel(); });
-
-    // Banner cleanup is handled inline in _trigClearAll (see above)
+    get('examplesBtn').addEventListener('click',function(e){e.stopPropagation();_buildExamplesPanel();});
 
 
 })();
