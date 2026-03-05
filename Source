@@ -5528,11 +5528,11 @@
         var target = (ex.type==='trig') ? get('panelTrig') : (ex.type==='3d') ? get('panel3D') : get('uiBody');
         if(target) target.insertBefore(banner, target.firstChild);
 
-        document.getElementById('exResetBtn').addEventListener('click', function(e){
+        banner.querySelector('#exResetBtn').addEventListener('click', function(e){
             e.stopPropagation();
             resetFn();
         });
-        document.getElementById('exCloseBtn').addEventListener('click', function(e){
+        banner.querySelector('#exCloseBtn').addEventListener('click', function(e){
             e.stopPropagation();
             _exDismissBanner();
         });
@@ -5691,7 +5691,7 @@
         ep.id='geoExamplesPanel';
         ep.style.cssText='position:fixed;top:60px;right:410px;width:310px;max-height:82vh;background:'+bg+';border:1.5px solid '+bdr+';border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.22);z-index:999999;font-family:system-ui,sans-serif;display:flex;flex-direction:column;overflow:hidden;';
         ep.innerHTML=
-            '<div style="padding:10px 14px;background:'+hbg+';border-radius:10px 10px 0 0;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">'
+            '<div id="exPanelHeader" style="padding:10px 14px;background:'+hbg+';border-radius:10px 10px 0 0;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;cursor:grab;user-select:none;">'
             +'<span style="font-weight:700;color:#fff;font-size:13px;">📚 Worked Examples</span>'
             +'<span id="exPanelClose" style="cursor:pointer;color:#fff;font-size:20px;line-height:1;opacity:0.8;">&times;</span>'
             +'</div>'
@@ -5702,6 +5702,37 @@
             +'<div id="exList" style="overflow-y:auto;flex:1;">'+listHtml+'</div>';
         document.body.appendChild(ep);
         _examplesPanel=ep;
+
+        // ── Drag to reposition ────────────────────────────────────────
+        (function(){
+            var hdr=ep.querySelector('#exPanelHeader');
+            if(!hdr) return;
+            var dragging=false, startX=0, startY=0, origLeft=0, origTop=0;
+            hdr.addEventListener('mousedown',function(e){
+                if(e.target.id==='exPanelClose') return;
+                dragging=true;
+                var rect=ep.getBoundingClientRect();
+                // Switch from right-anchored to left-anchored positioning
+                ep.style.right='auto';
+                ep.style.left=rect.left+'px';
+                ep.style.top=rect.top+'px';
+                startX=e.clientX; startY=e.clientY;
+                origLeft=rect.left; origTop=rect.top;
+                hdr.style.cursor='grabbing';
+                e.preventDefault();
+            });
+            document.addEventListener('mousemove',function(e){
+                if(!dragging) return;
+                var dx=e.clientX-startX, dy=e.clientY-startY;
+                ep.style.left=Math.max(0,origLeft+dx)+'px';
+                ep.style.top=Math.max(0,origTop+dy)+'px';
+            });
+            document.addEventListener('mouseup',function(){
+                if(!dragging) return;
+                dragging=false;
+                hdr.style.cursor='grab';
+            });
+        })();
 
         ep.querySelector('#exPanelClose').addEventListener('click',function(e){
             e.stopPropagation(); ep.remove(); _examplesPanel=null;
